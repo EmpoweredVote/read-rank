@@ -14,6 +14,8 @@ export default {
         'ev-muted-blue': '#00657c',
         'ev-light-blue': '#59b0c4',
         'ev-yellow': '#fed12e',
+        'ev-teal': '#00657c',
+        'ev-dark-blue': '#00657c',
       },
       fontFamily: {
         'manrope': ['Manrope', 'sans-serif'],

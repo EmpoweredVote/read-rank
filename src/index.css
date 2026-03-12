@@ -10,6 +10,8 @@
   --color-ev-muted-blue: #00657c;
   --color-ev-light-blue: #59b0c4;
   --color-ev-yellow: #fed12e;
+  --color-ev-teal: #00657c;
+  --color-ev-dark-blue: #00657c;
 
   /* Custom Font Family */
   --font-family-manrope: 'Manrope', sans-serif;
@@ -102,6 +104,39 @@ body {
 
 .ev-quote-card-dragging {
   background-color: rgba(0, 101, 124, 0.65);
+}
+
+/* EV Utility Classes */
+.ev-heading {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  color: #1c1c1c;
+}
+
+.ev-text-primary {
+  font-family: 'Manrope', sans-serif;
+  color: #374151; /* gray-700 */
+}
+
+.ev-text-secondary {
+  font-family: 'Manrope', sans-serif;
+  color: #6b7280; /* gray-500 */
+}
+
+.ev-button-primary {
+  background-color: #ff5740; /* ev-coral */
+  color: white;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.5rem;
+  transition: background-color 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.ev-button-primary:hover {
+  background-color: #e64a34;
 }
 
 /* Reduced motion support */
@@ -537,10 +572,11 @@ body {
 
 /* Quote card for sidebar - full text visible */
 .sidebar-quote-card {
-  background-color: #00657c;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   padding: 1rem;
-  color: white;
+  color: #1c1c1c;
   transition: all 0.2s ease;
 }
 
