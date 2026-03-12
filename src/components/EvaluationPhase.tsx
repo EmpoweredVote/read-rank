@@ -132,7 +132,7 @@ export const EvaluationPhase: React.FC = () => {
         </p>
         <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
           <div
-            className="ev-light-blue h-1 rounded-full transition-all duration-300"
+            className="bg-ev-coral h-1 rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

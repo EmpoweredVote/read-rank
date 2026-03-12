@@ -97,7 +97,10 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         rotate,
         opacity,
         scale: scaleValue,
-        zIndex: zIndexValue
+        zIndex: zIndexValue,
+        boxShadow: isStacked
+          ? `${stackIndex * 4}px ${stackIndex * 4}px 0 rgba(0,0,0,0.06)`
+          : undefined
       }}
       className={`
         ev-quote-card w-full max-w-lg md:max-w-xl relative
@@ -105,6 +108,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         shadow-lg select-none touch-none
         ${isCurrentlyAnimating ? 'pointer-events-none' : ''}
         ${isDragging ? 'ev-quote-card-dragging' : ''}
+        ${isStacked ? 'ev-quote-card-stacked' : ''}
       `}
       whileHover={isDraggable && !isCurrentlyAnimating && !isDragging ? { scale: 1.02 } : {}}
       transition={{ duration: 0.2 }}
