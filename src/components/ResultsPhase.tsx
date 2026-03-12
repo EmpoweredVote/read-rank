@@ -58,10 +58,11 @@ interface QuoteResultCardProps {
   index: number;
   candidates: Candidate[];
   issueProgress: Record<string, IssueProgress>;
+  topicId: string;
   onViewAlignment: (candidateId: string) => void;
 }
 
-const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, candidates, issueProgress, onViewAlignment }) => {
+const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, candidates, issueProgress, topicId, onViewAlignment }) => {
   const candidate = candidates.find(c => c.id === quote.candidateId);
 
   if (!candidate) return null;
@@ -180,7 +181,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
           </svg>
         </button>
         <a
-          href={buildEssentialsProfileUrl(candidate.id, issueProgress)}
+          href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined)}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full py-2 px-4 border border-ev-muted-blue text-ev-muted-blue font-manrope font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 text-sm hover:bg-ev-muted-blue hover:text-white mt-2"
@@ -197,7 +198,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
 
 export const ResultsPhase: React.FC = () => {
   const navigate = useNavigate();
-  const { rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments, goToHub, issueProgress } = useReadRankStore();
+  const { rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments, goToHub, issueProgress, topicId } = useReadRankStore();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
 
@@ -333,6 +334,7 @@ export const ResultsPhase: React.FC = () => {
             index={index}
             candidates={candidates}
             issueProgress={issueProgress}
+            topicId={topicId}
             onViewAlignment={handleViewAlignment}
           />
         ))}
