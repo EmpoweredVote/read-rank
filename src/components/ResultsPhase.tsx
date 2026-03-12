@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useReadRankStore } from '../store/useReadRankStore';
-import type { Quote, Candidate } from '../store/useReadRankStore';
+import type { Quote, Candidate, IssueProgress } from '../store/useReadRankStore';
 import { fetchQuotesData } from '../data/api';
+import { buildEssentialsProfileUrl } from '../utils/verdictFragment';
 
 // Display-only badge icons (non-interactive versions)
 const DiamondBadgeDisplay: React.FC<{ size?: number }> = ({ size = 28 }) => (
@@ -56,10 +57,11 @@ interface QuoteResultCardProps {
   badge: 'diamond' | 'gold' | 'agreed' | 'disagreed';
   index: number;
   candidates: Candidate[];
+  issueProgress: Record<string, IssueProgress>;
   onViewAlignment: (candidateId: string) => void;
 }
 
-const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, candidates, onViewAlignment }) => {
+const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, candidates, issueProgress, onViewAlignment }) => {
   const candidate = candidates.find(c => c.id === quote.candidateId);
 
   if (!candidate) return null;
@@ -177,6 +179,17 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        <a
+          href={buildEssentialsProfileUrl(candidate.id, issueProgress)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-2 px-4 border border-ev-muted-blue text-ev-muted-blue font-manrope font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 text-sm hover:bg-ev-muted-blue hover:text-white mt-2"
+        >
+          <span>View on Essentials</span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
       </div>
     </motion.div>
   );
@@ -184,7 +197,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
 
 export const ResultsPhase: React.FC = () => {
   const navigate = useNavigate();
-  const { rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments, goToHub } = useReadRankStore();
+  const { rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments, goToHub, issueProgress } = useReadRankStore();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
 
@@ -319,6 +332,7 @@ export const ResultsPhase: React.FC = () => {
             badge={badge}
             index={index}
             candidates={candidates}
+            issueProgress={issueProgress}
             onViewAlignment={handleViewAlignment}
           />
         ))}

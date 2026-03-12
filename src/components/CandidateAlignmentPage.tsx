@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useReadRankStore } from '../store/useReadRankStore';
 import type { Quote, IssueData, Candidate } from '../store/useReadRankStore';
 import { fetchQuotesData } from '../data/api';
+import { buildEssentialsProfileUrl } from '../utils/verdictFragment';
 
 // Display-only badge icons
 const DiamondBadgeDisplay: React.FC<{ size?: number }> = ({ size = 32 }) => (
@@ -335,6 +336,19 @@ export const CandidateAlignmentPage: React.FC = () => {
                 <div className="font-manrope font-bold text-2xl text-red-500">{aggregateStats.disagreed}</div>
                 <div className="text-xs text-gray-500">Disagreed</div>
               </div>
+            </div>
+            <div className="mt-4 flex justify-center">
+              <a
+                href={buildEssentialsProfileUrl(candidate.id, issueProgress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 py-2 px-6 border border-ev-muted-blue text-ev-muted-blue font-manrope font-semibold rounded-xl transition-colors duration-200 text-sm hover:bg-ev-muted-blue hover:text-white"
+              >
+                <span>View on Essentials</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           </div>
         </motion.div>
