@@ -68,8 +68,8 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
     switch (badge) {
       case 'diamond': return 'border-cyan-500';
       case 'gold': return 'border-amber-500';
-      case 'agreed': return 'border-green-500';
-      case 'disagreed': return 'border-red-400';
+      case 'agreed': return 'border-cyan-400';
+      case 'disagreed': return 'border-amber-400';
       default: return 'border-gray-300';
     }
   };
@@ -92,7 +92,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
         );
       case 'agreed':
         return (
-          <div className="inline-flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-700 px-3 py-1 rounded-full text-sm font-medium">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -101,7 +101,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
         );
       case 'disagreed':
         return (
-          <div className="inline-flex items-center gap-1.5 bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-sm font-medium">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -155,7 +155,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
             href={quote.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-3 text-sm text-ev-light-blue hover:text-ev-teal transition-colors"
+            className="inline-flex items-center gap-1 mt-3 text-sm text-ev-muted-blue hover:text-ev-coral transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,7 +170,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
       <div className="px-4 pb-4">
         <button
           onClick={() => onViewAlignment(candidate.id)}
-          className="w-full py-2.5 px-4 bg-ev-light-blue hover:bg-ev-teal text-white font-manrope font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-ev-coral hover:bg-red-600 text-white font-manrope font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
         >
           <span>View Your Alignment</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -277,7 +277,7 @@ export const ResultsPhase: React.FC = () => {
 
       {/* Summary Stats */}
       <motion.div
-        className="max-w-2xl mx-auto bg-ev-light-blue bg-opacity-10 rounded-xl p-4 md:p-6"
+        className="max-w-2xl mx-auto bg-ev-muted-blue/10 rounded-xl p-4 md:p-6"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
@@ -296,13 +296,13 @@ export const ResultsPhase: React.FC = () => {
             <div className="text-xs md:text-sm ev-text-primary">Gold</div>
           </div>
           <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-green-600">
+            <div className="font-manrope font-bold text-xl md:text-2xl text-cyan-700">
               {agreedQuotes.length + rankedQuotes.length - (badgeAssignments.diamond ? 1 : 0) - (badgeAssignments.gold ? 1 : 0)}
             </div>
             <div className="text-xs md:text-sm ev-text-primary">Agreed</div>
           </div>
           <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-red-500">
+            <div className="font-manrope font-bold text-xl md:text-2xl text-amber-700">
               {disagreedQuotes.length}
             </div>
             <div className="text-xs md:text-sm ev-text-primary">Disagreed</div>
@@ -333,7 +333,7 @@ export const ResultsPhase: React.FC = () => {
       >
         <motion.button
           onClick={handleBackToIssues}
-          className="relative overflow-hidden bg-gradient-to-r from-ev-light-blue to-ev-muted-blue hover:from-ev-muted-blue hover:to-ev-light-blue text-white font-manrope font-bold text-base md:text-lg px-8 py-3 rounded-xl shadow-lg shadow-ev-light-blue/30 hover:shadow-xl hover:shadow-ev-light-blue/40 transition-all duration-300"
+          className="relative overflow-hidden bg-ev-coral hover:bg-red-600 text-white font-manrope font-bold text-base md:text-lg px-8 py-3 rounded-xl shadow-lg transition-all duration-300"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
         >

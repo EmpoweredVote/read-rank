@@ -50,7 +50,7 @@ export const ProgressHeader: React.FC = () => {
             {canGoBack ? (
               <button
                 onClick={handleBack}
-                className="text-sm md:text-base text-ev-light-blue hover:text-ev-coral transition-colors duration-200 font-manrope font-medium flex items-center gap-1"
+                className="text-sm md:text-base text-ev-muted-blue hover:text-ev-coral transition-colors duration-200 font-manrope font-medium flex items-center gap-1"
                 aria-label="Go back"
               >
                 <span className="text-lg">←</span>
@@ -72,7 +72,7 @@ export const ProgressHeader: React.FC = () => {
           <div className="flex-1 flex justify-end items-center gap-3">
             <Link
               to="/animation-options"
-              className="text-xs text-gray-400 hover:text-ev-light-blue transition-colors duration-200 font-manrope font-medium"
+              className="text-xs text-gray-400 hover:text-ev-muted-blue transition-colors duration-200 font-manrope font-medium"
               title="View animation options"
             >
               🎮 Animations
@@ -107,7 +107,7 @@ export const ProgressHeader: React.FC = () => {
             </div>
 
             {/* Phase Indicator */}
-            <div className="flex justify-between text-xs text-ev-light-blue">
+            <div className="flex justify-between text-xs text-ev-muted-blue">
               <span className={phase === 'evaluation' ? 'font-bold text-ev-coral' : ''}>
                 Evaluate
               </span>
