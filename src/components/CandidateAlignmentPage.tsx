@@ -137,7 +137,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, badge, index }) => {
 export const CandidateAlignmentPage: React.FC = () => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
-  const { issueProgress } = useReadRankStore();
+  const { issueProgress, topicId } = useReadRankStore();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [issues, setIssues] = useState<IssueData[]>([]);
@@ -339,7 +339,7 @@ export const CandidateAlignmentPage: React.FC = () => {
             </div>
             <div className="mt-4 flex justify-center">
               <a
-                href={buildEssentialsProfileUrl(candidate.id, issueProgress)}
+                href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 py-2 px-6 border border-ev-muted-blue text-ev-muted-blue font-manrope font-semibold rounded-xl transition-colors duration-200 text-sm hover:bg-ev-muted-blue hover:text-white"
