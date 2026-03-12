@@ -101,7 +101,7 @@ export const ProgressHeader: React.FC = () => {
             {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2 mb-1">
               <div
-                className="ev-coral h-1.5 md:h-2 rounded-full transition-all duration-500 ease-out"
+                className="bg-ev-coral h-1.5 md:h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
