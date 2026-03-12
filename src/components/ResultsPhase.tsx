@@ -114,13 +114,6 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
     }
   };
 
-  const getPartyColor = (party: string) => {
-    if (party.toLowerCase().includes('democrat')) return 'text-blue-600';
-    if (party.toLowerCase().includes('republican')) return 'text-red-600';
-    if (party.toLowerCase().includes('libertarian')) return 'text-yellow-600';
-    return 'text-gray-600';
-  };
-
   return (
     <motion.div
       className={`bg-white rounded-xl border-2 ${getBorderColor()} shadow-md overflow-hidden`}
@@ -141,8 +134,6 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
               <h3 className="font-manrope font-bold text-lg text-gray-900">{candidate.name}</h3>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-gray-500">{candidate.office}</span>
-                <span className="text-gray-300">•</span>
-                <span className={`font-medium ${getPartyColor(candidate.party)}`}>{candidate.party}</span>
               </div>
             </div>
           </div>
