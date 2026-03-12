@@ -286,7 +286,6 @@ export const CandidateAlignmentPage: React.FC = () => {
                   {candidate.name}
                 </h1>
                 <p className="text-white/90 text-lg mb-1">{candidate.office}</p>
-                <p className={`font-medium text-white/80`}>{candidate.party}</p>
               </div>
             </div>
           </div>
