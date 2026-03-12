@@ -123,20 +123,20 @@ export const IssueHub: React.FC = () => {
 
       {/* Progress summary */}
       <motion.div
-        className="max-w-md mx-auto bg-ev-light-blue bg-opacity-10 rounded-xl p-4"
+        className="max-w-md mx-auto bg-ev-muted-blue/10 rounded-xl p-4"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <div className="flex items-center justify-between">
           <span className="ev-text-primary font-medium">Overall Progress</span>
-          <span className="font-manrope font-bold text-ev-light-blue">
+          <span className="font-manrope font-bold text-ev-muted-blue">
             {completedCount} of {totalIssues} issues completed
           </span>
         </div>
         <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-ev-light-blue to-ev-teal rounded-full"
+            className="h-full bg-ev-muted-blue rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${(completedCount / totalIssues) * 100}%` }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -154,7 +154,7 @@ export const IssueHub: React.FC = () => {
             <motion.button
               key={issue.id}
               onClick={() => handleSelectIssue(issue.id)}
-              className="w-full text-left bg-white rounded-xl border-2 border-gray-100 hover:border-ev-light-blue shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+              className="w-full text-left bg-white rounded-xl border-2 border-gray-100 hover:border-ev-muted-blue shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * index, duration: 0.4 }}
@@ -166,9 +166,9 @@ export const IssueHub: React.FC = () => {
                   {/* Icon */}
                   <div className={`p-3 rounded-xl ${
                     progressInfo.status === 'completed'
-                      ? 'bg-green-100 text-green-600'
+                      ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
                       : progressInfo.status === 'in-progress'
-                        ? 'bg-ev-light-blue bg-opacity-20 text-ev-light-blue'
+                        ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
                         : 'bg-gray-100 text-gray-500'
                   }`}>
                     {getIssueIcon(issue.id)}
@@ -183,7 +183,7 @@ export const IssueHub: React.FC = () => {
                       {/* Status badge */}
                       <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
                         progressInfo.status === 'completed'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
                           : progressInfo.status === 'in-progress'
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-gray-100 text-gray-600'
@@ -199,7 +199,7 @@ export const IssueHub: React.FC = () => {
                     {progressInfo.status === 'in-progress' && (
                       <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <motion.div
-                          className="h-full bg-ev-light-blue rounded-full"
+                          className="h-full bg-ev-muted-blue rounded-full"
                           initial={{ width: 0 }}
                           animate={{ width: `${progressInfo.percent}%` }}
                           transition={{ duration: 0.3 }}
@@ -230,7 +230,7 @@ export const IssueHub: React.FC = () => {
           transition={{ delay: 0.5 }}
         >
           <p className="text-center text-sm text-gray-500">
-            Completed issues will show your alignment with each candidate on their profile page.
+            Rate quotes on each issue to see your alignment with candidates on their Essentials profile.
           </p>
         </motion.div>
       )}
