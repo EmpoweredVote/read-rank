@@ -1,0 +1,26 @@
+[build]
+  # Directory where your build command runs
+  base = "."
+  
+  # Build command
+  command = "npm run build"
+  
+  # Directory that contains the deploy-ready HTML files and assets
+  publish = "dist"
+
+# Redirect all requests to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Set correct MIME types for JavaScript files
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"

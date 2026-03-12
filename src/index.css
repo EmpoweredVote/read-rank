@@ -1,0 +1,565 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Define custom theme variables */
+@theme {
+  /* Custom Colors */
+  --color-ev-black: #1c1c1c;
+  --color-ev-white: #ffffff;
+  --color-ev-coral: #ff5740;
+  --color-ev-muted-blue: #00657c;
+  --color-ev-light-blue: #59b0c4;
+  --color-ev-yellow: #fed12e;
+
+  /* Custom Font Family */
+  --font-family-manrope: 'Manrope', sans-serif;
+  
+  /* Custom Spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-112: 28rem;
+  --spacing-128: 32rem;
+}
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgb(243 244 246);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #59b0c4;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #00657c;
+}
+
+/* Animation keyframes */
+@keyframes gentle-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 1200ms ease-in-out infinite;
+}
+
+@keyframes rank-badge-appear {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes card-lift {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+/* Smooth drag transitions */
+.ev-quote-card {
+  will-change: transform;
+  transform-origin: center;
+  background-color: #00657c;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  color: white;
+  transition: background-color 0.15s ease-out;
+}
+
+.ev-quote-card-dragging {
+  background-color: rgba(0, 101, 124, 0.65);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Swipe Instructions - Matches treasury-tracker design aesthetic */
+.swipe-instructions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.swipe-instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swipe-label {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.swipe-arrow {
+  color: #6b7280;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.swipe-arrow-left {
+  color: #ef4444;
+}
+
+.swipe-arrow-right {
+  color: #22c55e;
+}
+
+/* Hover animation for visual feedback */
+.swipe-instruction-item:first-child:hover .swipe-arrow-left {
+  transform: translateX(-3px);
+}
+
+.swipe-instruction-item:last-child:hover .swipe-arrow-right {
+  transform: translateX(3px);
+}
+
+@media (max-width: 480px) {
+  .swipe-instructions {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .swipe-label {
+    font-size: 0.8125rem;
+  }
+
+  .swipe-arrow {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Swipe Background - Split zones behind card */
+.swipe-card-container {
+  position: relative;
+  width: 100%;
+  padding-top: 2.5rem;
+}
+
+.swipe-background-wrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+}
+
+.swipe-background-container {
+  position: absolute;
+  top: 2.5rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* Peek indicators that show above the card */
+.swipe-peek {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  z-index: 5;
+}
+
+.swipe-peek-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.swipe-peek-label {
+  white-space: nowrap;
+}
+
+/* Left side (disagree) peek positions */
+.swipe-peek-top-left {
+  top: 0;
+  left: 0.5rem;
+  background: #ef4444;
+  color: white;
+}
+
+/* Right side (agree) peek position */
+.swipe-peek-top-right {
+  top: 0;
+  right: 0.5rem;
+  background: #22c55e;
+  color: white;
+}
+
+.swipe-zone {
+  flex: 1;
+  transition: opacity 0.1s ease-out;
+}
+
+.swipe-zone-disagree {
+  background: linear-gradient(to right, #ef4444, #f87171);
+}
+
+.swipe-zone-agree {
+  background: linear-gradient(to left, #22c55e, #4ade80);
+}
+
+@media (max-width: 480px) {
+  .swipe-peek {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .swipe-peek-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Action Buttons - Desktop agree/disagree buttons */
+.action-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 36rem; /* Match quote card max-width */
+  margin: 0 auto;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1; /* Equal width, fills container */
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 2px solid transparent;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.action-button-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-button-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.action-button-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.action-button-hint {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+  margin-left: 0.25rem;
+}
+
+/* Disagree button styling */
+.action-button-disagree {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.action-button-disagree:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #f87171;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.action-button-disagree:active:not(:disabled) {
+  background-color: #fecaca;
+}
+
+/* Agree button styling */
+.action-button-agree {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.action-button-agree:hover:not(:disabled) {
+  background-color: #dcfce7;
+  border-color: #4ade80;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+.action-button-agree:active:not(:disabled) {
+  background-color: #bbf7d0;
+}
+
+/* Keyboard active state - visual feedback when using keyboard */
+.action-button-disagree.keyboard-active {
+  background-color: #fee2e2;
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+.action-button-agree.keyboard-active {
+  background-color: #dcfce7;
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+}
+
+/* Mobile: Hide action buttons on touch devices */
+@media (pointer: coarse) and (hover: none) {
+  .action-buttons-container {
+    display: none;
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+  .action-buttons-container {
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .action-button {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .action-button-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .action-button-label {
+    font-size: 0.8125rem;
+  }
+
+  .action-button-hint {
+    font-size: 0.5625rem;
+  }
+}
+
+/* ============================================
+   Question Banner - Displayed above content
+   ============================================ */
+
+.question-banner {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.question-banner h2 {
+  margin: 0;
+  color: #0c4a6e;
+}
+
+@media (max-width: 640px) {
+  .question-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* ============================================
+   Split Layout - Desktop Evaluation + Sidebar
+   ============================================ */
+
+.evaluation-split-layout {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.evaluation-main-panel {
+  width: 340px;
+  flex-shrink: 0;
+}
+
+.evaluation-sidebar-panel {
+  flex: 1;
+  min-width: 0; /* Prevent flex item from overflowing */
+}
+
+/* Completion card when all quotes are evaluated */
+.evaluation-complete-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* ============================================
+   Agreed Quotes Sidebar
+   ============================================ */
+
+.agreed-quotes-sidebar {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: white;
+}
+
+.sidebar-badge-status {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.badge-status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: 'Manrope', sans-serif;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.badge-status-item.active {
+  color: #374151;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-quotes-list {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebar-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 150px;
+  padding: 1rem;
+}
+
+.sidebar-progress {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: white;
+  text-align: center;
+}
+
+/* Quote card for sidebar - full text visible */
+.sidebar-quote-card {
+  background-color: #00657c;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.sidebar-quote-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive: Hide sidebar on smaller screens */
+@media (max-width: 900px) {
+  .evaluation-split-layout {
+    flex-direction: column;
+  }
+
+  .evaluation-sidebar-panel {
+    display: none;
+  }
+
+  .evaluation-main-panel {
+    max-width: 100%;
+  }
+}
