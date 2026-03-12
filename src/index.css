@@ -94,16 +94,23 @@ body {
 .ev-quote-card {
   will-change: transform;
   transform-origin: center;
-  background-color: #00657c;
+  background-color: #ffffff;
   border-radius: 10px;
+  border-top: 4px solid #00657c; /* ev-muted-blue top accent */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  color: white;
+  color: #1c1c1c; /* ev-black — text is now dark on white */
   transition: background-color 0.15s ease-out;
 }
 
 .ev-quote-card-dragging {
-  background-color: rgba(0, 101, 124, 0.65);
+  background-color: #f9fafb;
+  border-top-color: #00657c;
+}
+
+.ev-quote-card-stacked {
+  /* No visual override needed — stack offset is applied via inline style in QuoteCard.tsx */
+  /* This class exists for semantic targeting if needed */
 }
 
 /* EV Utility Classes */
@@ -184,11 +191,11 @@ body {
 }
 
 .swipe-arrow-left {
-  color: #ef4444;
+  color: #b45309;
 }
 
 .swipe-arrow-right {
-  color: #22c55e;
+  color: #0e7490;
 }
 
 /* Hover animation for visual feedback */
@@ -269,7 +276,7 @@ body {
 .swipe-peek-top-left {
   top: 0;
   left: 0.5rem;
-  background: #ef4444;
+  background: #b45309;
   color: white;
 }
 
@@ -277,7 +284,7 @@ body {
 .swipe-peek-top-right {
   top: 0;
   right: 0.5rem;
-  background: #22c55e;
+  background: #0e7490;
   color: white;
 }
 
@@ -287,11 +294,11 @@ body {
 }
 
 .swipe-zone-disagree {
-  background: linear-gradient(to right, #ef4444, #f87171);
+  background: linear-gradient(to right, #b45309, #d97706);
 }
 
 .swipe-zone-agree {
-  background: linear-gradient(to left, #22c55e, #4ade80);
+  background: linear-gradient(to left, #0e7490, #0891b2);
 }
 
 @media (max-width: 480px) {
@@ -365,49 +372,49 @@ body {
 
 /* Disagree button styling */
 .action-button-disagree {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
 }
 
 .action-button-disagree:hover:not(:disabled) {
-  background-color: #fee2e2;
-  border-color: #f87171;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+  background-color: #fef3c7;
+  border-color: #fcd34d;
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.2);
 }
 
 .action-button-disagree:active:not(:disabled) {
-  background-color: #fecaca;
+  background-color: #fde68a;
 }
 
 /* Agree button styling */
 .action-button-agree {
-  background-color: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #16a34a;
+  background-color: #ecfeff;
+  border-color: #a5f3fc;
+  color: #0e7490;
 }
 
 .action-button-agree:hover:not(:disabled) {
-  background-color: #dcfce7;
-  border-color: #4ade80;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+  background-color: #cffafe;
+  border-color: #67e8f9;
+  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.2);
 }
 
 .action-button-agree:active:not(:disabled) {
-  background-color: #bbf7d0;
+  background-color: #a5f3fc;
 }
 
 /* Keyboard active state - visual feedback when using keyboard */
 .action-button-disagree.keyboard-active {
-  background-color: #fee2e2;
-  border-color: #f87171;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  background-color: #fef3c7;
+  border-color: #fcd34d;
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.25);
 }
 
 .action-button-agree.keyboard-active {
-  background-color: #dcfce7;
-  border-color: #4ade80;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+  background-color: #cffafe;
+  border-color: #67e8f9;
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.25);
 }
 
 /* Mobile: Hide action buttons on touch devices */
@@ -491,8 +498,8 @@ body {
 
 /* Completion card when all quotes are evaluated */
 .evaluation-complete-card {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 2px solid #86efac;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e8f4f8 100%);
+  border: 2px solid #a5d8e2; /* ev-light-blue tint */
   border-radius: 0.75rem;
   padding: 1rem;
 }
