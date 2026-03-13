@@ -13,4 +13,12 @@ export default defineConfig({
     alias: useLocalEvUi ? { '@chrisandrewsedu/ev-ui': localEvUi } : {},
     dedupe: ['react', 'react-dom', '@react-spring/web'],
   },
+  server: {
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:5050',
+        changeOrigin: true,
+      },
+    },
+  },
 })

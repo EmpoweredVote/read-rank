@@ -14,7 +14,7 @@ function MainApp() {
     ? undefined
     : isLoggedIn
       ? { label: userName || 'Account', items: [{ label: 'Sign out', onClick: logout }] }
-      : { label: 'Account', items: [{ label: 'Sign in', href: 'https://compass.empowered.vote/login' }] };
+      : { label: 'Account', items: [{ label: 'Sign in', href: `${(import.meta.env as Record<string, string>).VITE_COMPASS_URL || 'https://compass.empowered.vote'}/login?returnTo=${encodeURIComponent(window.location.href)}` }] };
 
   return (
     <div className="min-h-screen bg-ev-white">
