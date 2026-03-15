@@ -243,15 +243,16 @@ export const PracticeRound: React.FC = () => {
           </svg>
         </div>
 
+        {/* Feature intro */}
         <h1 style={{
           fontFamily: "'Fraunces', serif",
           fontWeight: 700,
-          fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+          fontSize: 'clamp(1.75rem, 5vw, 2.25rem)',
           color: '#1a1a2e',
-          marginBottom: '0.75rem',
+          marginBottom: '0.5rem',
           letterSpacing: '-0.02em',
         }}>
-          Let&rsquo;s do a practice round
+          Read &amp; Rank
         </h1>
 
         <p style={{
@@ -259,23 +260,43 @@ export const PracticeRound: React.FC = () => {
           fontSize: '1rem',
           color: '#64748b',
           maxWidth: '24rem',
-          marginBottom: '0.5rem',
+          marginBottom: '1.5rem',
           lineHeight: 1.6,
         }}>
-          Swipe right on quotes you agree with, left on ones you don&rsquo;t.
-          Then pick favorites in head-to-head matchups.
+          Read real politician quotes without knowing who said them.
+          Agree or disagree, rank your favorites, and see which politicians
+          actually match your views.
         </p>
 
-        <p style={{
-          fontFamily: "'Manrope', sans-serif",
-          fontSize: '0.875rem',
-          color: '#94a3b8',
-          maxWidth: '22rem',
+        {/* Practice round intro */}
+        <div style={{
+          backgroundColor: '#fef3c7',
+          border: '1px solid #fde68a',
+          borderRadius: '0.75rem',
+          padding: '1rem 1.25rem',
+          maxWidth: '24rem',
           marginBottom: '2rem',
-          lineHeight: 1.5,
         }}>
-          We&rsquo;ll use pizza toppings so you can get the hang of it before diving into real issues.
-        </p>
+          <p style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            color: '#92400e',
+            marginBottom: '0.25rem',
+          }}>
+            But first, a quick practice round
+          </p>
+          <p style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.8125rem',
+            color: '#a16207',
+            lineHeight: 1.5,
+            margin: 0,
+          }}>
+            We&rsquo;ll use pizza opinions so you can get the hang of
+            swiping and ranking before diving into real issues.
+          </p>
+        </div>
 
         <motion.button
           onClick={() => setShowSplash(false)}
