@@ -1,93 +1,91 @@
 import React from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { motion } from 'framer-motion';
 import { useReadRankStore, type RankedQuote } from '../store/useReadRankStore';
 
-interface InlineSortableCardProps {
+const RANK_COLORS = ['#00657c', '#ff5740', '#59b0c4', '#94a3b8', '#64748b'];
+const RANK_LABELS = ['CHAMPION', 'CHALLENGER', '3RD', '4TH', '5TH'];
+
+interface RankSlotCompactProps {
   quote: RankedQuote;
   rank: number;
-  isPending: boolean;
+  wins: number;
 }
 
-const InlineSortableCard: React.FC<InlineSortableCardProps> = ({ quote, rank, isPending }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: quote.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : 0,
-    opacity: isDragging ? 0.85 : 1,
-  };
+const RankSlotCompact: React.FC<RankSlotCompactProps> = ({ quote, rank, wins }) => {
+  const rankIndex = Math.min(rank - 1, RANK_COLORS.length - 1);
+  const color = RANK_COLORS[rankIndex];
+  const label = RANK_LABELS[rankIndex] ?? `#${rank}`;
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <div
-        className={`sidebar-quote-card cursor-grab active:cursor-grabbing ${isPending ? 'pending-card' : ''}`}
-        style={{
-          transition: 'all 0.2s ease',
-          boxShadow: isDragging ? '0 4px 16px rgba(0,0,0,0.1)' : undefined,
-          borderLeft: isPending ? '3px solid #00657c' : undefined,
-          backgroundColor: isPending ? '#ecfeff' : undefined,
-        }}
-      >
-        {/* Header row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
-          <span style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontSize: '0.625rem',
-            fontWeight: 700,
-            color: '#00657c',
-            letterSpacing: '0.06em',
-          }}>
-            #{rank}
-          </span>
-          {isPending && (
-            <span style={{
-              fontFamily: "'Manrope', sans-serif",
-              fontSize: '0.625rem',
-              color: '#0e7490',
-              fontStyle: 'italic',
-            }}>
-              Place me
-            </span>
-          )}
-        </div>
-        {/* Quote text */}
+    <motion.div
+      layout
+      layoutId={`inline-rank-slot-${quote.id}`}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      style={{
+        borderLeft: `3px solid ${color}`,
+        background: `linear-gradient(90deg, ${color}0f 0%, transparent 100%)`,
+        borderRadius: '0 6px 6px 0',
+        padding: '0.5rem 0.625rem',
+        display: 'flex',
+        gap: '0.5rem',
+        alignItems: 'flex-start',
+      }}
+    >
+      {/* Rank number */}
+      <div style={{
+        fontFamily: "'Manrope', sans-serif",
+        fontWeight: 800,
+        fontSize: '0.875rem',
+        color,
+        lineHeight: 1,
+        minWidth: '1.125rem',
+        flexShrink: 0,
+        paddingTop: '1px',
+      }}>
+        {rank}
+      </div>
+
+      {/* Quote text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: "'Manrope', sans-serif",
-          fontStyle: 'normal',
+          fontWeight: 600,
+          fontSize: '0.5rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color,
+          marginBottom: '0.1875rem',
+        }}>
+          {label}
+        </div>
+        <div style={{
+          fontFamily: "'Manrope', sans-serif",
           fontWeight: 400,
-          fontSize: '0.8125rem',
+          fontSize: '0.6875rem',
           lineHeight: 1.5,
           color: '#2d2d44',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>
           {quote.text}
         </div>
       </div>
-    </div>
+
+      {/* Wins badge */}
+      <div style={{
+        fontFamily: "'Manrope', sans-serif",
+        fontWeight: 800,
+        fontSize: '0.8125rem',
+        color,
+        flexShrink: 0,
+        lineHeight: 1,
+        paddingTop: '1px',
+      }}>
+        {wins}W
+      </div>
+    </motion.div>
   );
 };
 
@@ -96,32 +94,11 @@ interface InlineRankPanelProps {
 }
 
 export const InlineRankPanel: React.FC<InlineRankPanelProps> = ({ onDismiss }) => {
-  const { getCurrentIssueProgress, insertAtRank, reorderRankedQuotes } = useReadRankStore();
+  const { getCurrentIssueProgress } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
   const rankedQuotes = progress?.rankedQuotes ?? [];
-  const pendingRankQuoteId = progress?.pendingRankQuoteId ?? null;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = rankedQuotes.findIndex((q) => q.id === active.id);
-    const newIndex = rankedQuotes.findIndex((q) => q.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    if (active.id === pendingRankQuoteId) {
-      insertAtRank(String(active.id), newIndex);
-    } else {
-      reorderRankedQuotes(arrayMove(rankedQuotes, oldIndex, newIndex));
-    }
-  };
+  const matchupWins = progress?.matchupWins ?? {};
 
   return (
     <div className="inline-rank-panel">
@@ -134,23 +111,19 @@ export const InlineRankPanel: React.FC<InlineRankPanelProps> = ({ onDismiss }) =
         marginBottom: '0.75rem',
         marginTop: 0,
       }}>
-        {pendingRankQuoteId ? 'Drag to rank this quote' : 'Your Ranking'}
+        Your Ranking
       </p>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={rankedQuotes.map((q) => q.id)} strategy={verticalListSortingStrategy}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {rankedQuotes.map((quote, index) => (
-              <InlineSortableCard
-                key={quote.id}
-                quote={quote}
-                rank={index + 1}
-                isPending={quote.id === pendingRankQuoteId}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+        {rankedQuotes.map((quote) => (
+          <RankSlotCompact
+            key={quote.id}
+            quote={quote}
+            rank={quote.rank}
+            wins={matchupWins[quote.id] ?? 0}
+          />
+        ))}
+      </div>
 
       {/* Continue button */}
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
