@@ -114,7 +114,7 @@ function buildClipPath(rect: Rect, vpWidth: number, vpHeight: number): Rect {
  *            "right" → caret points left
  *            "left"  → caret points right
  */
-function Caret({ placement }: { placement: Placement }): JSX.Element {
+function Caret({ placement }: { placement: Placement }): React.ReactElement {
   const commonCls = "absolute w-4 h-4 fill-white drop-shadow-sm";
   if (placement === "below") {
     // caret at top-center of tooltip pointing up
