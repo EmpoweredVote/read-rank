@@ -93,7 +93,8 @@ interface InlineRankPanelProps {
   onDismiss: () => void;
 }
 
-export const InlineRankPanel: React.FC<InlineRankPanelProps> = ({ onDismiss }) => {
+export const InlineRankPanel = React.forwardRef<HTMLDivElement, InlineRankPanelProps>(
+  ({ onDismiss }, ref) => {
   const { getCurrentIssueProgress } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
@@ -101,7 +102,7 @@ export const InlineRankPanel: React.FC<InlineRankPanelProps> = ({ onDismiss }) =
   const matchupWins = progress?.matchupWins ?? {};
 
   return (
-    <div className="inline-rank-panel">
+    <div ref={ref} className="inline-rank-panel">
       {/* Title */}
       <p style={{
         fontFamily: "'Manrope', sans-serif",
@@ -137,4 +138,5 @@ export const InlineRankPanel: React.FC<InlineRankPanelProps> = ({ onDismiss }) =
       </div>
     </div>
   );
-};
+});
+InlineRankPanel.displayName = 'InlineRankPanel';

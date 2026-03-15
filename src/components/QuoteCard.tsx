@@ -13,16 +13,8 @@ interface QuoteCardProps {
   onDisagree?: (quote: Quote) => void;
 }
 
-export const QuoteCard: React.FC<QuoteCardProps> = ({
-  quote,
-  isStacked = false,
-  stackIndex = 0,
-  displayNumber,
-  onDragStateChange,
-  externalAnimating = false,
-  onAgree,
-  onDisagree,
-}) => {
+export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
+  ({ quote, isStacked = false, stackIndex = 0, displayNumber, onDragStateChange, externalAnimating = false, onAgree, onDisagree }, ref) => {
   const store = useReadRankStore();
   const handleAgree = onAgree ?? store.agreeWithQuote;
   const handleDisagree = onDisagree ?? store.disagreeWithQuote;
@@ -82,6 +74,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
 
   return (
     <motion.div
+      ref={ref}
       drag={isDraggable && !isCurrentlyAnimating}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.7}
@@ -145,4 +138,5 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
       </div>
     </motion.div>
   );
-};
+});
+QuoteCard.displayName = 'QuoteCard';

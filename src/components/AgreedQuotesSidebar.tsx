@@ -94,7 +94,8 @@ const RankSlot: React.FC<RankSlotProps> = ({ quote, rank, wins, isNew }) => {
   );
 };
 
-export const RankedListSidebar: React.FC = () => {
+export const RankedListSidebar = React.forwardRef<HTMLDivElement>(
+  (_props, ref) => {
   const { getCurrentIssueProgress } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
@@ -118,7 +119,7 @@ export const RankedListSidebar: React.FC = () => {
   }, [rankedQuotes.length]);
 
   return (
-    <div className="agreed-quotes-sidebar">
+    <div ref={ref} className="agreed-quotes-sidebar">
       {/* Header */}
       <div className="sidebar-header">
         <span style={{
@@ -224,7 +225,8 @@ export const RankedListSidebar: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+RankedListSidebar.displayName = 'RankedListSidebar';
 
 // Keep old name as alias for any remaining imports during transition
 export const AgreedQuotesSidebar = RankedListSidebar;
