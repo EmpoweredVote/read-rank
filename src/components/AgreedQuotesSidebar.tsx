@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -22,9 +22,11 @@ import { useReadRankStore, type RankedQuote } from '../store/useReadRankStore';
 
 interface CompactQuoteCardProps {
   quote: RankedQuote;
+  rank: number;
+  isNew: boolean;
 }
 
-const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) => {
+const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote, rank, isNew }) => {
   const {
     attributes,
     listeners,
@@ -42,7 +44,15 @@ const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) =>
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative" {...attributes} {...listeners}>
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      className="relative"
+      {...attributes}
+      {...listeners}
+      animate={isNew ? { boxShadow: ['0 0 0 0 rgba(0,101,124,0)', '0 0 0 6px rgba(0,101,124,0.3)', '0 0 0 0 rgba(0,101,124,0)'] } : {}}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
       <div
         className="sidebar-quote-card relative overflow-visible cursor-grab active:cursor-grabbing"
         style={{
@@ -50,14 +60,20 @@ const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) =>
           boxShadow: isDragging ? '0 4px 16px rgba(0,0,0,0.1)' : undefined,
         }}
       >
-        {/* Label */}
+        {/* Rank number */}
         <div className="flex items-center justify-between mb-2">
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.5625rem', color: '#94a3b8' }}
+            style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.625rem',
+              fontWeight: 700,
+              color: '#00657c',
+              letterSpacing: '0.06em',
+            }}
           >
-            Agreed
+            #{rank}
           </motion.span>
         </div>
 
@@ -66,20 +82,29 @@ const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) =>
           {quote.text}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-export const AgreedQuotesSidebar: React.FC = () => {
+export const RankedListSidebar: React.FC = () => {
   const {
     reorderRankedQuotes,
     getCurrentIssueProgress,
   } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
-  const agreedQuotes = progress?.rankedQuotes ?? [];
-  const quotesToEvaluate = progress?.quotesToEvaluate ?? [];
-  const currentQuoteIndex = progress?.currentQuoteIndex ?? 0;
+  const rankedQuotes = progress?.rankedQuotes ?? [];
+  const pendingRankQuoteId = progress?.pendingRankQuoteId ?? null;
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(rankedQuotes.length);
+
+  useEffect(() => {
+    if (rankedQuotes.length > prevCountRef.current) {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    }
+    prevCountRef.current = rankedQuotes.length;
+  }, [rankedQuotes.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -90,43 +115,39 @@ export const AgreedQuotesSidebar: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = agreedQuotes.findIndex((q: RankedQuote) => q.id === active.id);
-      const newIndex = agreedQuotes.findIndex((q: RankedQuote) => q.id === over.id);
-      reorderRankedQuotes(arrayMove(agreedQuotes, oldIndex, newIndex));
+      const oldIndex = rankedQuotes.findIndex((q: RankedQuote) => q.id === active.id);
+      const newIndex = rankedQuotes.findIndex((q: RankedQuote) => q.id === over.id);
+      reorderRankedQuotes(arrayMove(rankedQuotes, oldIndex, newIndex));
     }
   };
-
-  const remainingQuotes = quotesToEvaluate.length - currentQuoteIndex;
-  const isComplete = currentQuoteIndex >= quotesToEvaluate.length;
 
   return (
     <div className="agreed-quotes-sidebar">
       <div className="sidebar-header">
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.8125rem', color: '#2d2d44', margin: 0 }}>
-          Agreed Quotes
+          Your Ranking ({rankedQuotes.length})
         </h3>
-        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: '#94a3b8' }}>
-          {agreedQuotes.length}
-        </span>
       </div>
 
-      <div className="sidebar-quotes-list">
-        {agreedQuotes.length === 0 ? (
+      <div ref={listRef} className="sidebar-quotes-list" style={{ overflowY: 'auto', maxHeight: '60vh' }}>
+        {rankedQuotes.length === 0 ? (
           <AnimatePresence>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="sidebar-empty-state">
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center' }}>
-                Quotes you agree with will appear here
+                Quotes you agree with will be ranked here
               </p>
             </motion.div>
           </AnimatePresence>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={agreedQuotes.map((q) => q.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={rankedQuotes.map((q) => q.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
-                {agreedQuotes.map((quote) => (
+                {rankedQuotes.map((quote, index) => (
                   <SortableCompactQuoteCard
                     key={quote.id}
                     quote={quote}
+                    rank={index + 1}
+                    isNew={quote.id === pendingRankQuoteId}
                   />
                 ))}
               </div>
@@ -134,14 +155,9 @@ export const AgreedQuotesSidebar: React.FC = () => {
           </DndContext>
         )}
       </div>
-
-      {!isComplete && (
-        <div className="sidebar-progress">
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.625rem', color: '#94a3b8' }}>
-            {remainingQuotes} quote{remainingQuotes !== 1 ? 's' : ''} remaining
-          </span>
-        </div>
-      )}
     </div>
   );
 };
+
+// Keep old name as alias for any remaining imports during transition
+export const AgreedQuotesSidebar = RankedListSidebar;
