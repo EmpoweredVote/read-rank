@@ -1,29 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,300;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* Define custom theme variables */
+/* ============================================
+   CIVIC EDITORIAL — Design Tokens
+   ============================================ */
+
 @theme {
-  /* Custom Colors */
-  --color-ev-black: #1c1c1c;
-  --color-ev-white: #ffffff;
+  /* Surface Colors */
+  --color-cream: #faf7f2;
+  --color-warm-white: #fffefb;
+  --color-parchment: #f5f0e8;
+  --color-card: #ffffff;
+
+  /* Brand — EV Palette */
   --color-ev-coral: #ff5740;
+  --color-ev-coral-dark: #e64a34;
   --color-ev-muted-blue: #00657c;
   --color-ev-light-blue: #59b0c4;
   --color-ev-yellow: #fed12e;
   --color-ev-teal: #00657c;
-  --color-ev-dark-blue: #00657c;
+  --color-ev-dark-blue: #004d5c;
 
-  /* Custom Font Family */
+  /* Semantic */
+  --color-ink: #1a1a2e;
+  --color-ink-light: #2d2d44;
+  --color-warm-slate: #64748b;
+  --color-warm-gray: #94a3b8;
+  --color-border-subtle: #e8e2d9;
+  --color-border-medium: #d4cdc3;
+
+  /* Agree / Disagree */
+  --color-agree: #0e7490;
+  --color-agree-bg: #ecfeff;
+  --color-agree-border: #a5f3fc;
+  --color-disagree: #78716c;
+  --color-disagree-bg: #f5f5f4;
+  --color-disagree-border: #d6d3d1;
+
+  /* Typography */
   --font-family-manrope: 'Manrope', sans-serif;
-  
-  /* Custom Spacing */
+  --font-family-fraunces: 'Fraunces', serif;
+
+  /* Spacing */
   --spacing-18: 4.5rem;
   --spacing-88: 22rem;
   --spacing-112: 28rem;
   --spacing-128: 32rem;
 }
 
-/* Global styles */
+/* ============================================
+   Global Base
+   ============================================ */
+
 * {
   box-sizing: border-box;
 }
@@ -33,19 +62,36 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  background-color: #faf7f2;
+  color: #1a1a2e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar for webkit browsers */
+/* Subtle paper grain texture via pseudo-element */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: rgb(243 244 246);
+  background-color: #faf7f2;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #59b0c4;
+  background-color: #d4cdc3;
   border-radius: 9999px;
 }
 
@@ -53,100 +99,157 @@ body {
   background-color: #00657c;
 }
 
-/* Animation keyframes */
-@keyframes gentle-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.03);
-  }
-}
+/* ============================================
+   Typography Classes
+   ============================================ */
 
-.animate-gentle-pulse {
-  animation: gentle-pulse 1200ms ease-in-out infinite;
-}
-
-@keyframes rank-badge-appear {
-  0% {
-    transform: scale(0) rotate(-180deg);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.15) rotate(10deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-@keyframes card-lift {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  100% {
-    transform: translateY(-4px) rotate(2deg);
-  }
-}
-
-/* Smooth drag transitions */
-.ev-quote-card {
-  will-change: transform;
-  transform-origin: center;
-  background-color: #ffffff;
-  border-radius: 10px;
-  border-top: 4px solid #00657c; /* ev-muted-blue top accent */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  color: #1c1c1c; /* ev-black — text is now dark on white */
-  transition: background-color 0.15s ease-out;
-}
-
-.ev-quote-card-dragging {
-  background-color: #f9fafb;
-  border-top-color: #00657c;
-}
-
-.ev-quote-card-stacked {
-  /* No visual override needed — stack offset is applied via inline style in QuoteCard.tsx */
-  /* This class exists for semantic targeting if needed */
-}
-
-/* EV Utility Classes */
 .ev-heading {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Fraunces', serif;
   font-weight: 700;
-  color: #1c1c1c;
+  color: #1a1a2e;
+  font-optical-sizing: auto;
+}
+
+.ev-subheading {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  color: #2d2d44;
+  letter-spacing: -0.01em;
 }
 
 .ev-text-primary {
   font-family: 'Manrope', sans-serif;
-  color: #374151; /* gray-700 */
+  color: #2d2d44;
 }
 
 .ev-text-secondary {
   font-family: 'Manrope', sans-serif;
-  color: #6b7280; /* gray-500 */
+  color: #64748b;
 }
 
+/* Editorial pull-quote style */
+.ev-quote-text {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-optical-sizing: auto;
+  line-height: 1.6;
+  color: #1a1a2e;
+}
+
+/* ============================================
+   Button Styles
+   ============================================ */
+
 .ev-button-primary {
-  background-color: #ff5740; /* ev-coral */
+  background-color: #ff5740;
   color: white;
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
-  border-radius: 0.75rem;
-  padding: 0.625rem 1.5rem;
-  transition: background-color 0.2s ease;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
+  letter-spacing: 0.01em;
 }
 
 .ev-button-primary:hover {
   background-color: #e64a34;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 87, 64, 0.3);
 }
 
-/* Reduced motion support */
+.ev-button-secondary {
+  background-color: transparent;
+  color: #00657c;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  transition: all 0.2s ease;
+  border: 1.5px solid #00657c;
+  cursor: pointer;
+}
+
+.ev-button-secondary:hover {
+  background-color: #00657c;
+  color: white;
+}
+
+/* ============================================
+   Quote Card — The Hero Element
+   ============================================ */
+
+.ev-quote-card {
+  will-change: transform;
+  transform-origin: center;
+  background-color: #fffefb;
+  border-radius: 0.75rem;
+  border: 1px solid #e8e2d9;
+  border-left: 3px solid #00657c;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 6px 16px rgba(0, 0, 0, 0.04);
+  padding: 2rem 2rem 1.75rem;
+  color: #1a1a2e;
+  position: relative;
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.ev-quote-card::before {
+  content: '\201C';
+  font-family: 'Fraunces', serif;
+  font-size: 5rem;
+  line-height: 1;
+  color: #00657c;
+  opacity: 0.08;
+  position: absolute;
+  top: 0.25rem;
+  left: 0.75rem;
+  pointer-events: none;
+}
+
+.ev-quote-card-dragging {
+  border-color: #d4cdc3;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================
+   Animation Keyframes
+   ============================================ */
+
+@keyframes gentle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rank-badge-appear {
+  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+  60% { transform: scale(1.1) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -157,73 +260,10 @@ body {
   }
 }
 
-/* Swipe Instructions - Matches treasury-tracker design aesthetic */
-.swipe-instructions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 28rem;
-  margin: 0 auto;
-  padding: 1rem 1.5rem;
-  background-color: #ffffff;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
+/* ============================================
+   Swipe System
+   ============================================ */
 
-.swipe-instruction-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.swipe-label {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  line-height: 1.4;
-}
-
-.swipe-arrow {
-  color: #6b7280;
-  flex-shrink: 0;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.swipe-arrow-left {
-  color: #b45309;
-}
-
-.swipe-arrow-right {
-  color: #0e7490;
-}
-
-/* Hover animation for visual feedback */
-.swipe-instruction-item:first-child:hover .swipe-arrow-left {
-  transform: translateX(-3px);
-}
-
-.swipe-instruction-item:last-child:hover .swipe-arrow-right {
-  transform: translateX(3px);
-}
-
-@media (max-width: 480px) {
-  .swipe-instructions {
-    padding: 0.875rem 1rem;
-    gap: 0.75rem;
-  }
-
-  .swipe-label {
-    font-size: 0.8125rem;
-  }
-
-  .swipe-arrow {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-/* Swipe Background - Split zones behind card */
 .swipe-card-container {
   position: relative;
   width: 100%;
@@ -244,43 +284,42 @@ body {
   left: 0;
   right: 0;
   display: flex;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
-/* Peek indicators that show above the card */
+/* Peek indicators */
 .swipe-peek {
   position: absolute;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
-  font-size: 0.875rem;
-  letter-spacing: 0.05em;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   z-index: 5;
 }
 
 .swipe-peek-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .swipe-peek-label {
   white-space: nowrap;
 }
 
-/* Left side (disagree) peek positions */
 .swipe-peek-top-left {
   top: 0;
   left: 0.5rem;
-  background: #b45309;
+  background: #78716c;
   color: white;
 }
 
-/* Right side (agree) peek position */
 .swipe-peek-top-right {
   top: 0;
   right: 0.5rem;
@@ -294,31 +333,66 @@ body {
 }
 
 .swipe-zone-disagree {
-  background: linear-gradient(to right, #b45309, #d97706);
+  background: linear-gradient(to right, #78716c, #a8a29e);
 }
 
 .swipe-zone-agree {
-  background: linear-gradient(to left, #0e7490, #0891b2);
+  background: linear-gradient(to left, #0e7490, #22d3ee);
 }
 
-@media (max-width: 480px) {
-  .swipe-peek {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .swipe-peek-icon {
-    width: 16px;
-    height: 16px;
-  }
+/* Swipe Instructions */
+.swipe-instructions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0.875rem 1.25rem;
+  background-color: #fffefb;
+  border: 1px solid #e8e2d9;
+  border-radius: 0.5rem;
 }
 
-/* Action Buttons - Desktop agree/disagree buttons */
+.swipe-instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swipe-label {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.swipe-arrow {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.swipe-arrow-left { color: #78716c; }
+.swipe-arrow-right { color: #0e7490; }
+
+.swipe-instruction-item:first-child:hover .swipe-arrow-left {
+  transform: translateX(-3px);
+}
+
+.swipe-instruction-item:last-child:hover .swipe-arrow-right {
+  transform: translateX(3px);
+}
+
+/* ============================================
+   Action Buttons — Desktop Agree/Disagree
+   ============================================ */
+
 .action-buttons-container {
   display: flex;
   justify-content: center;
   gap: 0.75rem;
-  max-width: 36rem; /* Match quote card max-width */
+  max-width: 36rem;
   margin: 0 auto;
   padding: 0.5rem 0;
   width: 100%;
@@ -328,13 +402,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1; /* Equal width, fills container */
-  padding: 0.5rem 1rem;
+  flex: 1;
+  padding: 0.625rem 1rem;
   border-radius: 0.5rem;
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
   font-family: 'Manrope', sans-serif;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -353,8 +427,8 @@ body {
 }
 
 .action-button-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .action-button-label {
@@ -365,29 +439,29 @@ body {
 .action-button-hint {
   font-size: 0.6875rem;
   font-weight: 500;
-  opacity: 0.7;
+  opacity: 0.6;
   letter-spacing: 0.02em;
   margin-left: 0.25rem;
 }
 
-/* Disagree button styling */
+/* Disagree */
 .action-button-disagree {
-  background-color: #fffbeb;
-  border-color: #fde68a;
-  color: #b45309;
+  background-color: #fafaf9;
+  border-color: #d6d3d1;
+  color: #57534e;
 }
 
 .action-button-disagree:hover:not(:disabled) {
-  background-color: #fef3c7;
-  border-color: #fcd34d;
-  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.2);
+  background-color: #f5f5f4;
+  border-color: #a8a29e;
+  box-shadow: 0 2px 8px rgba(120, 113, 108, 0.15);
 }
 
 .action-button-disagree:active:not(:disabled) {
-  background-color: #fde68a;
+  background-color: #e7e5e4;
 }
 
-/* Agree button styling */
+/* Agree */
 .action-button-agree {
   background-color: #ecfeff;
   border-color: #a5f3fc;
@@ -397,66 +471,39 @@ body {
 .action-button-agree:hover:not(:disabled) {
   background-color: #cffafe;
   border-color: #67e8f9;
-  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.2);
+  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.15);
 }
 
 .action-button-agree:active:not(:disabled) {
   background-color: #a5f3fc;
 }
 
-/* Keyboard active state - visual feedback when using keyboard */
+/* Keyboard active states */
 .action-button-disagree.keyboard-active {
-  background-color: #fef3c7;
-  border-color: #fcd34d;
-  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.25);
+  background-color: #f5f5f4;
+  border-color: #a8a29e;
+  box-shadow: 0 0 0 3px rgba(120, 113, 108, 0.2);
 }
 
 .action-button-agree.keyboard-active {
   background-color: #cffafe;
   border-color: #67e8f9;
-  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.25);
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.2);
 }
 
 /* Mobile: Hide action buttons on touch devices */
 @media (pointer: coarse) and (hover: none) {
-  .action-buttons-container {
-    display: none;
-  }
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 480px) {
-  .action-buttons-container {
-    gap: 0.5rem;
-    padding: 0.25rem 0;
-  }
-
-  .action-button {
-    padding: 0.4rem 0.75rem;
-  }
-
-  .action-button-icon {
-    width: 18px;
-    height: 18px;
-  }
-
-  .action-button-label {
-    font-size: 0.8125rem;
-  }
-
-  .action-button-hint {
-    font-size: 0.5625rem;
-  }
+  .action-buttons-container { display: none; }
 }
 
 /* ============================================
-   Question Banner - Displayed above content
+   Question Banner
    ============================================ */
 
 .question-banner {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #bae6fd;
-  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f0f7f9 0%, #e8f0f2 100%);
+  border: 1px solid #d4e4e8;
+  border-radius: 0.5rem;
   padding: 1rem 1.5rem;
   max-width: 1200px;
   margin-left: auto;
@@ -465,18 +512,11 @@ body {
 
 .question-banner h2 {
   margin: 0;
-  color: #0c4a6e;
-}
-
-@media (max-width: 640px) {
-  .question-banner {
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-  }
+  color: #004d5c;
 }
 
 /* ============================================
-   Split Layout - Desktop Evaluation + Sidebar
+   Split Layout — Desktop Evaluation + Sidebar
    ============================================ */
 
 .evaluation-split-layout {
@@ -487,19 +527,18 @@ body {
 }
 
 .evaluation-main-panel {
-  width: 340px;
+  width: 380px;
   flex-shrink: 0;
 }
 
 .evaluation-sidebar-panel {
   flex: 1;
-  min-width: 0; /* Prevent flex item from overflowing */
+  min-width: 0;
 }
 
-/* Completion card when all quotes are evaluated */
 .evaluation-complete-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e8f4f8 100%);
-  border: 2px solid #a5d8e2; /* ev-light-blue tint */
+  background: linear-gradient(135deg, #f0f7f9 0%, #e8f0f2 100%);
+  border: 1.5px solid #d4e4e8;
   border-radius: 0.75rem;
   padding: 1rem;
 }
@@ -509,8 +548,8 @@ body {
    ============================================ */
 
 .agreed-quotes-sidebar {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: #fffefb;
+  border: 1px solid #e8e2d9;
   border-radius: 0.75rem;
   display: flex;
   flex-direction: column;
@@ -521,16 +560,16 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: white;
+  border-bottom: 1px solid #e8e2d9;
+  background-color: #fffefb;
 }
 
 .sidebar-badge-status {
   display: flex;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background-color: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: #faf7f2;
+  border-bottom: 1px solid #e8e2d9;
 }
 
 .badge-status-item {
@@ -538,12 +577,12 @@ body {
   align-items: center;
   gap: 0.375rem;
   font-family: 'Manrope', sans-serif;
-  color: #6b7280;
+  color: #94a3b8;
   transition: color 0.2s ease;
 }
 
 .badge-status-item.active {
-  color: #374151;
+  color: #2d2d44;
   font-weight: 600;
 }
 
@@ -572,37 +611,129 @@ body {
 
 .sidebar-progress {
   padding: 0.5rem 1rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: white;
+  border-top: 1px solid #e8e2d9;
+  background-color: #fffefb;
   text-align: center;
 }
 
-/* Quote card for sidebar - full text visible */
 .sidebar-quote-card {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: #faf7f2;
+  border: 1px solid #e8e2d9;
   border-radius: 0.5rem;
   padding: 1rem;
-  color: #1c1c1c;
+  color: #1a1a2e;
   transition: all 0.2s ease;
 }
 
 .sidebar-quote-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Responsive: Hide sidebar on smaller screens */
+/* ============================================
+   Responsive
+   ============================================ */
+
 @media (max-width: 900px) {
-  .evaluation-split-layout {
-    flex-direction: column;
+  .evaluation-split-layout { flex-direction: column; }
+  .evaluation-sidebar-panel { display: none; }
+  .evaluation-main-panel { max-width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .question-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .swipe-instructions {
+    padding: 0.75rem 0.875rem;
+    gap: 0.75rem;
   }
 
-  .evaluation-sidebar-panel {
-    display: none;
+  .swipe-label { font-size: 0.75rem; }
+  .swipe-arrow { width: 16px; height: 16px; }
+
+  .swipe-peek {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.6875rem;
   }
 
-  .evaluation-main-panel {
-    max-width: 100%;
+  .swipe-peek-icon { width: 14px; height: 14px; }
+
+  .action-buttons-container {
+    gap: 0.5rem;
+    padding: 0.25rem 0;
   }
+
+  .action-button { padding: 0.5rem 0.75rem; }
+  .action-button-icon { width: 16px; height: 16px; }
+  .action-button-label { font-size: 0.8125rem; }
+}
+
+/* ============================================
+   Inline Rank Panel
+   ============================================ */
+
+.inline-rank-panel {
+  background-color: #fffefb;
+  border: 1px solid #e8e2d9;
+  border-radius: 0.625rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.inline-rank-panel .pending-card {
+  border-left: 3px solid #00657c;
+  background-color: #ecfeff;
+}
+
+/* ============================================
+   Counter Pill
+   ============================================ */
+
+.rank-counter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  background-color: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 9999px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0e7490;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.rank-counter-pill:hover {
+  background-color: #cffafe;
+}
+
+/* ============================================
+   Quick Confirmation
+   ============================================ */
+
+.quick-confirmation {
+  background-color: #fffefb;
+  border: 1px solid #e8e2d9;
+  border-radius: 0.625rem;
+  padding: 1.5rem;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.quick-confirmation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0ebe3;
+}
+
+.quick-confirmation-item:last-child {
+  border-bottom: none;
 }
