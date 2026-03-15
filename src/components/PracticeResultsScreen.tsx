@@ -91,13 +91,28 @@ export const PracticeResultsScreen: React.FC = () => {
               {character && (
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e8e2d9', backgroundColor: '#faf7f2' }}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
-                        {character.name}
-                      </h3>
-                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
-                        {character.title}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        backgroundColor: character.avatar?.bg ?? '#e2ebef',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                        flexShrink: 0,
+                      }}>
+                        {character.avatar?.emoji ?? '🍕'}
+                      </div>
+                      <div>
+                        <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
+                          {character.name}
+                        </h3>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
+                          {character.title}
+                        </span>
+                      </div>
                     </div>
                     <span style={{
                       fontFamily: "'Manrope', sans-serif",
@@ -154,13 +169,30 @@ export const PracticeResultsScreen: React.FC = () => {
               {character && (
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e8e2d9', backgroundColor: '#faf7f2' }}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
-                        {character.name}
-                      </h3>
-                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
-                        {character.title}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        backgroundColor: character.avatar?.bg ?? '#e2ebef',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                        flexShrink: 0,
+                        filter: 'grayscale(0.5)',
+                        opacity: 0.7,
+                      }}>
+                        {character.avatar?.emoji ?? '🍕'}
+                      </div>
+                      <div>
+                        <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
+                          {character.name}
+                        </h3>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
+                          {character.title}
+                        </span>
+                      </div>
                     </div>
                     <span style={{
                       fontFamily: "'Manrope', sans-serif",

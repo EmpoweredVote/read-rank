@@ -7,11 +7,11 @@ export const PRACTICE_ISSUE = {
 };
 
 export const PRACTICE_CHARACTERS = [
-  { id: 'chef-mario', name: 'Chef Mario', title: 'Head Chef, Napoli Kitchen' },
-  { id: 'pizza-pete', name: 'Pizza Pete', title: 'Professional Pizza Critic' },
-  { id: 'tina-toppings', name: 'Tina Toppings', title: 'Pizza Purist' },
-  { id: 'derek-deep', name: 'Derek Deep-Dish', title: 'Deep Dish Defender' },
-  { id: 'sam-slice', name: 'Sam Slice', title: 'Artisan Slice Enthusiast' },
+  { id: 'chef-mario', name: 'Chef Mario', title: 'Head Chef, Napoli Kitchen', avatar: { emoji: '👨‍🍳', bg: '#fef3c7' } },
+  { id: 'pizza-pete', name: 'Pizza Pete', title: 'Professional Pizza Critic', avatar: { emoji: '🧐', bg: '#dbeafe' } },
+  { id: 'tina-toppings', name: 'Tina Toppings', title: 'Pizza Purist', avatar: { emoji: '🤌', bg: '#fce7f3' } },
+  { id: 'derek-deep', name: 'Derek Deep-Dish', title: 'Deep Dish Defender', avatar: { emoji: '💪', bg: '#dcfce7' } },
+  { id: 'sam-slice', name: 'Sam Slice', title: 'Artisan Slice Enthusiast', avatar: { emoji: '🎨', bg: '#f3e8ff' } },
 ];
 
 export const PRACTICE_QUOTES: Quote[] = [
