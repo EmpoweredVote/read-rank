@@ -15,13 +15,6 @@ export interface RankedQuote extends Quote {
   timestamp: number;
 }
 
-export type BadgeType = 'diamond' | 'gold' | null;
-
-export interface BadgeAssignment {
-  diamond: string | null; // quoteId that has the diamond
-  gold: string | null;    // quoteId that has the gold
-}
-
 export interface Candidate {
   id: string;
   name: string;
@@ -55,18 +48,17 @@ export interface IssueData {
   question: string;
 }
 
-export type Phase = 'hub' | 'evaluation' | 'ranking' | 'results';
+export type Phase = 'hub' | 'evaluation' | 'results';
 
 // Progress state for a single issue
 export interface IssueProgress {
   issueId: string;
-  phase: 'evaluation' | 'ranking' | 'results';
+  phase: 'evaluation' | 'results';
   quotesToEvaluate: Quote[];
   currentQuoteIndex: number;
   agreedQuotes: Quote[];
   disagreedQuotes: Quote[];
   rankedQuotes: RankedQuote[];
-  badgeAssignments: BadgeAssignment;
   candidateMatches: MatchingResult[];
   completed: boolean;
 }
@@ -88,8 +80,6 @@ interface ReadRankState {
   rankQuote: (quoteId: string, newRank: number) => void;
   setRankedQuotes: (quotes: Quote[]) => void;
   reorderAgreedQuotes: (quotes: Quote[]) => void;
-  assignBadge: (quoteId: string, badge: BadgeType) => void;
-  clearBadge: (badge: 'diamond' | 'gold') => void;
   setCandidateMatches: (matches: MatchingResult[]) => void;
   goToHub: () => void;
   reset: () => void;
@@ -99,20 +89,6 @@ interface ReadRankState {
   getCurrentIssueProgress: () => IssueProgress | null;
   getIssueProgress: (issueId: string) => IssueProgress | null;
   getAllIssueProgress: () => Record<string, IssueProgress>;
-
-  // Legacy compatibility (deprecated)
-  issueTitle: string;
-  questionText: string;
-  topicId: string;
-  quotesToEvaluate: Quote[];
-  currentQuoteIndex: number;
-  agreedQuotes: Quote[];
-  disagreedQuotes: Quote[];
-  rankedQuotes: RankedQuote[];
-  badgeAssignments: BadgeAssignment;
-  candidateMatches: MatchingResult[];
-  setQuotes: (quotes: Quote[]) => void;
-  setIssueInfo: (title: string, question: string, topicId: string) => void;
 }
 
 const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
@@ -123,7 +99,6 @@ const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
   agreedQuotes: [],
   disagreedQuotes: [],
   rankedQuotes: [],
-  badgeAssignments: { diamond: null, gold: null },
   candidateMatches: [],
   completed: false,
 });
@@ -132,18 +107,6 @@ const initialState = {
   phase: 'hub' as Phase,
   currentIssueId: null as string | null,
   issueProgress: {} as Record<string, IssueProgress>,
-
-  // Legacy flat state (derived from current issue)
-  issueTitle: '',
-  questionText: '',
-  topicId: '',
-  quotesToEvaluate: [] as Quote[],
-  currentQuoteIndex: 0,
-  agreedQuotes: [] as Quote[],
-  disagreedQuotes: [] as Quote[],
-  rankedQuotes: [] as RankedQuote[],
-  badgeAssignments: { diamond: null, gold: null } as BadgeAssignment,
-  candidateMatches: [] as MatchingResult[],
 };
 
 export const useReadRankStore = create<ReadRankState>()(
@@ -164,7 +127,7 @@ export const useReadRankStore = create<ReadRankState>()(
                 ...state.issueProgress,
                 [issueId]: {
                   ...state.issueProgress[issueId],
-                  phase: phase as 'evaluation' | 'ranking' | 'results',
+                  phase: phase as 'evaluation' | 'results',
                   completed: phase === 'results' ? true : state.issueProgress[issueId].completed,
                 },
               },
@@ -177,7 +140,7 @@ export const useReadRankStore = create<ReadRankState>()(
         }
       },
 
-      selectIssue: (issueId, quotes, issueData) => {
+      selectIssue: (issueId, quotes, _issueData) => {
         const state = get();
 
         // Check if we have existing progress for this issue
@@ -196,17 +159,6 @@ export const useReadRankStore = create<ReadRankState>()(
             ...state.issueProgress,
             [issueId]: progress,
           },
-          // Update legacy flat state
-          issueTitle: issueData.title,
-          questionText: issueData.question,
-          topicId: issueId,
-          quotesToEvaluate: progress.quotesToEvaluate,
-          currentQuoteIndex: progress.currentQuoteIndex,
-          agreedQuotes: progress.agreedQuotes,
-          disagreedQuotes: progress.disagreedQuotes,
-          rankedQuotes: progress.rankedQuotes,
-          badgeAssignments: progress.badgeAssignments,
-          candidateMatches: progress.candidateMatches,
         });
       },
 
@@ -218,32 +170,18 @@ export const useReadRankStore = create<ReadRankState>()(
         const progress = state.issueProgress[issueId];
         const nextIndex = progress.currentQuoteIndex + 1;
 
-        if (nextIndex >= progress.quotesToEvaluate.length) {
-          // Move to ranking phase
-          set({
-            phase: 'ranking',
-            currentQuoteIndex: nextIndex,
-            issueProgress: {
-              ...state.issueProgress,
-              [issueId]: {
-                ...progress,
-                currentQuoteIndex: nextIndex,
-                phase: 'ranking',
-              },
+        // Cap the index — EvaluationPhase.handleComplete handles explicit phase transitions
+        const cappedIndex = Math.min(nextIndex, progress.quotesToEvaluate.length);
+
+        set({
+          issueProgress: {
+            ...state.issueProgress,
+            [issueId]: {
+              ...progress,
+              currentQuoteIndex: cappedIndex,
             },
-          });
-        } else {
-          set({
-            currentQuoteIndex: nextIndex,
-            issueProgress: {
-              ...state.issueProgress,
-              [issueId]: {
-                ...progress,
-                currentQuoteIndex: nextIndex,
-              },
-            },
-          });
-        }
+          },
+        });
       },
 
       agreeWithQuote: (quote) => {
@@ -255,7 +193,6 @@ export const useReadRankStore = create<ReadRankState>()(
         const updatedAgreedQuotes = [...progress.agreedQuotes, quote];
 
         set({
-          agreedQuotes: updatedAgreedQuotes,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
@@ -276,7 +213,6 @@ export const useReadRankStore = create<ReadRankState>()(
         const updatedDisagreedQuotes = [...progress.disagreedQuotes, quote];
 
         set({
-          disagreedQuotes: updatedDisagreedQuotes,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
@@ -309,7 +245,6 @@ export const useReadRankStore = create<ReadRankState>()(
           .map((quote, index) => ({ ...quote, rank: index + 1 }));
 
         set({
-          rankedQuotes: newRankedQuotes,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
@@ -333,7 +268,6 @@ export const useReadRankStore = create<ReadRankState>()(
         }));
 
         set({
-          rankedQuotes,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
@@ -352,68 +286,11 @@ export const useReadRankStore = create<ReadRankState>()(
         const progress = state.issueProgress[issueId];
 
         set({
-          agreedQuotes: quotes,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
               ...progress,
               agreedQuotes: quotes,
-            },
-          },
-        });
-      },
-
-      assignBadge: (quoteId: string, badge: BadgeType) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const newAssignments = { ...progress.badgeAssignments };
-
-        if (badge === 'diamond' && newAssignments.diamond === quoteId) {
-          newAssignments.diamond = null;
-        } else if (badge === 'gold' && newAssignments.gold === quoteId) {
-          newAssignments.gold = null;
-        } else if (badge) {
-          if (badge === 'diamond' && newAssignments.gold === quoteId) {
-            newAssignments.gold = null;
-          } else if (badge === 'gold' && newAssignments.diamond === quoteId) {
-            newAssignments.diamond = null;
-          }
-          newAssignments[badge] = quoteId;
-        }
-
-        set({
-          badgeAssignments: newAssignments,
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              badgeAssignments: newAssignments,
-            },
-          },
-        });
-      },
-
-      clearBadge: (badge: 'diamond' | 'gold') => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const newAssignments = {
-          ...progress.badgeAssignments,
-          [badge]: null,
-        };
-
-        set({
-          badgeAssignments: newAssignments,
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              badgeAssignments: newAssignments,
             },
           },
         });
@@ -427,7 +304,6 @@ export const useReadRankStore = create<ReadRankState>()(
         const progress = state.issueProgress[issueId];
 
         set({
-          candidateMatches: matches,
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
@@ -469,63 +345,18 @@ export const useReadRankStore = create<ReadRankState>()(
       getAllIssueProgress: () => {
         return get().issueProgress;
       },
-
-      // Legacy compatibility methods
-      setQuotes: (quotes) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (issueId && state.issueProgress[issueId]) {
-          set({
-            quotesToEvaluate: quotes,
-            currentQuoteIndex: 0,
-            agreedQuotes: [],
-            disagreedQuotes: [],
-            issueProgress: {
-              ...state.issueProgress,
-              [issueId]: {
-                ...state.issueProgress[issueId],
-                quotesToEvaluate: quotes,
-                currentQuoteIndex: 0,
-                agreedQuotes: [],
-                disagreedQuotes: [],
-              },
-            },
-          });
-        } else {
-          set({
-            quotesToEvaluate: quotes,
-            currentQuoteIndex: 0,
-            agreedQuotes: [],
-            disagreedQuotes: [],
-          });
-        }
-      },
-
-      setIssueInfo: (title, question, topicId) => set({
-        issueTitle: title,
-        questionText: question,
-        topicId,
-      }),
     }),
     {
       name: 'ev_readrank',
-      version: 1,
-      migrate: (persistedState, _version) => {
-        // State shape is unchanged from readrank-storage; pass through
-        return persistedState as ReadRankState
+      version: 2,
+      migrate: (_persistedState, _version) => {
+        // v2 migration: wipe all old state (v1 had 'ranking' phase + badge system)
+        return { phase: 'hub' as Phase, currentIssueId: null as string | null, issueProgress: {} as Record<string, IssueProgress> };
       },
       partialize: (state) => ({
         phase: state.phase,
         currentIssueId: state.currentIssueId,
         issueProgress: state.issueProgress,
-        // Legacy fields for backwards compatibility
-        agreedQuotes: state.agreedQuotes,
-        disagreedQuotes: state.disagreedQuotes,
-        rankedQuotes: state.rankedQuotes,
-        badgeAssignments: state.badgeAssignments,
-        issueTitle: state.issueTitle,
-        questionText: state.questionText,
-        topicId: state.topicId,
       }),
     }
   )
