@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { arrayMove } from '@dnd-kit/sortable';
+import { getPendingMatchups, computeRankings, makePairKey } from '../utils/matchupAlgorithm';
 
 export interface Quote {
   id: string;
@@ -63,6 +64,9 @@ export interface IssueProgress {
   rankSkipCount: number;  // Tracks how many times user skipped rank prompt for pending quote
   candidateMatches: MatchingResult[];
   completed: boolean;
+  matchupWins: Record<string, number>;       // quoteId -> win count
+  completedMatchupPairs: string[];           // canonical pair keys (string[], NOT Set)
+  activeMatchupPair: [string, string] | null; // current matchup pair IDs; null = swipe mode
 }
 
 interface ReadRankState {
@@ -83,6 +87,7 @@ interface ReadRankState {
   skipRankPrompt: () => void;
   dismissPending: () => void;
   reorderRankedQuotes: (newOrder: RankedQuote[]) => void;
+  recordMatchupWin: (winnerId: string, loserId: string) => void;
   setCandidateMatches: (matches: MatchingResult[]) => void;
   goToHub: () => void;
   reset: () => void;
@@ -105,6 +110,9 @@ const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
   rankSkipCount: 0,
   candidateMatches: [],
   completed: false,
+  matchupWins: {},
+  completedMatchupPairs: [],
+  activeMatchupPair: null,
 });
 
 const initialState = {
@@ -201,14 +209,24 @@ export const useReadRankStore = create<ReadRankState>()(
           timestamp: Date.now(),
         };
 
+        const updatedRankedQuotes = [...progress.rankedQuotes, rankedQuote];
+
+        // Check for pending matchups if we now have 2+ agreed quotes
+        let activeMatchupPair: [string, string] | null = progress.activeMatchupPair;
+        if (updatedRankedQuotes.length >= 2) {
+          const pending = getPendingMatchups(updatedRankedQuotes, progress.completedMatchupPairs);
+          activeMatchupPair = pending.length > 0 ? pending[0] : null;
+        }
+
         set({
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
               ...progress,
-              rankedQuotes: [...progress.rankedQuotes, rankedQuote],
+              rankedQuotes: updatedRankedQuotes,
               pendingRankQuoteId: quote.id,
               rankSkipCount: 0,
+              activeMatchupPair,
             },
           },
         });
@@ -318,6 +336,44 @@ export const useReadRankStore = create<ReadRankState>()(
         });
       },
 
+      recordMatchupWin: (winnerId, loserId) => {
+        const state = get();
+        const issueId = state.currentIssueId;
+        if (!issueId || !state.issueProgress[issueId]) return;
+
+        const progress = state.issueProgress[issueId];
+
+        // Update win count for winner
+        const newWins = {
+          ...progress.matchupWins,
+          [winnerId]: (progress.matchupWins[winnerId] ?? 0) + 1,
+        };
+
+        // Record completed pair
+        const pairKey = makePairKey(winnerId, loserId);
+        const newCompletedPairs = [...progress.completedMatchupPairs, pairKey];
+
+        // Rerank by wins
+        const reranked = computeRankings(progress.rankedQuotes, newWins);
+
+        // Find next pending matchup
+        const pending = getPendingMatchups(reranked, newCompletedPairs);
+        const nextPair: [string, string] | null = pending.length > 0 ? pending[0] : null;
+
+        set({
+          issueProgress: {
+            ...state.issueProgress,
+            [issueId]: {
+              ...progress,
+              matchupWins: newWins,
+              completedMatchupPairs: newCompletedPairs,
+              rankedQuotes: reranked,
+              activeMatchupPair: nextPair,
+            },
+          },
+        });
+      },
+
       setCandidateMatches: (matches) => {
         const state = get();
         const issueId = state.currentIssueId;
@@ -370,9 +426,9 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 3,
+      version: 4,
       migrate: (_persistedState, _version) => {
-        // v3 migration: wipe all old state (v2 had agreedQuotes as separate field)
+        // v4 migration: wipe all old state — returning users with v3 localStorage land on hub cleanly
         return { phase: 'hub' as Phase, currentIssueId: null as string | null, issueProgress: {} as Record<string, IssueProgress> };
       },
       partialize: (state) => ({
