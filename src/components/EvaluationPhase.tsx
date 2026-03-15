@@ -37,6 +37,7 @@ export const EvaluationPhase: React.FC = () => {
   const [modeTransition, setModeTransition] = useState(false);
 
   const [tourStep, setTourStep] = useState<1 | 2 | null>(null);
+  const swipeAreaRef = useRef<HTMLDivElement>(null);
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const inlinePanelRef = useRef<HTMLDivElement>(null);
@@ -114,7 +115,7 @@ export const EvaluationPhase: React.FC = () => {
     cardXRef.current.set(0);
     dragX.set(0);
     setIsAnimating(false);
-  }, [isAnimating, currentQuote, agreeWithQuote, disagreeWithQuote, dragX]);
+  }, [isAnimating, currentQuote, agreeWithQuote, disagreeWithQuote, dragX, tourStep]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -188,45 +189,47 @@ export const EvaluationPhase: React.FC = () => {
         </div>
       </div>
 
-      {/* Quote Card */}
-      {currentQuote ? (
-        <div className="swipe-card-container">
-          <SwipeBackground dragX={dragX} isDragging={isDragging} />
-          <div className="flex justify-center relative z-10">
-            <QuoteCard
-              ref={quoteCardRef}
-              key={currentQuote.id}
-              quote={currentQuote}
-              displayNumber={currentQuoteIndex + 1}
-              onDragStateChange={handleDragStateChange}
-              externalAnimating={isAnimating}
-              onAgree={handleCardAgree}
-              onDisagree={handleCardDisagree}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="evaluation-complete-card">
-          <div className="text-center py-8">
-            <div style={{ fontFamily: "'Fraunces', serif", fontSize: '2rem', color: '#00657c', marginBottom: '0.75rem' }}>
-              Done
+      {/* Quote Card + Action Buttons (wrapped for coach mark spotlight) */}
+      <div ref={swipeAreaRef}>
+        {currentQuote ? (
+          <div className="swipe-card-container">
+            <SwipeBackground dragX={dragX} isDragging={isDragging} />
+            <div className="flex justify-center relative z-10">
+              <QuoteCard
+                ref={quoteCardRef}
+                key={currentQuote.id}
+                quote={currentQuote}
+                displayNumber={currentQuoteIndex + 1}
+                onDragStateChange={handleDragStateChange}
+                externalAnimating={isAnimating}
+                onAgree={handleCardAgree}
+                onDisagree={handleCardDisagree}
+              />
             </div>
-            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>
-              {rankedQuotes.length} ranked &middot; {disagreedQuotes.length} disagreed
-            </p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="evaluation-complete-card">
+            <div className="text-center py-8">
+              <div style={{ fontFamily: "'Fraunces', serif", fontSize: '2rem', color: '#00657c', marginBottom: '0.75rem' }}>
+                Done
+              </div>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                {rankedQuotes.length} ranked &middot; {disagreedQuotes.length} disagreed
+              </p>
+            </div>
+          </div>
+        )}
 
-      {isMouseDevice && currentQuote && (
-        <ActionButtons
-          onAgree={() => handleButtonSwipe('agree')}
-          onDisagree={() => handleButtonSwipe('disagree')}
-          disabled={isAnimating}
-        />
-      )}
+        {isMouseDevice && currentQuote && (
+          <ActionButtons
+            onAgree={() => handleButtonSwipe('agree')}
+            onDisagree={() => handleButtonSwipe('disagree')}
+            disabled={isAnimating}
+          />
+        )}
 
-      {!isMouseDevice && currentQuote && <SwipeInstructions />}
+        {!isMouseDevice && currentQuote && <SwipeInstructions />}
+      </div>
     </>
   );
 
@@ -301,9 +304,9 @@ export const EvaluationPhase: React.FC = () => {
 
   const coachMarkOverlay = (
     <>
-      {/* Step 1: Spotlight the swipe card — interactive, user can swipe through it */}
+      {/* Step 1: Spotlight the swipe card + buttons — interactive, user can swipe/click through it */}
       <CoachMark
-        targetRef={quoteCardRef}
+        targetRef={swipeAreaRef}
         show={tourStep === 1 && !!currentQuote}
         allowSpotlightInteraction={true}
         stepLabel="1 of 2"
