@@ -4,7 +4,6 @@ import { useAuthState } from '../hooks/useAuthState';
 import { postVerdicts } from '../utils/verdictSync';
 import { IssueHub } from './IssueHub';
 import { EvaluationPhase } from './EvaluationPhase';
-import { RankingPhase } from './RankingPhase';
 import { ResultsPhase } from './ResultsPhase';
 
 export const PhaseContainer: React.FC = () => {
@@ -25,8 +24,6 @@ export const PhaseContainer: React.FC = () => {
         return <IssueHub />;
       case 'evaluation':
         return <EvaluationPhase />;
-      case 'ranking':
-        return <RankingPhase />;
       case 'results':
         return <ResultsPhase />;
       default:
