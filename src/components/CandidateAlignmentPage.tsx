@@ -128,8 +128,7 @@ export const CandidateAlignmentPage: React.FC = () => {
       issueQuotes.forEach(quote => {
         if (!progress) {
           grouped[issue.id].quotes.push({ quote, verdict: 'unevaluated' });
-        } else if (progress.agreedQuotes.find(q => q.id === quote.id) ||
-                   progress.rankedQuotes.find(q => q.id === quote.id)) {
+        } else if (progress.rankedQuotes.find((q) => q.id === quote.id)) {
           grouped[issue.id].quotes.push({ quote, verdict: 'agreed' });
         } else if (progress.disagreedQuotes.find(q => q.id === quote.id)) {
           grouped[issue.id].quotes.push({ quote, verdict: 'disagreed' });

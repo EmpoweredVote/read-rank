@@ -14,11 +14,8 @@ export function buildVerdictPayload(
   const map = new Map<string, 'agreed' | 'disagreed'>();
 
   for (const progress of Object.values(issueProgress)) {
-    for (const quote of progress.agreedQuotes) {
-      map.set(quote.id, 'agreed');
-    }
     for (const quote of progress.rankedQuotes) {
-      map.set(quote.id, 'agreed'); // rankedQuotes is a subset of agreed; idempotent
+      map.set(quote.id, 'agreed');
     }
     for (const quote of progress.disagreedQuotes) {
       map.set(quote.id, 'disagreed');

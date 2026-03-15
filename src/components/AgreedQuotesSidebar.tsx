@@ -18,10 +18,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useReadRankStore, type Quote } from '../store/useReadRankStore';
+import { useReadRankStore, type RankedQuote } from '../store/useReadRankStore';
 
 interface CompactQuoteCardProps {
-  quote: Quote;
+  quote: RankedQuote;
 }
 
 const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) => {
@@ -72,12 +72,12 @@ const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote }) =>
 
 export const AgreedQuotesSidebar: React.FC = () => {
   const {
-    reorderAgreedQuotes,
+    reorderRankedQuotes,
     getCurrentIssueProgress,
   } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
-  const agreedQuotes = progress?.agreedQuotes ?? [];
+  const agreedQuotes = progress?.rankedQuotes ?? [];
   const quotesToEvaluate = progress?.quotesToEvaluate ?? [];
   const currentQuoteIndex = progress?.currentQuoteIndex ?? 0;
 
@@ -90,9 +90,9 @@ export const AgreedQuotesSidebar: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = agreedQuotes.findIndex((q) => q.id === active.id);
-      const newIndex = agreedQuotes.findIndex((q) => q.id === over.id);
-      reorderAgreedQuotes(arrayMove(agreedQuotes, oldIndex, newIndex));
+      const oldIndex = agreedQuotes.findIndex((q: RankedQuote) => q.id === active.id);
+      const newIndex = agreedQuotes.findIndex((q: RankedQuote) => q.id === over.id);
+      reorderRankedQuotes(arrayMove(agreedQuotes, oldIndex, newIndex));
     }
   };
 

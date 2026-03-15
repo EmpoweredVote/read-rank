@@ -19,7 +19,7 @@ export const EvaluationPhase: React.FC = () => {
   const progress = getCurrentIssueProgress();
   const quotesToEvaluate = progress?.quotesToEvaluate ?? [];
   const currentQuoteIndex = progress?.currentQuoteIndex ?? 0;
-  const agreedQuotes = progress?.agreedQuotes ?? [];
+  const rankedQuotes = progress?.rankedQuotes ?? [];
   const disagreedQuotes = progress?.disagreedQuotes ?? [];
 
   const deviceType = useDeviceType();
@@ -140,17 +140,17 @@ export const EvaluationPhase: React.FC = () => {
               Done
             </div>
             <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>
-              {agreedQuotes.length} agreed &middot; {disagreedQuotes.length} disagreed
+              {rankedQuotes.length} ranked &middot; {disagreedQuotes.length} disagreed
             </p>
           </div>
         </div>
       )}
 
       {/* Mobile summary */}
-      {!isMouseDevice && (agreedQuotes.length > 0 || disagreedQuotes.length > 0) && (
+      {!isMouseDevice && (rankedQuotes.length > 0 || disagreedQuotes.length > 0) && (
         <div className="text-center">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#94a3b8' }}>
-            Agreed: {agreedQuotes.length} &middot; Disagreed: {disagreedQuotes.length}
+            Ranked: {rankedQuotes.length} &middot; Disagreed: {disagreedQuotes.length}
           </p>
         </div>
       )}

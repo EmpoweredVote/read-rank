@@ -173,7 +173,7 @@ export const ResultsPhase: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
 
   const progress = getCurrentIssueProgress();
-  const agreedQuotes = progress?.agreedQuotes ?? [];
+  const rankedQuotes = progress?.rankedQuotes ?? [];
   const disagreedQuotes = progress?.disagreedQuotes ?? [];
 
   useEffect(() => {
@@ -186,10 +186,10 @@ export const ResultsPhase: React.FC = () => {
 
   const organizedQuotes = useMemo(() => {
     const result: { quote: Quote; verdict: 'agreed' | 'disagreed' }[] = [];
-    agreedQuotes.forEach(quote => result.push({ quote, verdict: 'agreed' }));
+    rankedQuotes.forEach(quote => result.push({ quote, verdict: 'agreed' }));
     disagreedQuotes.forEach(quote => result.push({ quote, verdict: 'disagreed' }));
     return result;
-  }, [agreedQuotes, disagreedQuotes]);
+  }, [rankedQuotes, disagreedQuotes]);
 
   const handleViewAlignment = (candidateId: string) => {
     navigate(`/candidate/${candidateId}/alignment`);
@@ -250,7 +250,7 @@ export const ResultsPhase: React.FC = () => {
       >
         <div className="grid grid-cols-2 gap-4 text-center">
           {[
-            { label: 'Agreed', value: agreedQuotes.length, color: '#00657c' },
+            { label: 'Agreed', value: rankedQuotes.length, color: '#00657c' },
             { label: 'Disagreed', value: disagreedQuotes.length, color: '#78716c' },
           ].map(stat => (
             <div key={stat.label}>

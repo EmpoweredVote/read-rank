@@ -20,11 +20,11 @@ export const PhaseNavigation: React.FC<PhaseNavigationProps> = ({
   const { phase, getCurrentIssueProgress } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
-  const agreedCount = progress?.agreedQuotes.length ?? 0;
+  const rankedCount = progress?.rankedQuotes.length ?? 0;
   const disagreedCount = progress?.disagreedQuotes.length ?? 0;
   const totalQuotes = progress?.quotesToEvaluate.length ?? 0;
 
-  const getCompletedCount = () => agreedCount + disagreedCount;
+  const getCompletedCount = () => rankedCount + disagreedCount;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-ev-white border-t border-gray-200 p-3 md:p-4 shadow-lg">

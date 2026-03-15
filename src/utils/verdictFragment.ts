@@ -6,8 +6,7 @@ const ESSENTIALS_BASE =
 
 /**
  * Builds a verdict map from all issue progress across ALL issues.
- * rankedQuotes are a ranked subset of agreedQuotes — both map to 'agreed'.
- * Setting v[quote.id] twice with the same value is idempotent.
+ * rankedQuotes is the single source of truth for agreed quotes.
  * topicId, if provided, is encoded as `t` so Essentials can auto-open that accordion row.
  */
 export function buildVerdictFragment(
@@ -16,11 +15,8 @@ export function buildVerdictFragment(
 ): string {
   const v: Record<string, 'agreed' | 'disagreed'> = {};
   for (const progress of Object.values(issueProgress)) {
-    for (const quote of progress.agreedQuotes) {
-      v[quote.id] = 'agreed';
-    }
     for (const quote of progress.rankedQuotes) {
-      v[quote.id] = 'agreed'; // rankedQuotes is a subset of agreed; assignment is idempotent
+      v[quote.id] = 'agreed';
     }
     for (const quote of progress.disagreedQuotes) {
       v[quote.id] = 'disagreed';
