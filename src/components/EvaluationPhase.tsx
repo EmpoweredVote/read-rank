@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useMotionValue, MotionValue, animate } from 'framer-motion';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { useReadRankStore, type Quote } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
 import { SwipeInstructions } from './SwipeInstructions';
 import { SwipeBackground } from './SwipeBackground';
@@ -9,6 +9,7 @@ import { RankedListSidebar } from './AgreedQuotesSidebar';
 import { InlineRankPanel } from './InlineRankPanel';
 import { MatchupPhase } from './MatchupPhase';
 import { useDeviceType } from '../hooks/useDeviceType';
+import CoachMark from './CoachMark';
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -16,6 +17,8 @@ export const EvaluationPhase: React.FC = () => {
     disagreeWithQuote,
     setPhase,
     getCurrentIssueProgress,
+    coachMarksCompleted,
+    completeCoachMarks,
   } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
@@ -32,6 +35,11 @@ export const EvaluationPhase: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showFullRankList, setShowFullRankList] = useState(false);
   const [modeTransition, setModeTransition] = useState(false);
+
+  const [tourStep, setTourStep] = useState<1 | 2 | null>(null);
+  const quoteCardRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const inlinePanelRef = useRef<HTMLDivElement>(null);
 
   const prevMatchupPairRef = useRef<string | null>(null);
 
@@ -54,6 +62,20 @@ export const EvaluationPhase: React.FC = () => {
       prevMatchupPairRef.current = newPairKey;
     }
   }, [activeMatchupPair]);
+
+  // Coach mark tour: start ~500ms after mount on first real issue
+  useEffect(() => {
+    if (coachMarksCompleted) return;
+    const timer = setTimeout(() => setTourStep(1), 500);
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-open mobile rank panel for coach mark step 2
+  useEffect(() => {
+    if (tourStep === 2 && !isMouseDevice && rankedQuotes.length >= 1) {
+      setShowFullRankList(true);
+    }
+  }, [tourStep, isMouseDevice, rankedQuotes.length]);
 
   const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
     setIsDragging(dragging);
@@ -84,6 +106,11 @@ export const EvaluationPhase: React.FC = () => {
       disagreeWithQuote(currentQuote);
     }
 
+    // Advance tour on first swipe (button/keyboard path)
+    if (tourStep === 1) {
+      setTourStep(2);
+    }
+
     cardXRef.current.set(0);
     dragX.set(0);
     setIsAnimating(false);
@@ -111,6 +138,30 @@ export const EvaluationPhase: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleButtonSwipe, isAnimating, currentQuote, showMatchupMode]);
+
+  const handleSkipTour = useCallback(() => {
+    setTourStep(null);
+    completeCoachMarks();
+  }, [completeCoachMarks]);
+
+  const handleCompleteTour = useCallback(() => {
+    setTourStep(null);
+    completeCoachMarks();
+  }, [completeCoachMarks]);
+
+  const handleCardAgree = useCallback((quote: Quote) => {
+    agreeWithQuote(quote);
+    if (tourStep === 1) {
+      setTourStep(2);
+    }
+  }, [agreeWithQuote, tourStep]);
+
+  const handleCardDisagree = useCallback((quote: Quote) => {
+    disagreeWithQuote(quote);
+    if (tourStep === 1) {
+      setTourStep(2);
+    }
+  }, [disagreeWithQuote, tourStep]);
 
   // Issue 4: Always go straight to results — no confirmation step
   const handleComplete = useCallback(() => {
@@ -143,11 +194,14 @@ export const EvaluationPhase: React.FC = () => {
           <SwipeBackground dragX={dragX} isDragging={isDragging} />
           <div className="flex justify-center relative z-10">
             <QuoteCard
+              ref={quoteCardRef}
               key={currentQuote.id}
               quote={currentQuote}
               displayNumber={currentQuoteIndex + 1}
               onDragStateChange={handleDragStateChange}
               externalAnimating={isAnimating}
+              onAgree={handleCardAgree}
+              onDisagree={handleCardDisagree}
             />
           </div>
         </div>
@@ -218,7 +272,7 @@ export const EvaluationPhase: React.FC = () => {
 
       {/* Mobile: Inline rank list (triggered by counter pill) */}
       {showFullRankList && !isMouseDevice && !showMatchupMode && (
-        <InlineRankPanel onDismiss={() => setShowFullRankList(false)} />
+        <InlineRankPanel ref={inlinePanelRef} onDismiss={() => setShowFullRankList(false)} />
       )}
 
       {/* Mobile summary */}
@@ -245,6 +299,48 @@ export const EvaluationPhase: React.FC = () => {
     </div>
   );
 
+  const coachMarkOverlay = (
+    <>
+      {/* Step 1: Spotlight the swipe card — interactive, user can swipe through it */}
+      <CoachMark
+        targetRef={quoteCardRef}
+        show={tourStep === 1 && !!currentQuote}
+        allowSpotlightInteraction={true}
+        stepLabel="1 of 2"
+        onNext={handleSkipTour}
+        onSkipAll={handleSkipTour}
+      >
+        Swipe right to agree, left to disagree
+      </CoachMark>
+
+      {/* Step 2 desktop: Spotlight the ranked list sidebar */}
+      {isMouseDevice && (
+        <CoachMark
+          targetRef={sidebarRef}
+          show={tourStep === 2 && rankedQuotes.length >= 1}
+          allowSpotlightInteraction={false}
+          stepLabel="2 of 2"
+          onDismiss={handleCompleteTour}
+        >
+          Your agreed quotes rank here. Pick the stronger quote when matchups appear.
+        </CoachMark>
+      )}
+
+      {/* Step 2 mobile: Spotlight the inline rank panel */}
+      {!isMouseDevice && (
+        <CoachMark
+          targetRef={inlinePanelRef}
+          show={tourStep === 2 && rankedQuotes.length >= 1 && showFullRankList}
+          allowSpotlightInteraction={false}
+          stepLabel="2 of 2"
+          onDismiss={handleCompleteTour}
+        >
+          Your agreed quotes rank here. Pick the stronger quote when matchups appear.
+        </CoachMark>
+      )}
+    </>
+  );
+
   // Desktop: Split layout
   if (isMouseDevice) {
     return (
@@ -254,9 +350,10 @@ export const EvaluationPhase: React.FC = () => {
             {evaluationContent}
           </div>
           <div className="evaluation-sidebar-panel">
-            <RankedListSidebar />
+            <RankedListSidebar ref={sidebarRef} />
           </div>
         </div>
+        {coachMarkOverlay}
       </div>
     );
   }
@@ -265,6 +362,7 @@ export const EvaluationPhase: React.FC = () => {
   return (
     <div>
       {evaluationContent}
+      {coachMarkOverlay}
     </div>
   );
 };
