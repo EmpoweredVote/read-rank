@@ -51,6 +51,7 @@ export const PracticeRound: React.FC = () => {
   const deviceType = useDeviceType();
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
+  const [showSplash, setShowSplash] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showFullRankList, setShowFullRankList] = useState(false);
@@ -197,6 +198,114 @@ export const PracticeRound: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePick, showMatchupMode, matchupSelected]);
+
+  // Splash screen — introduce the practice round before jumping in
+  if (showSplash) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        padding: '2rem 1.5rem',
+        textAlign: 'center',
+      }}>
+        {/* Pizza card illustration */}
+        <div style={{ width: '100%', maxWidth: '280px', marginBottom: '2rem' }}>
+          <svg viewBox="0 0 200 160" style={{ width: '100%', height: 'auto' }}>
+            {/* Back card (tilted left) */}
+            <g transform="rotate(-8, 100, 80)">
+              <rect x="55" y="20" width="90" height="120" rx="8" fill="#f5f0eb" stroke="#e8e2d9" strokeWidth="1.5" />
+              <rect x="65" y="35" width="70" height="8" rx="4" fill="#e8e2d9" />
+              <rect x="65" y="50" width="55" height="6" rx="3" fill="#e8e2d9" />
+              <rect x="65" y="62" width="60" height="6" rx="3" fill="#e8e2d9" />
+            </g>
+            {/* Front card (tilted right) */}
+            <g transform="rotate(6, 100, 80)">
+              <rect x="55" y="20" width="90" height="120" rx="8" fill="#fffefb" stroke="#e8e2d9" strokeWidth="1.5" />
+              <rect x="65" y="35" width="70" height="8" rx="4" fill="#00657c" fillOpacity="0.15" />
+              <rect x="65" y="50" width="55" height="6" rx="3" fill="#00657c" fillOpacity="0.1" />
+              <rect x="65" y="62" width="60" height="6" rx="3" fill="#00657c" fillOpacity="0.1" />
+              {/* Pizza emoji circle */}
+              <circle cx="100" cy="100" r="18" fill="#fef3c7" stroke="#fde68a" strokeWidth="1" />
+              <text x="100" y="107" textAnchor="middle" fontSize="20">🍕</text>
+            </g>
+            {/* Swipe arrows */}
+            <g opacity="0.4">
+              {/* Left arrow (disagree) */}
+              <path d="M30 80 L15 80" stroke="#ff5740" strokeWidth="2" strokeLinecap="round" />
+              <path d="M20 75 L15 80 L20 85" stroke="#ff5740" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              {/* Right arrow (agree) */}
+              <path d="M170 80 L185 80" stroke="#00657c" strokeWidth="2" strokeLinecap="round" />
+              <path d="M180 75 L185 80 L180 85" stroke="#00657c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </g>
+          </svg>
+        </div>
+
+        <h1 style={{
+          fontFamily: "'Fraunces', serif",
+          fontWeight: 700,
+          fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+          color: '#1a1a2e',
+          marginBottom: '0.75rem',
+          letterSpacing: '-0.02em',
+        }}>
+          Let&rsquo;s do a practice round
+        </h1>
+
+        <p style={{
+          fontFamily: "'Manrope', sans-serif",
+          fontSize: '1rem',
+          color: '#64748b',
+          maxWidth: '24rem',
+          marginBottom: '0.5rem',
+          lineHeight: 1.6,
+        }}>
+          Swipe right on quotes you agree with, left on ones you don&rsquo;t.
+          Then pick favorites in head-to-head matchups.
+        </p>
+
+        <p style={{
+          fontFamily: "'Manrope', sans-serif",
+          fontSize: '0.875rem',
+          color: '#94a3b8',
+          maxWidth: '22rem',
+          marginBottom: '2rem',
+          lineHeight: 1.5,
+        }}>
+          We&rsquo;ll use pizza toppings so you can get the hang of it before diving into real issues.
+        </p>
+
+        <motion.button
+          onClick={() => setShowSplash(false)}
+          className="ev-button-primary"
+          style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+          whileHover={{ scale: 1.03, y: -1 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          Let&rsquo;s try it
+        </motion.button>
+
+        <button
+          onClick={skipPractice}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.875rem',
+            color: '#94a3b8',
+            textDecoration: 'underline',
+            padding: '0.5rem',
+            marginTop: '1rem',
+          }}
+        >
+          Skip practice
+        </button>
+      </div>
+    );
+  }
 
   // If showing results sub-phase
   if (showResults) {
