@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { arrayMove } from '@dnd-kit/sortable';
 
 export interface Quote {
   id: string;
@@ -56,9 +57,10 @@ export interface IssueProgress {
   phase: 'evaluation' | 'results';
   quotesToEvaluate: Quote[];
   currentQuoteIndex: number;
-  agreedQuotes: Quote[];
   disagreedQuotes: Quote[];
-  rankedQuotes: RankedQuote[];
+  rankedQuotes: RankedQuote[];  // Single source of truth for agreed quotes
+  pendingRankQuoteId: string | null;  // Newly agreed quote awaiting user placement
+  rankSkipCount: number;  // Tracks how many times user skipped rank prompt for pending quote
   candidateMatches: MatchingResult[];
   completed: boolean;
 }
@@ -77,9 +79,10 @@ interface ReadRankState {
   nextQuote: () => void;
   agreeWithQuote: (quote: Quote) => void;
   disagreeWithQuote: (quote: Quote) => void;
-  rankQuote: (quoteId: string, newRank: number) => void;
-  setRankedQuotes: (quotes: Quote[]) => void;
-  reorderAgreedQuotes: (quotes: Quote[]) => void;
+  insertAtRank: (quoteId: string, targetIndex: number) => void;
+  skipRankPrompt: () => void;
+  dismissPending: () => void;
+  reorderRankedQuotes: (newOrder: RankedQuote[]) => void;
   setCandidateMatches: (matches: MatchingResult[]) => void;
   goToHub: () => void;
   reset: () => void;
@@ -96,9 +99,10 @@ const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
   phase: 'evaluation',
   quotesToEvaluate: [],
   currentQuoteIndex: 0,
-  agreedQuotes: [],
   disagreedQuotes: [],
   rankedQuotes: [],
+  pendingRankQuoteId: null,
+  rankSkipCount: 0,
   candidateMatches: [],
   completed: false,
 });
@@ -190,14 +194,21 @@ export const useReadRankStore = create<ReadRankState>()(
         if (!issueId || !state.issueProgress[issueId]) return;
 
         const progress = state.issueProgress[issueId];
-        const updatedAgreedQuotes = [...progress.agreedQuotes, quote];
+        const newRank = progress.rankedQuotes.length + 1;
+        const rankedQuote: RankedQuote = {
+          ...quote,
+          rank: newRank,
+          timestamp: Date.now(),
+        };
 
         set({
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
               ...progress,
-              agreedQuotes: updatedAgreedQuotes,
+              rankedQuotes: [...progress.rankedQuotes, rankedQuote],
+              pendingRankQuoteId: quote.id,
+              rankSkipCount: 0,
             },
           },
         });
@@ -224,61 +235,52 @@ export const useReadRankStore = create<ReadRankState>()(
         get().nextQuote();
       },
 
-      rankQuote: (quoteId, newRank) => {
+      insertAtRank: (quoteId, targetIndex) => {
         const state = get();
         const issueId = state.currentIssueId;
         if (!issueId || !state.issueProgress[issueId]) return;
 
         const progress = state.issueProgress[issueId];
-        const quoteToRank = progress.agreedQuotes.find(q => q.id === quoteId);
-        if (!quoteToRank) return;
+        const currentIndex = progress.rankedQuotes.findIndex(q => q.id === quoteId);
+        if (currentIndex === -1) return;
 
-        const filteredRankedQuotes = progress.rankedQuotes.filter(q => q.id !== quoteId);
-        const rankedQuote: RankedQuote = {
-          ...quoteToRank,
-          rank: newRank,
-          timestamp: Date.now(),
-        };
-
-        const newRankedQuotes = [...filteredRankedQuotes, rankedQuote]
-          .sort((a, b) => a.rank - b.rank)
-          .map((quote, index) => ({ ...quote, rank: index + 1 }));
+        const reordered = arrayMove(progress.rankedQuotes, currentIndex, targetIndex);
+        const withUpdatedRanks = reordered.map((q, i) => ({ ...q, rank: i + 1 }));
 
         set({
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
               ...progress,
-              rankedQuotes: newRankedQuotes,
+              rankedQuotes: withUpdatedRanks,
+              pendingRankQuoteId: null,
             },
           },
         });
       },
 
-      setRankedQuotes: (quotes: Quote[]) => {
+      skipRankPrompt: () => {
         const state = get();
         const issueId = state.currentIssueId;
         if (!issueId || !state.issueProgress[issueId]) return;
 
         const progress = state.issueProgress[issueId];
-        const rankedQuotes: RankedQuote[] = quotes.map((quote, index) => ({
-          ...quote,
-          rank: index + 1,
-          timestamp: Date.now(),
-        }));
+        const newSkipCount = progress.rankSkipCount + 1;
 
         set({
           issueProgress: {
             ...state.issueProgress,
             [issueId]: {
               ...progress,
-              rankedQuotes,
+              rankSkipCount: newSkipCount,
+              // After 2 skips, dismiss the pending state (quote stays at bottom)
+              pendingRankQuoteId: newSkipCount > 1 ? null : progress.pendingRankQuoteId,
             },
           },
         });
       },
 
-      reorderAgreedQuotes: (quotes: Quote[]) => {
+      dismissPending: () => {
         const state = get();
         const issueId = state.currentIssueId;
         if (!issueId || !state.issueProgress[issueId]) return;
@@ -290,7 +292,27 @@ export const useReadRankStore = create<ReadRankState>()(
             ...state.issueProgress,
             [issueId]: {
               ...progress,
-              agreedQuotes: quotes,
+              pendingRankQuoteId: null,
+              rankSkipCount: 0,
+            },
+          },
+        });
+      },
+
+      reorderRankedQuotes: (newOrder) => {
+        const state = get();
+        const issueId = state.currentIssueId;
+        if (!issueId || !state.issueProgress[issueId]) return;
+
+        const progress = state.issueProgress[issueId];
+        const withUpdatedRanks = newOrder.map((q, i) => ({ ...q, rank: i + 1 }));
+
+        set({
+          issueProgress: {
+            ...state.issueProgress,
+            [issueId]: {
+              ...progress,
+              rankedQuotes: withUpdatedRanks,
             },
           },
         });
@@ -348,9 +370,9 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 2,
+      version: 3,
       migrate: (_persistedState, _version) => {
-        // v2 migration: wipe all old state (v1 had 'ranking' phase + badge system)
+        // v3 migration: wipe all old state (v2 had agreedQuotes as separate field)
         return { phase: 'hub' as Phase, currentIssueId: null as string | null, issueProgress: {} as Record<string, IssueProgress> };
       },
       partialize: (state) => ({
