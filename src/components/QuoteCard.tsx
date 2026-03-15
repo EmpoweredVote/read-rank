@@ -6,9 +6,11 @@ interface QuoteCardProps {
   quote: Quote;
   isStacked?: boolean;
   stackIndex?: number;
-  displayNumber?: number; // Optional display number for the quote
+  displayNumber?: number;
   onDragStateChange?: (isDragging: boolean, x: MotionValue<number>) => void;
-  externalAnimating?: boolean; // When true, card is being animated externally (buttons/keyboard)
+  externalAnimating?: boolean;
+  onAgree?: (quote: Quote) => void;
+  onDisagree?: (quote: Quote) => void;
 }
 
 export const QuoteCard: React.FC<QuoteCardProps> = ({
@@ -17,21 +19,21 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   stackIndex = 0,
   displayNumber,
   onDragStateChange,
-  externalAnimating = false
+  externalAnimating = false,
+  onAgree,
+  onDisagree,
 }) => {
-  const { agreeWithQuote, disagreeWithQuote } = useReadRankStore();
+  const store = useReadRankStore();
+  const handleAgree = onAgree ?? store.agreeWithQuote;
+  const handleDisagree = onDisagree ?? store.disagreeWithQuote;
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Combined animating state (internal swipe or external button/keyboard)
   const isCurrentlyAnimating = isAnimating || externalAnimating;
-
-  // Only the top card (not stacked) should be interactive
   const isDraggable = !isStacked;
 
-  // Motion values for swipe animation
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-300, 300], [-20, 20]);
+  const rotate = useTransform(x, [-300, 300], [-12, 12]);
   const opacity = useTransform(x, [-300, -150, 0, 150, 300], [0.3, 1, 1, 1, 0.3]);
 
   const handleDragStart = () => {
@@ -47,41 +49,34 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
     onDragStateChange?.(false, x);
     const { offset } = info;
 
-    // Decision threshold - must drag past this point and release to commit
     const SWIPE_THRESHOLD = 150;
 
     if (Math.abs(offset.x) > SWIPE_THRESHOLD) {
-      // User released past threshold - commit the swipe
       await handleSwipe(offset.x > 0 ? 1 : -1);
     } else {
-      // Reset position - user didn't drag far enough or changed their mind
       await animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
     }
   };
 
   const handleSwipe = async (direction: number) => {
     if (isCurrentlyAnimating || !isDraggable) return;
-    
+
     setIsAnimating(true);
-    
+
     const offScreenX = direction > 0 ? 500 : -500;
-    
-    // Animate card off screen
+
     await animate(x, offScreenX, { duration: 0.4, ease: [0.4, 0, 0.2, 1] }).finished;
-    
-    // Perform the action
+
     if (direction > 0) {
-      agreeWithQuote(quote);
+      handleAgree(quote);
     } else {
-      disagreeWithQuote(quote);
+      handleDisagree(quote);
     }
-    
-    // Reset for next card
+
     x.set(0);
     setIsAnimating(false);
   };
 
-  // Stacked card styling
   const scaleValue = isStacked ? 0.95 - (stackIndex * 0.02) : 1;
   const zIndexValue = isStacked ? 100 - (stackIndex * 10) : 100;
 
@@ -99,34 +94,53 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         scale: scaleValue,
         zIndex: zIndexValue,
         boxShadow: isStacked
-          ? `${stackIndex * 4}px ${stackIndex * 4}px 0 rgba(0,0,0,0.06)`
+          ? `${stackIndex * 3}px ${stackIndex * 3}px 0 rgba(0,0,0,0.04)`
           : undefined
       }}
       className={`
         ev-quote-card w-full max-w-lg md:max-w-xl relative
         ${isDraggable && !isCurrentlyAnimating ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
-        shadow-lg select-none touch-none
+        select-none touch-none
         ${isCurrentlyAnimating ? 'pointer-events-none' : ''}
         ${isDragging ? 'ev-quote-card-dragging' : ''}
-        ${isStacked ? 'ev-quote-card-stacked' : ''}
       `}
-      whileHover={isDraggable && !isCurrentlyAnimating && !isDragging ? { scale: 1.02 } : {}}
+      whileHover={isDraggable && !isCurrentlyAnimating && !isDragging ? { scale: 1.01, y: -2 } : {}}
       transition={{ duration: 0.2 }}
     >
-      {/* Quote Label - only show if displayNumber is provided */}
+      {/* Quote number */}
       {displayNumber && (
-        <div className="flex justify-center items-start mb-4 text-center">
-          <span className="font-manrope font-bold text-lg">
+        <div className="flex items-center gap-2 mb-4">
+          <span style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 600,
+            fontSize: '0.6875rem',
+            color: '#94a3b8',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase' as const,
+          }}>
             Quote {displayNumber}
           </span>
           {isStacked && (
-            <span className="text-xs opacity-60 ml-2">Preview</span>
+            <span style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.625rem',
+              color: '#94a3b8',
+              opacity: 0.6,
+            }}>
+              Preview
+            </span>
           )}
         </div>
       )}
 
-      {/* Quote Text */}
-      <div className="font-manrope font-medium text-base leading-relaxed">
+      {/* Quote Text — the hero */}
+      <div
+        className="ev-quote-text"
+        style={{
+          fontSize: 'clamp(1.0625rem, 2.5vw, 1.25rem)',
+          paddingLeft: '0.25rem',
+        }}
+      >
         {quote.text}
       </div>
     </motion.div>
