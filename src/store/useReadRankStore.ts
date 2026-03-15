@@ -91,6 +91,10 @@ interface ReadRankState {
   practiceCompleted: boolean;
   practiceProgress: PracticeProgress | null;
 
+  // Coach marks state
+  coachMarksCompleted: boolean;
+  completeCoachMarks: () => void;
+
   // Actions
   setPhase: (phase: Phase) => void;
   selectIssue: (issueId: string, quotes: Quote[], issueData: IssueData) => void;
@@ -145,6 +149,7 @@ const initialState = {
   issueProgress: {} as Record<string, IssueProgress>,
   practiceCompleted: false,
   practiceProgress: null as PracticeProgress | null,
+  coachMarksCompleted: false,
 };
 
 export const useReadRankStore = create<ReadRankState>()(
@@ -538,6 +543,8 @@ export const useReadRankStore = create<ReadRankState>()(
         });
       },
 
+      completeCoachMarks: () => set({ coachMarksCompleted: true }),
+
       getCurrentIssueProgress: () => {
         const state = get();
         if (!state.currentIssueId) return null;
@@ -559,9 +566,9 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 5,
+      version: 6,
       migrate: (_persistedState, version) => {
-        // v5 migration: existing users (version > 0) skip practice; new users see it
+        // v6 migration: existing users (version > 0) skip practice and coach marks; new users see them
         const isUpgrade = version > 0;
         return {
           phase: 'hub' as Phase,
@@ -569,6 +576,7 @@ export const useReadRankStore = create<ReadRankState>()(
           issueProgress: {} as Record<string, IssueProgress>,
           practiceCompleted: isUpgrade,
           practiceProgress: null as PracticeProgress | null,
+          coachMarksCompleted: isUpgrade,
         };
       },
       partialize: (state) => ({
@@ -577,6 +585,7 @@ export const useReadRankStore = create<ReadRankState>()(
         issueProgress: state.issueProgress,
         practiceCompleted: state.practiceCompleted,
         practiceProgress: state.practiceProgress,
+        coachMarksCompleted: state.coachMarksCompleted,
       }),
     }
   )
