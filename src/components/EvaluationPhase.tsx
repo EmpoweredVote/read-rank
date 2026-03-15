@@ -10,94 +10,71 @@ import { useDeviceType } from '../hooks/useDeviceType';
 
 export const EvaluationPhase: React.FC = () => {
   const {
-    quotesToEvaluate,
-    currentQuoteIndex,
-    agreedQuotes,
-    disagreedQuotes,
     agreeWithQuote,
     disagreeWithQuote,
     setPhase,
-    setRankedQuotes,
-    questionText
+    getCurrentIssueProgress,
   } = useReadRankStore();
 
-  // Device detection for adaptive UI
+  const progress = getCurrentIssueProgress();
+  const quotesToEvaluate = progress?.quotesToEvaluate ?? [];
+  const currentQuoteIndex = progress?.currentQuoteIndex ?? 0;
+  const agreedQuotes = progress?.agreedQuotes ?? [];
+  const disagreedQuotes = progress?.disagreedQuotes ?? [];
+
   const deviceType = useDeviceType();
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
-  // Track drag state for swipe background
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const dragX = useMotionValue(0);
-
-  // Ref to the motion value for programmatic swipes
   const cardXRef = useRef<MotionValue<number>>(dragX);
 
   const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
     setIsDragging(dragging);
     cardXRef.current = x;
-    // Sync the motion value from the card
     return x.on('change', (latest) => {
       dragX.set(latest);
     });
   }, [dragX]);
 
   const currentQuote = quotesToEvaluate[currentQuoteIndex];
-  const progress = quotesToEvaluate.length > 0
+  const progressPercent = quotesToEvaluate.length > 0
     ? Math.round(((currentQuoteIndex + 1) / quotesToEvaluate.length) * 100)
     : 0;
 
-  // Handle programmatic swipes (for buttons and keyboard)
   const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
-
     setIsAnimating(true);
 
     const offScreenX = direction === 'agree' ? 500 : -500;
-
-    // Animate card off screen
     await animate(cardXRef.current, offScreenX, {
       duration: 0.4,
       ease: [0.4, 0, 0.2, 1]
     }).finished;
 
-    // Perform the action
     if (direction === 'agree') {
       agreeWithQuote(currentQuote);
     } else {
       disagreeWithQuote(currentQuote);
     }
 
-    // Reset for next card
     cardXRef.current.set(0);
     dragX.set(0);
     setIsAnimating(false);
   }, [isAnimating, currentQuote, agreeWithQuote, disagreeWithQuote, dragX]);
 
-  // Keyboard support
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle if user is typing in an input
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      // Don't handle during animation
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       if (isAnimating || !currentQuote) return;
 
       switch (event.key) {
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
+        case 'ArrowLeft': case 'a': case 'A':
           event.preventDefault();
           handleButtonSwipe('disagree');
           break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
+        case 'ArrowRight': case 'd': case 'D':
           event.preventDefault();
           handleButtonSwipe('agree');
           break;
@@ -109,36 +86,28 @@ export const EvaluationPhase: React.FC = () => {
   }, [handleButtonSwipe, isAnimating, currentQuote]);
 
   const handleComplete = () => {
-    // Set ranked quotes and go to results (skip ranking phase on desktop since they can badge as they go)
-    if (isMouseDevice) {
-      setRankedQuotes(agreedQuotes);
-      setPhase('results');
-    } else {
-      // Mobile still goes to ranking phase
-      setPhase('ranking');
-    }
+    setPhase('results');
   };
 
   const isComplete = currentQuoteIndex >= quotesToEvaluate.length;
   const isLastQuote = currentQuoteIndex >= quotesToEvaluate.length - 1;
 
-  // Evaluation content (left side on desktop, full width on mobile)
   const evaluationContent = (
-    <div className="space-y-4 md:space-y-6">
-      {/* Progress indicator */}
+    <div className="space-y-5">
+      {/* Progress */}
       <div className="text-center">
-        <p className="ev-text-secondary text-xs md:text-sm">
-          Quote {Math.min(currentQuoteIndex + 1, quotesToEvaluate.length)} of {quotesToEvaluate.length}
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.375rem' }}>
+          {Math.min(currentQuoteIndex + 1, quotesToEvaluate.length)} of {quotesToEvaluate.length}
         </p>
-        <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+        <div className="w-full h-1 rounded-full" style={{ backgroundColor: '#e8e2d9' }}>
           <div
-            className="bg-ev-coral h-1 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            className="h-1 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercent}%`, backgroundColor: '#00657c' }}
           />
         </div>
       </div>
 
-      {/* Quote Card with Swipe Background */}
+      {/* Quote Card */}
       {currentQuote ? (
         <>
           <div className="swipe-card-container">
@@ -154,7 +123,6 @@ export const EvaluationPhase: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons - Show on mouse devices */}
           {isMouseDevice && (
             <ActionButtons
               onAgree={() => handleButtonSwipe('agree')}
@@ -163,65 +131,49 @@ export const EvaluationPhase: React.FC = () => {
             />
           )}
 
-          {/* Swipe Instructions - only for touch devices */}
           {!isMouseDevice && <SwipeInstructions />}
         </>
       ) : (
         <div className="evaluation-complete-card">
           <div className="text-center py-8">
-            <div className="text-4xl mb-4">✓</div>
-            <h3 className="font-manrope font-bold text-lg text-gray-700 mb-2">
-              All quotes evaluated!
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {agreedQuotes.length} agreed • {disagreedQuotes.length} disagreed
+            <div style={{ fontFamily: "'Fraunces', serif", fontSize: '2rem', color: '#00657c', marginBottom: '0.75rem' }}>
+              Done
+            </div>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>
+              {agreedQuotes.length} agreed &middot; {disagreedQuotes.length} disagreed
             </p>
-            {isMouseDevice && agreedQuotes.length > 0 && (
-              <p className="text-xs text-gray-400">
-                Make sure you've assigned your badges, then see your results.
-              </p>
-            )}
           </div>
         </div>
       )}
 
-      {/* Summary - only show on mobile */}
+      {/* Mobile summary */}
       {!isMouseDevice && (agreedQuotes.length > 0 || disagreedQuotes.length > 0) && (
-        <div className="text-center text-xs md:text-sm ev-text-secondary">
-          <p>
-            Agreed: {agreedQuotes.length} • Disagreed: {disagreedQuotes.length}
+        <div className="text-center">
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#94a3b8' }}>
+            Agreed: {agreedQuotes.length} &middot; Disagreed: {disagreedQuotes.length}
           </p>
         </div>
       )}
 
-      {/* Continue Button */}
+      {/* Continue */}
       {(isLastQuote || isComplete) && (
         <div className="flex justify-center pt-4">
           <button
             onClick={handleComplete}
-            className="ev-button-primary text-base md:text-lg px-8 py-3 animate-gentle-pulse"
+            className="ev-button-primary animate-gentle-pulse"
+            style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
           >
-            {isMouseDevice ? 'See Your Results' : 'Rank Your Priorities →'}
+            See Your Results
           </button>
         </div>
       )}
     </div>
   );
 
-  // Question banner displayed above the main content
-  const questionBanner = questionText ? (
-    <div className="question-banner mb-6">
-      <h2 className="font-manrope font-bold text-base md:text-lg text-ev-dark-blue text-center leading-snug">
-        {questionText}
-      </h2>
-    </div>
-  ) : null;
-
-  // Desktop: Split layout with sidebar
+  // Desktop: Split layout
   if (isMouseDevice) {
     return (
       <div>
-        {questionBanner}
         <div className="evaluation-split-layout">
           <div className="evaluation-main-panel">
             {evaluationContent}
@@ -234,10 +186,9 @@ export const EvaluationPhase: React.FC = () => {
     );
   }
 
-  // Mobile: Single column layout
+  // Mobile: Single column
   return (
     <div>
-      {questionBanner}
       {evaluationContent}
     </div>
   );

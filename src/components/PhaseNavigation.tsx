@@ -17,14 +17,14 @@ export const PhaseNavigation: React.FC<PhaseNavigationProps> = ({
   continueText = "Continue",
   backText = "Back"
 }) => {
-  const { phase } = useReadRankStore();
+  const { phase, getCurrentIssueProgress } = useReadRankStore();
 
-  const getCompletedCount = () => {
-    const { agreedQuotes, disagreedQuotes } = useReadRankStore.getState();
-    return agreedQuotes.length + disagreedQuotes.length;
-  };
+  const progress = getCurrentIssueProgress();
+  const agreedCount = progress?.agreedQuotes.length ?? 0;
+  const disagreedCount = progress?.disagreedQuotes.length ?? 0;
+  const totalQuotes = progress?.quotesToEvaluate.length ?? 0;
 
-  const totalQuotes = useReadRankStore.getState().quotesToEvaluate.length;
+  const getCompletedCount = () => agreedCount + disagreedCount;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-ev-white border-t border-gray-200 p-3 md:p-4 shadow-lg">
@@ -52,12 +52,6 @@ export const PhaseNavigation: React.FC<PhaseNavigationProps> = ({
               </div>
             )}
 
-            {phase === 'ranking' && (
-              <span className="ev-text-secondary font-manrope font-semibold text-xs md:text-sm">
-                Drag to reorder
-              </span>
-            )}
-            
             {phase === 'results' && (
               <span className="ev-text-secondary font-manrope font-semibold text-xs md:text-sm">
                 Your matches

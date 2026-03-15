@@ -6,180 +6,159 @@ import type { Quote, Candidate, IssueProgress } from '../store/useReadRankStore'
 import { fetchQuotesData } from '../data/api';
 import { buildEssentialsProfileUrl } from '../utils/verdictFragment';
 
-// Display-only badge icons (non-interactive versions)
-const DiamondBadgeDisplay: React.FC<{ size?: number }> = ({ size = 28 }) => (
-  <div className="bg-gradient-to-br from-cyan-400 to-blue-600 p-1.5 rounded-lg shadow-lg shadow-cyan-500/40">
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="diamondGradientDisplay" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E0F7FF" />
-          <stop offset="30%" stopColor="#67E8F9" />
-          <stop offset="60%" stopColor="#22D3EE" />
-          <stop offset="100%" stopColor="#0891B2" />
-        </linearGradient>
-      </defs>
-      <path d="M12 2L4 9L12 22L20 9L12 2Z" fill="url(#diamondGradientDisplay)" stroke="#0E7490" strokeWidth="0.5" />
-      <path d="M12 2L4 9H20L12 2Z" fill="#A5F3FC" opacity="0.7" />
-      <path d="M4 9L12 22L12 9H4Z" fill="#22D3EE" opacity="0.5" />
-      <path d="M8 6L10 9L8 9L8 6Z" fill="#FFFFFF" opacity="0.8" />
-    </svg>
-  </div>
-);
-
-const GoldBadgeDisplay: React.FC<{ size?: number }> = ({ size = 28 }) => (
-  <div className="bg-gradient-to-br from-yellow-400 to-amber-600 p-1.5 rounded-lg shadow-lg shadow-amber-500/40">
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="goldGradientDisplay" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FEF3C7" />
-          <stop offset="30%" stopColor="#FCD34D" />
-          <stop offset="60%" stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#B45309" />
-        </linearGradient>
-        <linearGradient id="ribbonGradientDisplay" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#DC2626" />
-          <stop offset="50%" stopColor="#EF4444" />
-          <stop offset="100%" stopColor="#DC2626" />
-        </linearGradient>
-      </defs>
-      <path d="M8 4L6 1H9L10.5 4" fill="url(#ribbonGradientDisplay)" />
-      <path d="M16 4L18 1H15L13.5 4" fill="url(#ribbonGradientDisplay)" />
-      <circle cx="12" cy="14" r="8" fill="url(#goldGradientDisplay)" stroke="#92400E" strokeWidth="0.5" />
-      <circle cx="12" cy="14" r="5.5" fill="none" stroke="#B45309" strokeWidth="0.75" />
-      <path d="M12 10L13.09 12.26L15.5 12.63L13.75 14.34L14.18 16.73L12 15.58L9.82 16.73L10.25 14.34L8.5 12.63L10.91 12.26L12 10Z" fill="#FEF3C7" stroke="#B45309" strokeWidth="0.3" />
-      <ellipse cx="9.5" cy="11.5" rx="1.5" ry="1" fill="#FFFFFF" opacity="0.6" />
-    </svg>
-  </div>
-);
-
 interface QuoteResultCardProps {
   quote: Quote;
-  badge: 'diamond' | 'gold' | 'agreed' | 'disagreed';
+  verdict: 'agreed' | 'disagreed';
   index: number;
   candidates: Candidate[];
   issueProgress: Record<string, IssueProgress>;
-  topicId: string;
+  topicId: string | null;
   onViewAlignment: (candidateId: string) => void;
 }
 
-const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, candidates, issueProgress, topicId, onViewAlignment }) => {
+const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, verdict, index, candidates, issueProgress, topicId, onViewAlignment }) => {
   const candidate = candidates.find(c => c.id === quote.candidateId);
-
   if (!candidate) return null;
 
-  const getBorderColor = () => {
-    switch (badge) {
-      case 'diamond': return 'border-cyan-500';
-      case 'gold': return 'border-amber-500';
-      case 'agreed': return 'border-cyan-400';
-      case 'disagreed': return 'border-amber-400';
-      default: return 'border-gray-300';
-    }
-  };
+  const borderLeftColor = verdict === 'agreed' ? '#00657c' : '#d4cdc3';
 
   const getStatusBadge = () => {
-    switch (badge) {
-      case 'diamond':
-        return (
-          <div className="flex items-center gap-2">
-            <DiamondBadgeDisplay size={24} />
-            <span className="text-sm font-semibold text-cyan-700">Your Top Pick</span>
-          </div>
-        );
-      case 'gold':
-        return (
-          <div className="flex items-center gap-2">
-            <GoldBadgeDisplay size={24} />
-            <span className="text-sm font-semibold text-amber-700">Your Runner Up</span>
-          </div>
-        );
-      case 'agreed':
-        return (
-          <div className="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-700 px-3 py-1 rounded-full text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            You Agreed
-          </div>
-        );
-      case 'disagreed':
-        return (
-          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            You Disagreed
-          </div>
-        );
+    if (verdict === 'agreed') {
+      return (
+        <span style={{
+          fontFamily: "'Manrope', sans-serif",
+          fontSize: '0.6875rem',
+          fontWeight: 600,
+          color: '#0e7490',
+          backgroundColor: '#ecfeff',
+          padding: '0.25rem 0.625rem',
+          borderRadius: '9999px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+          Agreed
+        </span>
+      );
     }
+    return (
+      <span style={{
+        fontFamily: "'Manrope', sans-serif",
+        fontSize: '0.6875rem',
+        fontWeight: 600,
+        color: '#78716c',
+        backgroundColor: '#f5f5f4',
+        padding: '0.25rem 0.625rem',
+        borderRadius: '9999px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Disagreed
+      </span>
+    );
   };
 
   return (
     <motion.div
-      className={`bg-white rounded-xl border-2 ${getBorderColor()} shadow-md overflow-hidden`}
-      initial={{ opacity: 0, y: 30 }}
+      style={{
+        backgroundColor: '#fffefb',
+        border: '1px solid #e8e2d9',
+        borderLeft: `3px solid ${borderLeftColor}`,
+        borderRadius: '0.625rem',
+        overflow: 'hidden',
+      }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.4 }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Header with candidate info */}
-      <div className="p-4 bg-gray-50 border-b border-gray-100">
+      {/* Candidate header */}
+      <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e8e2d9', backgroundColor: '#faf7f2' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={candidate.photo}
               alt={candidate.name}
-              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow"
+              style={{
+                width: '2.75rem',
+                height: '2.75rem',
+                borderRadius: '9999px',
+                objectFit: 'cover',
+                border: '2px solid #fffefb',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+              }}
             />
             <div>
-              <h3 className="font-manrope font-bold text-lg text-gray-900">{candidate.name}</h3>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500">{candidate.office}</span>
-              </div>
+              <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
+                {candidate.name}
+              </h3>
+              <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
+                {candidate.office}
+              </span>
             </div>
           </div>
           {getStatusBadge()}
         </div>
       </div>
 
-      {/* Quote content */}
-      <div className="p-4">
-        <p className="text-gray-700 text-base leading-relaxed italic">"{quote.text}"</p>
+      {/* Quote */}
+      <div style={{ padding: '1.25rem 1.25rem 1rem' }}>
+        <p className="ev-quote-text" style={{ fontSize: '0.9375rem', margin: 0 }}>
+          &ldquo;{quote.text}&rdquo;
+        </p>
         {quote.sourceUrl && (
           <a
             href={quote.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-3 text-sm text-ev-muted-blue hover:text-ev-coral transition-colors"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              marginTop: '0.75rem',
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.8125rem',
+              color: '#00657c',
+              textDecoration: 'none',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            <span>{quote.sourceName || 'View Source'}</span>
+            <span>{quote.sourceName || 'Source'}</span>
           </a>
         )}
       </div>
 
-      {/* Action footer */}
-      <div className="px-4 pb-4">
+      {/* Actions */}
+      <div style={{ padding: '0 1.25rem 1.25rem', display: 'flex', gap: '0.5rem' }}>
         <button
           onClick={() => onViewAlignment(candidate.id)}
-          className="w-full py-2.5 px-4 bg-ev-coral hover:bg-red-600 text-white font-manrope font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
+          className="ev-button-primary"
+          style={{ flex: 1, fontSize: '0.8125rem', padding: '0.625rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem' }}
         >
-          <span>View Your Alignment</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          View Alignment
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
         <a
           href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined)}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-2 px-4 border border-ev-muted-blue text-ev-muted-blue font-manrope font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 text-sm hover:bg-ev-muted-blue hover:text-white mt-2"
+          className="ev-button-secondary"
+          style={{ flex: 1, fontSize: '0.8125rem', padding: '0.625rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem', textDecoration: 'none' }}
         >
-          <span>View on Essentials</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          Essentials
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
         </a>
       </div>
@@ -189,76 +168,43 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, badge, index, 
 
 export const ResultsPhase: React.FC = () => {
   const navigate = useNavigate();
-  const { rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments, goToHub, issueProgress, topicId } = useReadRankStore();
+  const { goToHub, issueProgress, currentIssueId, getCurrentIssueProgress } = useReadRankStore();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+
+  const progress = getCurrentIssueProgress();
+  const agreedQuotes = progress?.agreedQuotes ?? [];
+  const disagreedQuotes = progress?.disagreedQuotes ?? [];
 
   useEffect(() => {
     fetchQuotesData().then(data => {
       setCandidates(data.candidates);
-      // Brief delay for animation
       const timer = setTimeout(() => setLoading(false), 800);
       return () => clearTimeout(timer);
     });
   }, []);
 
-  // Organize quotes by badge priority: diamond, gold, other agreed, disagreed
   const organizedQuotes = useMemo(() => {
-    const result: { quote: Quote; badge: 'diamond' | 'gold' | 'agreed' | 'disagreed' }[] = [];
-
-    // All quotes that were agreed to (from rankedQuotes and agreedQuotes)
-    const allAgreedQuotes = [...rankedQuotes, ...agreedQuotes.filter(q =>
-      !rankedQuotes.find(rq => rq.id === q.id)
-    )];
-
-    // Diamond badge quote first
-    if (badgeAssignments.diamond) {
-      const diamondQuote = allAgreedQuotes.find(q => q.id === badgeAssignments.diamond);
-      if (diamondQuote) {
-        result.push({ quote: diamondQuote, badge: 'diamond' });
-      }
-    }
-
-    // Gold badge quote second
-    if (badgeAssignments.gold) {
-      const goldQuote = allAgreedQuotes.find(q => q.id === badgeAssignments.gold);
-      if (goldQuote) {
-        result.push({ quote: goldQuote, badge: 'gold' });
-      }
-    }
-
-    // Other agreed quotes (not diamond or gold)
-    allAgreedQuotes.forEach(quote => {
-      if (quote.id !== badgeAssignments.diamond && quote.id !== badgeAssignments.gold) {
-        result.push({ quote, badge: 'agreed' });
-      }
-    });
-
-    // Disagreed quotes last
-    disagreedQuotes.forEach(quote => {
-      result.push({ quote, badge: 'disagreed' });
-    });
-
+    const result: { quote: Quote; verdict: 'agreed' | 'disagreed' }[] = [];
+    agreedQuotes.forEach(quote => result.push({ quote, verdict: 'agreed' }));
+    disagreedQuotes.forEach(quote => result.push({ quote, verdict: 'disagreed' }));
     return result;
-  }, [rankedQuotes, agreedQuotes, disagreedQuotes, badgeAssignments]);
+  }, [agreedQuotes, disagreedQuotes]);
 
   const handleViewAlignment = (candidateId: string) => {
     navigate(`/candidate/${candidateId}/alignment`);
   };
 
-  const handleBackToIssues = () => {
-    goToHub();
-  };
-
   if (loading) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-16">
         <motion.div
-          className="inline-block w-8 h-8 border-4 border-ev-coral border-t-transparent rounded-full"
+          className="inline-block w-6 h-6 border-2 rounded-full"
+          style={{ borderColor: '#e8e2d9', borderTopColor: '#00657c' }}
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         />
-        <p className="mt-4 ev-text-primary text-base md:text-lg">
+        <p className="mt-4" style={{ fontFamily: "'Fraunces', serif", fontStyle: 'italic', color: '#64748b', fontSize: '1rem' }}>
           Revealing who said what...
         </p>
       </div>
@@ -266,96 +212,90 @@ export const ResultsPhase: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-8">
-      {/* Results intro text */}
+    <div className="pb-12">
+      {/* Header */}
       <motion.div
-        className="text-center max-w-3xl mx-auto"
+        className="text-center max-w-2xl mx-auto mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <h2 className="ev-heading text-2xl md:text-3xl mb-2">Here's Who Said What</h2>
-        <p className="ev-text-primary text-base md:text-lg">
-          See how your preferences align with each candidate's positions
+        <h2 style={{
+          fontFamily: "'Fraunces', serif",
+          fontWeight: 700,
+          fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+          color: '#1a1a2e',
+          marginBottom: '0.375rem',
+          letterSpacing: '-0.02em',
+        }}>
+          Here&rsquo;s Who Said What
+        </h2>
+        <p style={{ fontFamily: "'Manrope', sans-serif", color: '#64748b', fontSize: '0.9375rem' }}>
+          See how your preferences align with each candidate
         </p>
       </motion.div>
 
       {/* Summary Stats */}
       <motion.div
-        className="max-w-2xl mx-auto bg-ev-muted-blue/10 rounded-xl p-4 md:p-6"
-        initial={{ opacity: 0, scale: 0.95 }}
+        className="max-w-lg mx-auto mb-8"
+        initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+        transition={{ delay: 0.15, duration: 0.5 }}
+        style={{
+          backgroundColor: '#fffefb',
+          border: '1px solid #e8e2d9',
+          borderRadius: '0.625rem',
+          padding: '1.25rem',
+        }}
       >
-        <div className="grid grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-cyan-600">
-              {badgeAssignments.diamond ? 1 : 0}
+        <div className="grid grid-cols-2 gap-4 text-center">
+          {[
+            { label: 'Agreed', value: agreedQuotes.length, color: '#00657c' },
+            { label: 'Disagreed', value: disagreedQuotes.length, color: '#78716c' },
+          ].map(stat => (
+            <div key={stat.label}>
+              <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1.5rem', color: stat.color }}>
+                {stat.value}
+              </div>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
+                {stat.label}
+              </div>
             </div>
-            <div className="text-xs md:text-sm ev-text-primary">Diamond</div>
-          </div>
-          <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-amber-600">
-              {badgeAssignments.gold ? 1 : 0}
-            </div>
-            <div className="text-xs md:text-sm ev-text-primary">Gold</div>
-          </div>
-          <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-cyan-700">
-              {agreedQuotes.length + rankedQuotes.length - (badgeAssignments.diamond ? 1 : 0) - (badgeAssignments.gold ? 1 : 0)}
-            </div>
-            <div className="text-xs md:text-sm ev-text-primary">Agreed</div>
-          </div>
-          <div>
-            <div className="font-manrope font-bold text-xl md:text-2xl text-amber-700">
-              {disagreedQuotes.length}
-            </div>
-            <div className="text-xs md:text-sm ev-text-primary">Disagreed</div>
-          </div>
+          ))}
         </div>
       </motion.div>
 
-      {/* Quote Cards */}
-      <div className="max-w-3xl mx-auto space-y-4">
-        {organizedQuotes.map(({ quote, badge }, index) => (
+      {/* Result Cards */}
+      <div className="max-w-2xl mx-auto space-y-4">
+        {organizedQuotes.map(({ quote, verdict }, index) => (
           <QuoteResultCard
             key={quote.id}
             quote={quote}
-            badge={badge}
+            verdict={verdict}
             index={index}
             candidates={candidates}
             issueProgress={issueProgress}
-            topicId={topicId}
+            topicId={currentIssueId}
             onViewAlignment={handleViewAlignment}
           />
         ))}
       </div>
 
-      {/* Back to Issues Button */}
+      {/* Back to Issues */}
       <motion.div
-        className="flex justify-center pt-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
+        className="flex justify-center pt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
       >
         <motion.button
-          onClick={handleBackToIssues}
-          className="relative overflow-hidden bg-ev-coral hover:bg-red-600 text-white font-manrope font-bold text-base md:text-lg px-8 py-3 rounded-xl shadow-lg transition-all duration-300"
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
+          onClick={() => goToHub()}
+          className="ev-button-primary"
+          style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+          whileHover={{ scale: 1.03, y: -1 }}
+          whileTap={{ scale: 0.97 }}
         >
-          <motion.span
-            className="absolute inset-0 bg-white/20"
-            initial={{ x: '-100%', skewX: '-15deg' }}
-            animate={{ x: '200%' }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 4, ease: 'easeInOut' }}
-          />
-          <span className="relative flex items-center gap-2">
-            Explore More Issues
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </span>
+          Explore More Issues
         </motion.button>
       </motion.div>
     </div>

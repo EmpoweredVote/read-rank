@@ -5,35 +5,6 @@ import type { IssueData, Quote } from '../store/useReadRankStore';
 import { fetchQuotesData, getQuotesForIssue } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 
-const getIssueIcon = (issueId: string) => {
-  switch (issueId) {
-    case 'cannabis-legalization':
-      return (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      );
-    case 'education-funding':
-      return (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      );
-    case 'abortion-rights':
-      return (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      );
-  }
-};
-
 const getProgressInfo = (
   _issueId: string,
   progress: ReturnType<typeof useReadRankStore.getState>['issueProgress'][string] | undefined
@@ -51,15 +22,7 @@ const getProgressInfo = (
 
   if (progress.phase === 'evaluation') {
     const percent = totalQuotes > 0 ? Math.round((evaluatedQuotes / totalQuotes) * 50) : 0;
-    return {
-      status: 'in-progress',
-      text: `Evaluating (${evaluatedQuotes}/${totalQuotes})`,
-      percent
-    };
-  }
-
-  if (progress.phase === 'ranking') {
-    return { status: 'in-progress', text: 'Assigning badges', percent: 75 };
+    return { status: 'in-progress', text: `Evaluating (${evaluatedQuotes}/${totalQuotes})`, percent };
   }
 
   if (progress.phase === 'results') {
@@ -86,153 +49,211 @@ export const IssueHub: React.FC = () => {
   const handleSelectIssue = (issueId: string) => {
     const issue = issues.find(i => i.id === issueId);
     if (!issue) return;
-
-    // Get quotes for this issue and shuffle them
     const issueQuotes = getQuotesForIssue(quotes, issueId);
     const shuffledQuotes = shuffleArray(issueQuotes);
-
     selectIssue(issueId, shuffledQuotes, issue);
   };
 
-  // Count completed issues
   const completedCount = Object.values(issueProgress).filter(p => p.completed).length;
   const totalIssues = issues.length;
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <p className="ev-text-primary text-base md:text-lg">Loading issues...</p>
+      <div className="text-center py-16">
+        <div
+          className="inline-block w-6 h-6 border-2 rounded-full animate-spin"
+          style={{ borderColor: '#e8e2d9', borderTopColor: '#00657c' }}
+        />
+        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", color: '#64748b', fontSize: '0.9375rem' }}>
+          Loading issues...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-8">
-      {/* Header */}
+    <div className="pb-12">
+      {/* Editorial Header */}
       <motion.div
-        className="text-center max-w-3xl mx-auto"
+        className="text-center max-w-2xl mx-auto mb-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <h1 className="ev-heading text-2xl md:text-3xl mb-2">Choose an Issue</h1>
-        <p className="ev-text-primary text-base md:text-lg">
-          Select an issue to evaluate candidate positions. Each issue is evaluated independently.
+        {/* Decorative quotation mark */}
+        <div
+          style={{
+            fontFamily: "'Fraunces', serif",
+            fontSize: '4.5rem',
+            lineHeight: 1,
+            color: '#00657c',
+            opacity: 0.12,
+            marginBottom: '-1.5rem',
+          }}
+          aria-hidden="true"
+        >
+          {'\u201C'}
+        </div>
+
+        <h1
+          style={{
+            fontFamily: "'Fraunces', serif",
+            fontWeight: 700,
+            fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
+            color: '#1a1a2e',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Choose an Issue
+        </h1>
+        <p style={{
+          fontFamily: "'Manrope', sans-serif",
+          color: '#64748b',
+          fontSize: '1rem',
+          lineHeight: 1.6,
+          maxWidth: '28rem',
+          margin: '0 auto',
+        }}>
+          Evaluate candidate positions on the issues that matter to you.
         </p>
       </motion.div>
 
       {/* Progress summary */}
       <motion.div
-        className="max-w-md mx-auto bg-ev-muted-blue/10 rounded-xl p-4"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md mx-auto mb-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
+        style={{
+          backgroundColor: '#fffefb',
+          border: '1px solid #e8e2d9',
+          borderRadius: '0.5rem',
+          padding: '1rem 1.25rem',
+        }}
       >
-        <div className="flex items-center justify-between">
-          <span className="ev-text-primary font-medium">Overall Progress</span>
-          <span className="font-manrope font-bold text-ev-muted-blue">
-            {completedCount} of {totalIssues} issues completed
+        <div className="flex items-center justify-between mb-2">
+          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: '0.8125rem', color: '#64748b' }}>
+            Progress
+          </span>
+          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.8125rem', color: '#00657c' }}>
+            {completedCount}/{totalIssues}
           </span>
         </div>
-        <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-ev-muted-blue rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${(completedCount / totalIssues) * 100}%` }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          />
+        <div className="flex gap-1">
+          {Array.from({ length: totalIssues }).map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 h-1.5 rounded-full transition-all duration-500"
+              style={{ backgroundColor: i < completedCount ? '#00657c' : '#e8e2d9' }}
+            />
+          ))}
         </div>
       </motion.div>
 
       {/* Issue Cards */}
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="max-w-2xl mx-auto space-y-3">
         {issues.map((issue, index) => {
           const progress = issueProgress[issue.id];
           const progressInfo = getProgressInfo(issue.id, progress);
+          const isCompleted = progressInfo.status === 'completed';
+          const isInProgress = progressInfo.status === 'in-progress';
 
           return (
             <motion.button
               key={issue.id}
               onClick={() => handleSelectIssue(issue.id)}
-              className="w-full text-left bg-white rounded-xl border-2 border-gray-100 hover:border-ev-muted-blue shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
+              className="w-full text-left transition-all duration-200 group"
+              style={{
+                backgroundColor: '#fffefb',
+                border: '1px solid #e8e2d9',
+                borderRadius: '0.625rem',
+                borderLeft: `3px solid ${isCompleted ? '#00657c' : isInProgress ? '#ff5740' : '#d4cdc3'}`,
+                padding: 0,
+                cursor: 'pointer',
+              }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index, duration: 0.4 }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              transition={{ delay: 0.06 * index, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ x: 4, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+              whileTap={{ scale: 0.995 }}
             >
-              <div className="p-4 md:p-6">
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className={`p-3 rounded-xl ${
-                    progressInfo.status === 'completed'
-                      ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
-                      : progressInfo.status === 'in-progress'
-                        ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
-                        : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {getIssueIcon(issue.id)}
-                  </div>
+              <div className="p-4 md:p-5">
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <h3 style={{
+                    fontFamily: "'Fraunces', serif",
+                    fontWeight: 600,
+                    fontSize: '1.0625rem',
+                    color: '#1a1a2e',
+                  }}>
+                    {issue.title}
+                  </h3>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="font-manrope font-bold text-lg text-gray-900 truncate">
-                        {issue.title}
-                      </h3>
-                      {/* Status badge */}
-                      <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
-                        progressInfo.status === 'completed'
-                          ? 'bg-ev-muted-blue/10 text-ev-muted-blue'
-                          : progressInfo.status === 'in-progress'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {progressInfo.text}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {issue.question}
-                    </p>
-
-                    {/* Progress bar for in-progress issues */}
-                    {progressInfo.status === 'in-progress' && (
-                      <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-ev-muted-blue rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressInfo.percent}%` }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="shrink-0 text-gray-400">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
+                  {/* Status */}
+                  <span
+                    className="shrink-0"
+                    style={{
+                      fontFamily: "'Manrope', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      padding: '0.25rem 0.625rem',
+                      borderRadius: '9999px',
+                      letterSpacing: '0.03em',
+                      textTransform: 'uppercase' as const,
+                      backgroundColor: isCompleted ? '#e8f4f6' : isInProgress ? '#fff4f2' : '#f5f0e8',
+                      color: isCompleted ? '#00657c' : isInProgress ? '#e64a34' : '#94a3b8',
+                    }}
+                  >
+                    {progressInfo.text}
+                  </span>
                 </div>
+
+                <p style={{
+                  fontFamily: "'Manrope', sans-serif",
+                  fontSize: '0.8125rem',
+                  color: '#64748b',
+                  lineHeight: 1.5,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical' as const,
+                  overflow: 'hidden',
+                }}>
+                  {issue.question}
+                </p>
+
+                {/* Progress bar for in-progress */}
+                {isInProgress && (
+                  <div className="mt-3 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#e8e2d9' }}>
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: '#ff5740' }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressInfo.percent}%` }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                )}
               </div>
             </motion.button>
           );
         })}
       </div>
 
-      {/* Candidate Profiles Link */}
+      {/* Footer note */}
       {completedCount > 0 && (
-        <motion.div
-          className="max-w-2xl mx-auto pt-4"
+        <motion.p
+          className="text-center mt-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
+          style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.8125rem',
+            color: '#94a3b8',
+          }}
         >
-          <p className="text-center text-sm text-gray-500">
-            Rate quotes on each issue to see your alignment with candidates on their Essentials profile.
-          </p>
-        </motion.div>
+          Your verdicts appear on candidate profiles in Essentials.
+        </motion.p>
       )}
     </div>
   );
