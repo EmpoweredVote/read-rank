@@ -7,7 +7,6 @@ import { SwipeBackground } from './SwipeBackground';
 import { ActionButtons } from './ActionButtons';
 import { RankedListSidebar } from './AgreedQuotesSidebar';
 import { InlineRankPanel } from './InlineRankPanel';
-import { QuickConfirmation } from './QuickConfirmation';
 import { useDeviceType } from '../hooks/useDeviceType';
 
 export const EvaluationPhase: React.FC = () => {
@@ -16,6 +15,7 @@ export const EvaluationPhase: React.FC = () => {
     disagreeWithQuote,
     setPhase,
     skipRankPrompt,
+    dismissPending,
     getCurrentIssueProgress,
   } = useReadRankStore();
 
@@ -33,14 +33,16 @@ export const EvaluationPhase: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showFullRankList, setShowFullRankList] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [reorderMode, setReorderMode] = useState(false);
+  // Mobile bottom sheet visibility is driven by pendingRankQuoteId directly
 
   const dragX = useMotionValue(0);
   const cardXRef = useRef<MotionValue<number>>(dragX);
 
-  // Inline panel shows on mobile when: pending quote exists AND 2+ ranked quotes AND not showing full list
-  const showInlinePanel = !isMouseDevice && pendingRankQuoteId !== null && rankedQuotes.length >= 2 && !showFullRankList;
+  // Desktop: rank gate — show when mouse device AND pending exists AND 2+ ranked
+  const showRankGate = isMouseDevice && pendingRankQuoteId !== null && rankedQuotes.length >= 2;
+
+  // Mobile: bottom sheet shows when pending exists AND 2+ ranked AND not showing full list
+  const showBottomSheet = !isMouseDevice && pendingRankQuoteId !== null && rankedQuotes.length >= 2 && !showFullRankList;
 
   const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
     setIsDragging(dragging);
@@ -103,23 +105,10 @@ export const EvaluationPhase: React.FC = () => {
     }
   }, [pendingRankQuoteId, skipRankPrompt]);
 
+  // Issue 4: Always go straight to results — no confirmation step
   const handleComplete = useCallback(() => {
-    if (rankedQuotes.length >= 2) {
-      setShowConfirmation(true);
-    } else {
-      // 0 or 1 agrees — skip confirmation, go straight to results
-      setPhase('results');
-    }
-  }, [rankedQuotes.length, setPhase]);
-
-  const handleConfirm = useCallback(() => {
     setPhase('results');
   }, [setPhase]);
-
-  const handleReorder = useCallback(() => {
-    setShowConfirmation(false);
-    setReorderMode(true);
-  }, []);
 
   const isComplete = currentQuoteIndex >= quotesToEvaluate.length;
   const isLastQuote = currentQuoteIndex >= quotesToEvaluate.length - 1;
@@ -142,28 +131,71 @@ export const EvaluationPhase: React.FC = () => {
       {/* Quote Card */}
       {currentQuote ? (
         <>
-          <div className="swipe-card-container">
-            <SwipeBackground dragX={dragX} isDragging={isDragging} />
-            <div className="flex justify-center relative z-10">
-              <QuoteCard
-                key={currentQuote.id}
-                quote={currentQuote}
-                displayNumber={currentQuoteIndex + 1}
-                onDragStateChange={handleDragStateChange}
-                externalAnimating={isAnimating}
-              />
+          {/* Desktop rank gate: blur card when pending rank needs attention */}
+          <div
+            style={{
+              filter: showRankGate ? 'blur(3px)' : 'none',
+              pointerEvents: showRankGate ? 'none' : undefined,
+              transition: 'filter 0.2s ease',
+              userSelect: showRankGate ? 'none' : undefined,
+            }}
+          >
+            <div className="swipe-card-container">
+              <SwipeBackground dragX={dragX} isDragging={isDragging} />
+              <div className="flex justify-center relative z-10">
+                <QuoteCard
+                  key={currentQuote.id}
+                  quote={currentQuote}
+                  displayNumber={currentQuoteIndex + 1}
+                  onDragStateChange={handleDragStateChange}
+                  externalAnimating={isAnimating}
+                />
+              </div>
             </div>
+
+            {isMouseDevice && (
+              <ActionButtons
+                onAgree={() => handleButtonSwipe('agree')}
+                onDisagree={() => handleButtonSwipe('disagree')}
+                disabled={isAnimating}
+              />
+            )}
+
+            {!isMouseDevice && <SwipeInstructions />}
           </div>
 
-          {isMouseDevice && (
-            <ActionButtons
-              onAgree={() => handleButtonSwipe('agree')}
-              onDisagree={() => handleButtonSwipe('disagree')}
-              disabled={isAnimating}
-            />
+          {/* Desktop rank gate overlay prompt */}
+          {showRankGate && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.875rem 1rem',
+              backgroundColor: '#ecfeff',
+              border: '1px solid #a5f3fc',
+              borderRadius: '0.5rem',
+              marginTop: '0.5rem',
+            }}>
+              <p style={{
+                fontFamily: "'Manrope', sans-serif",
+                fontSize: '0.8125rem',
+                color: '#0e7490',
+                fontWeight: 500,
+                margin: 0,
+                textAlign: 'center',
+              }}>
+                Where does this rank? Drag in the sidebar to reorder, or
+              </p>
+              <button
+                onClick={() => dismissPending()}
+                className="ev-button-secondary"
+                style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', padding: '0.375rem 1rem' }}
+              >
+                Keep at #{rankedQuotes.length}
+              </button>
+            </div>
           )}
-
-          {!isMouseDevice && <SwipeInstructions />}
         </>
       ) : (
         <div className="evaluation-complete-card">
@@ -177,22 +209,6 @@ export const EvaluationPhase: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Mobile: Inline rank panel (after 2nd agree, when pending exists) */}
-      <AnimatePresence>
-        {showInlinePanel && (
-          <motion.div
-            key="inline-rank-panel"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            style={{ overflow: 'hidden' }}
-          >
-            <InlineRankPanel onDismiss={handleDismissPanel} />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Mobile: Nudge text on first skip */}
       {!isMouseDevice && rankSkipCount === 1 && pendingRankQuoteId && (
@@ -208,8 +224,8 @@ export const EvaluationPhase: React.FC = () => {
         </p>
       )}
 
-      {/* Mobile: Counter pill (visible when ranked quotes exist and not showing inline panel) */}
-      {!isMouseDevice && rankedQuotes.length > 0 && !showInlinePanel && (
+      {/* Mobile: Counter pill (visible when ranked quotes exist and not showing bottom sheet) */}
+      {!isMouseDevice && rankedQuotes.length > 0 && !showBottomSheet && (
         <div className="flex justify-center mt-3">
           <button
             onClick={() => setShowFullRankList(prev => !prev)}
@@ -233,7 +249,7 @@ export const EvaluationPhase: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile: Full rank list (triggered by counter pill) */}
+      {/* Mobile: Full rank list (triggered by counter pill, no pending context) */}
       {showFullRankList && !isMouseDevice && (
         <InlineRankPanel onDismiss={() => setShowFullRankList(false)} />
       )}
@@ -248,7 +264,7 @@ export const EvaluationPhase: React.FC = () => {
       )}
 
       {/* See Your Results button */}
-      {(isLastQuote || isComplete) && !showConfirmation && !reorderMode && (
+      {(isLastQuote || isComplete) && (
         <div className="flex justify-center pt-4">
           <button
             onClick={handleComplete}
@@ -257,18 +273,6 @@ export const EvaluationPhase: React.FC = () => {
           >
             See Your Results
           </button>
-        </div>
-      )}
-
-      {/* Quick Confirmation */}
-      {showConfirmation && (
-        <QuickConfirmation onConfirm={handleConfirm} onReorder={handleReorder} />
-      )}
-
-      {/* Reorder mode */}
-      {reorderMode && (
-        <div className="mt-4">
-          <InlineRankPanel onDismiss={() => { setReorderMode(false); setShowConfirmation(true); }} />
         </div>
       )}
     </div>
@@ -290,10 +294,64 @@ export const EvaluationPhase: React.FC = () => {
     );
   }
 
-  // Mobile: Single column
+  // Mobile: Single column with bottom sheet overlay
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
       {evaluationContent}
+
+      {/* Mobile: Bottom sheet for ranking (slides up from bottom when pending exists) */}
+      <AnimatePresence>
+        {showBottomSheet && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="rank-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={handleDismissPanel}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(26, 26, 46, 0.35)',
+                zIndex: 40,
+              }}
+            />
+            {/* Bottom sheet */}
+            <motion.div
+              key="rank-bottom-sheet"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                backgroundColor: '#fffefb',
+                borderTop: '1px solid #e8e2d9',
+                borderRadius: '1rem 1rem 0 0',
+                padding: '1.25rem 1rem 2rem',
+                maxHeight: '75vh',
+                overflowY: 'auto',
+              }}
+            >
+              {/* Handle bar */}
+              <div style={{
+                width: '2.5rem',
+                height: '0.25rem',
+                backgroundColor: '#d4cdc3',
+                borderRadius: '9999px',
+                margin: '0 auto 1rem',
+              }} />
+              <InlineRankPanel onDismiss={handleDismissPanel} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

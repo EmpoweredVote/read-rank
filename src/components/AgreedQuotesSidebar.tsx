@@ -78,7 +78,7 @@ const SortableCompactQuoteCard: React.FC<CompactQuoteCardProps> = ({ quote, rank
         </div>
 
         {/* Quote */}
-        <div style={{ fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontWeight: 400, fontSize: '0.8125rem', lineHeight: 1.5, color: '#1a1a2e' }}>
+        <div style={{ fontFamily: "'Manrope', sans-serif", fontStyle: 'normal', fontWeight: 400, fontSize: '0.8125rem', lineHeight: 1.5, color: '#2d2d44' }}>
           {quote.text}
         </div>
       </div>

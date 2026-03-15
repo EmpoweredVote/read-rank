@@ -77,12 +77,12 @@ const InlineSortableCard: React.FC<InlineSortableCardProps> = ({ quote, rank, is
         </div>
         {/* Quote text */}
         <div style={{
-          fontFamily: "'Fraunces', serif",
-          fontStyle: 'italic',
+          fontFamily: "'Manrope', sans-serif",
+          fontStyle: 'normal',
           fontWeight: 400,
           fontSize: '0.8125rem',
           lineHeight: 1.5,
-          color: '#1a1a2e',
+          color: '#2d2d44',
         }}>
           {quote.text}
         </div>
