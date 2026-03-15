@@ -162,7 +162,6 @@ export const MatchupPhase: React.FC<MatchupPhaseProps> = ({ onMatchupComplete })
             alignItems: 'center',
             justifyContent: 'center',
             alignSelf: 'center',
-            flexShrink: 0,
             animation: 'vsPulse 2s ease-in-out infinite',
           }}>
             <span style={{
