@@ -50,7 +50,17 @@ export interface IssueData {
   question: string;
 }
 
-export type Phase = 'hub' | 'evaluation' | 'results';
+export type Phase = 'hub' | 'practice' | 'evaluation' | 'results';
+
+export interface PracticeProgress {
+  phase: 'evaluation' | 'results';
+  currentQuoteIndex: number;
+  rankedQuotes: RankedQuote[];
+  disagreedQuotes: Quote[];
+  matchupWins: Record<string, number>;
+  completedMatchupPairs: string[];
+  activeMatchupPair: [string, string] | null;
+}
 
 // Progress state for a single issue
 export interface IssueProgress {
@@ -77,6 +87,10 @@ interface ReadRankState {
   // Per-issue progress tracking
   issueProgress: Record<string, IssueProgress>;
 
+  // Practice state
+  practiceCompleted: boolean;
+  practiceProgress: PracticeProgress | null;
+
   // Actions
   setPhase: (phase: Phase) => void;
   selectIssue: (issueId: string, quotes: Quote[], issueData: IssueData) => void;
@@ -93,10 +107,20 @@ interface ReadRankState {
   reset: () => void;
   resetIssue: (issueId: string) => void;
 
+  // Practice actions
+  startPractice: () => void;
+  agreePracticeQuote: (quote: Quote) => void;
+  disagreePracticeQuote: (quote: Quote) => void;
+  nextPracticeQuote: () => void;
+  recordPracticeMatchupWin: (winnerId: string, loserId: string) => void;
+  completePractice: () => void;
+  skipPractice: () => void;
+
   // Helpers
   getCurrentIssueProgress: () => IssueProgress | null;
   getIssueProgress: (issueId: string) => IssueProgress | null;
   getAllIssueProgress: () => Record<string, IssueProgress>;
+  getPracticeProgress: () => PracticeProgress | null;
 }
 
 const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
@@ -119,6 +143,8 @@ const initialState = {
   phase: 'hub' as Phase,
   currentIssueId: null as string | null,
   issueProgress: {} as Record<string, IssueProgress>,
+  practiceCompleted: false,
+  practiceProgress: null as PracticeProgress | null,
 };
 
 export const useReadRankStore = create<ReadRankState>()(
@@ -409,6 +435,109 @@ export const useReadRankStore = create<ReadRankState>()(
         set({ issueProgress: newProgress });
       },
 
+      startPractice: () => {
+        set({
+          phase: 'practice' as Phase,
+          practiceProgress: {
+            phase: 'evaluation',
+            currentQuoteIndex: 0,
+            rankedQuotes: [],
+            disagreedQuotes: [],
+            matchupWins: {},
+            completedMatchupPairs: [],
+            activeMatchupPair: null,
+          },
+        });
+      },
+
+      agreePracticeQuote: (quote) => {
+        const state = get();
+        const progress = state.practiceProgress;
+        if (!progress) return;
+
+        const newRank = progress.rankedQuotes.length + 1;
+        const rankedQuote: RankedQuote = { ...quote, rank: newRank, timestamp: Date.now() };
+        const updatedRanked = [...progress.rankedQuotes, rankedQuote];
+
+        let activeMatchupPair: [string, string] | null = progress.activeMatchupPair;
+        if (updatedRanked.length >= 2) {
+          const pending = getPendingMatchups(updatedRanked, progress.completedMatchupPairs);
+          activeMatchupPair = pending.length > 0 ? pending[0] : null;
+        }
+
+        set({
+          practiceProgress: {
+            ...progress,
+            rankedQuotes: updatedRanked,
+            currentQuoteIndex: progress.currentQuoteIndex + 1,
+            activeMatchupPair,
+          },
+        });
+      },
+
+      disagreePracticeQuote: (quote) => {
+        const state = get();
+        const progress = state.practiceProgress;
+        if (!progress) return;
+
+        set({
+          practiceProgress: {
+            ...progress,
+            disagreedQuotes: [...progress.disagreedQuotes, quote],
+            currentQuoteIndex: progress.currentQuoteIndex + 1,
+          },
+        });
+      },
+
+      nextPracticeQuote: () => {
+        // No-op — index already advanced in agree/disagree actions
+      },
+
+      recordPracticeMatchupWin: (winnerId, loserId) => {
+        const state = get();
+        const progress = state.practiceProgress;
+        if (!progress) return;
+
+        const newWins = {
+          ...progress.matchupWins,
+          [winnerId]: (progress.matchupWins[winnerId] ?? 0) + 1,
+        };
+
+        const pairKey = makePairKey(winnerId, loserId);
+        const newCompletedPairs = [...progress.completedMatchupPairs, pairKey];
+
+        const reranked = computeRankings(progress.rankedQuotes, newWins);
+
+        const pending = getPendingMatchups(reranked, newCompletedPairs);
+        const nextPair: [string, string] | null = pending.length > 0 ? pending[0] : null;
+
+        set({
+          practiceProgress: {
+            ...progress,
+            matchupWins: newWins,
+            completedMatchupPairs: newCompletedPairs,
+            rankedQuotes: reranked,
+            activeMatchupPair: nextPair,
+          },
+        });
+      },
+
+      completePractice: () => {
+        set({
+          phase: 'hub' as Phase,
+          practiceCompleted: true,
+          practiceProgress: null,
+        });
+      },
+
+      skipPractice: () => {
+        set({
+          phase: 'hub' as Phase,
+          practiceCompleted: true,
+          practiceProgress: null,
+        });
+      },
+
       getCurrentIssueProgress: () => {
         const state = get();
         if (!state.currentIssueId) return null;
@@ -423,18 +552,31 @@ export const useReadRankStore = create<ReadRankState>()(
       getAllIssueProgress: () => {
         return get().issueProgress;
       },
+
+      getPracticeProgress: () => {
+        return get().practiceProgress;
+      },
     }),
     {
       name: 'ev_readrank',
-      version: 4,
-      migrate: (_persistedState, _version) => {
-        // v4 migration: wipe all old state — returning users with v3 localStorage land on hub cleanly
-        return { phase: 'hub' as Phase, currentIssueId: null as string | null, issueProgress: {} as Record<string, IssueProgress> };
+      version: 5,
+      migrate: (_persistedState, version) => {
+        // v5 migration: existing users (version > 0) skip practice; new users see it
+        const isUpgrade = version > 0;
+        return {
+          phase: 'hub' as Phase,
+          currentIssueId: null as string | null,
+          issueProgress: {} as Record<string, IssueProgress>,
+          practiceCompleted: isUpgrade,
+          practiceProgress: null as PracticeProgress | null,
+        };
       },
       partialize: (state) => ({
         phase: state.phase,
         currentIssueId: state.currentIssueId,
         issueProgress: state.issueProgress,
+        practiceCompleted: state.practiceCompleted,
+        practiceProgress: state.practiceProgress,
       }),
     }
   )
