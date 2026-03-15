@@ -1,15 +1,8 @@
-import type { Quote, RankedQuote, Candidate, MatchingResult, BadgeAssignment } from '../store/useReadRankStore';
+import type { Quote, RankedQuote, Candidate, MatchingResult } from '../store/useReadRankStore';
 
 interface QuoteCandidateMap {
   [quoteId: string]: string; // quoteId -> candidateId
 }
-
-// Badge-based scoring: Diamond = 5, Gold = 3, Others = 1
-const BADGE_POINTS = {
-  diamond: 5,
-  gold: 3,
-  none: 1,
-};
 
 /**
  * Shuffle an array randomly using Fisher-Yates algorithm
@@ -24,25 +17,20 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * Calculate alignment between user badge assignments and candidate responses
- * Scoring: Diamond = 5 points, Gold = 3 points, Other agreed quotes = 1 point
+ * Calculate alignment between user rank positions and candidate responses.
+ * Scoring: rank 1 gets N points, rank 2 gets N-1, ..., rank N gets 1 point.
+ * maxPossiblePoints = N * (N + 1) / 2 (triangular sum).
  */
 export function calculateAlignment(
   rankedQuotes: RankedQuote[],
   quoteCandidateMap: QuoteCandidateMap,
-  candidates: Candidate[],
-  badgeAssignments?: BadgeAssignment
+  candidates: Candidate[]
 ): MatchingResult[] {
-  // Helper to get points for a quote based on badge assignment
-  const getPointsForQuote = (quoteId: string): number => {
-    if (badgeAssignments?.diamond === quoteId) return BADGE_POINTS.diamond;
-    if (badgeAssignments?.gold === quoteId) return BADGE_POINTS.gold;
-    return BADGE_POINTS.none;
-  };
+  const totalQuotes = rankedQuotes.length;
 
   // Group quotes by candidate
   const candidatePoints: { [candidateId: string]: number } = {};
-  const candidateQuoteMatches: { [candidateId: string]: Array<{ userRank: number; quoteId: string; points: number; badge?: string }> } = {};
+  const candidateQuoteMatches: { [candidateId: string]: Array<{ userRank: number; quoteId: string; points: number }> } = {};
 
   // Initialize candidate tracking
   candidates.forEach(candidate => {
@@ -50,33 +38,23 @@ export function calculateAlignment(
     candidateQuoteMatches[candidate.id] = [];
   });
 
-  // Calculate points for each quote based on badges
+  // Score by rank position: rank 1 (index 0) gets totalQuotes points, rank N gets 1 point
   rankedQuotes.forEach((rankedQuote, index) => {
     const candidateId = quoteCandidateMap[rankedQuote.id];
-    if (candidateId && candidatePoints.hasOwnProperty(candidateId)) {
-      const points = getPointsForQuote(rankedQuote.id);
+    if (candidateId && Object.prototype.hasOwnProperty.call(candidatePoints, candidateId)) {
+      const points = totalQuotes - index; // rank 1 = totalQuotes, rank N = 1
       candidatePoints[candidateId] += points;
-
-      // Determine badge type for this quote
-      let badge: string | undefined;
-      if (badgeAssignments?.diamond === rankedQuote.id) badge = 'diamond';
-      else if (badgeAssignments?.gold === rankedQuote.id) badge = 'gold';
 
       candidateQuoteMatches[candidateId].push({
         userRank: index + 1,
         quoteId: rankedQuote.id,
         points,
-        badge
       });
     }
   });
 
-  // Calculate maximum possible points
-  // Max = diamond (5) + gold (3) + remaining quotes at 1 point each
-  const numQuotes = rankedQuotes.length;
-  let maxPossiblePoints = numQuotes; // All quotes worth 1 point base
-  if (numQuotes >= 1) maxPossiblePoints += (BADGE_POINTS.diamond - 1); // Diamond adds 4 extra
-  if (numQuotes >= 2) maxPossiblePoints += (BADGE_POINTS.gold - 1); // Gold adds 2 extra
+  // Maximum possible points = triangular sum: N * (N + 1) / 2
+  const maxPossiblePoints = totalQuotes * (totalQuotes + 1) / 2;
 
   // Create results for all candidates
   const results: MatchingResult[] = candidates.map(candidate => {
@@ -93,7 +71,7 @@ export function calculateAlignment(
       alignmentPercent,
       issuesAligned,
       totalIssues: rankedQuotes.length,
-      rankedQuoteMatches: candidateQuoteMatches[candidate.id]
+      rankedQuoteMatches: candidateQuoteMatches[candidate.id],
     };
   });
 
@@ -120,14 +98,13 @@ export function createQuoteCandidateMap(quotes: Quote[]): QuoteCandidateMap {
 export async function fetchMatchingResults(
   rankedQuotes: RankedQuote[],
   allQuotes: Quote[],
-  candidates: Candidate[],
-  badgeAssignments?: BadgeAssignment
+  candidates: Candidate[]
 ): Promise<MatchingResult[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
 
   const quoteCandidateMap = createQuoteCandidateMap(allQuotes);
-  return calculateAlignment(rankedQuotes, quoteCandidateMap, candidates, badgeAssignments);
+  return calculateAlignment(rankedQuotes, quoteCandidateMap, candidates);
 }
 
 /**
@@ -136,13 +113,13 @@ export async function fetchMatchingResults(
 export function generateMockCandidatesForRanking(rankedQuotes: RankedQuote[], baseCandidates: Candidate[]): Candidate[] {
   // Create a more realistic distribution based on ranking
   const shuffled = [...baseCandidates].sort(() => Math.random() - 0.5);
-  
+
   return shuffled.map((candidate, index) => {
     // Calculate alignment based on position in ranked quotes
     const alignmentBase = Math.max(30, 95 - (index * 8));
     const randomVariation = Math.floor(Math.random() * 20) - 10; // ±10 variation
     const alignmentPercent = Math.max(20, Math.min(95, alignmentBase + randomVariation));
-    
+
     return {
       ...candidate,
       alignmentPercent,
