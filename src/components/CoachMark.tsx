@@ -1,0 +1,447 @@
+// CoachMark.tsx
+// Reusable spotlight overlay system for guided tours and contextual hints.
+// Renders via createPortal above all content at z-index 60+.
+// TypeScript port of CompassV2/src/components/CoachMark.jsx
+// NOTE: useCoachMark hook intentionally NOT ported — Zustand store handles persistence.
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Padding around the spotlight cutout (px)
+const SPOTLIGHT_PADDING = 8;
+// Border radius of the cutout (px)
+const CUTOUT_RADIUS = 8;
+// Tooltip width (px) for positioning calculation
+const TOOLTIP_WIDTH = 280;
+// Tooltip approximate height (px) for positioning calculation
+const TOOLTIP_HEIGHT = 140;
+// Minimum gap between tooltip and viewport edge (px)
+const VIEWPORT_MARGIN = 12;
+
+interface CoachMarkProps {
+  targetRef: React.RefObject<HTMLDivElement | null>;
+  message?: React.ReactNode;
+  children?: React.ReactNode;
+  onDismiss?: () => void;
+  onNext?: () => void;
+  onSkipAll?: () => void;
+  stepLabel?: string;
+  show?: boolean;
+  allowSpotlightInteraction?: boolean;
+}
+
+interface Rect {
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+}
+
+interface TooltipPosition {
+  top: number;
+  left: number;
+  placement: "below" | "above" | "right" | "left";
+}
+
+type Placement = "below" | "above" | "right" | "left";
+
+/**
+ * Calculate the best tooltip position relative to the spotlight rect.
+ * Prefers below, falls back to above, left, right.
+ */
+function calcTooltipPosition(rect: Rect, vpWidth: number, vpHeight: number): TooltipPosition {
+  const cutoutTop = rect.top - SPOTLIGHT_PADDING;
+  const cutoutBottom = rect.bottom + SPOTLIGHT_PADDING;
+  const cutoutLeft = rect.left - SPOTLIGHT_PADDING;
+  const cutoutRight = rect.right + SPOTLIGHT_PADDING;
+  const cutoutCenterX = (cutoutLeft + cutoutRight) / 2;
+
+  // Preferred: below
+  const belowTop = cutoutBottom + 12;
+  const belowLeft = Math.min(
+    Math.max(cutoutCenterX - TOOLTIP_WIDTH / 2, VIEWPORT_MARGIN),
+    vpWidth - TOOLTIP_WIDTH - VIEWPORT_MARGIN
+  );
+  if (belowTop + TOOLTIP_HEIGHT < vpHeight - VIEWPORT_MARGIN) {
+    return { top: belowTop, left: belowLeft, placement: "below" };
+  }
+
+  // Fallback: above
+  const aboveTop = cutoutTop - TOOLTIP_HEIGHT - 12;
+  if (aboveTop > VIEWPORT_MARGIN) {
+    return {
+      top: Math.max(aboveTop, VIEWPORT_MARGIN),
+      left: belowLeft,
+      placement: "above",
+    };
+  }
+
+  // Fallback: right
+  const rightLeft = cutoutRight + 12;
+  const sideTop = Math.min(
+    Math.max(rect.top, VIEWPORT_MARGIN),
+    vpHeight - TOOLTIP_HEIGHT - VIEWPORT_MARGIN
+  );
+  if (rightLeft + TOOLTIP_WIDTH < vpWidth - VIEWPORT_MARGIN) {
+    return { top: sideTop, left: rightLeft, placement: "right" };
+  }
+
+  // Fallback: left
+  const leftLeft = cutoutLeft - TOOLTIP_WIDTH - 12;
+  return {
+    top: sideTop,
+    left: Math.max(leftLeft, VIEWPORT_MARGIN),
+    placement: "left",
+  };
+}
+
+/**
+ * Build an SVG mask definition string for the overlay.
+ * The mask covers the full viewport with a transparent rectangle cut out around the target.
+ */
+function buildClipPath(rect: Rect, vpWidth: number, vpHeight: number): Rect {
+  const top = Math.max(0, rect.top - SPOTLIGHT_PADDING);
+  const left = Math.max(0, rect.left - SPOTLIGHT_PADDING);
+  const right = Math.min(vpWidth, rect.right + SPOTLIGHT_PADDING);
+  const bottom = Math.min(vpHeight, rect.bottom + SPOTLIGHT_PADDING);
+  return { top, left, right, bottom };
+}
+
+/**
+ * Caret arrow SVG pointing toward the spotlight.
+ * placement: "below" → caret points up (above tooltip)
+ *            "above" → caret points down
+ *            "right" → caret points left
+ *            "left"  → caret points right
+ */
+function Caret({ placement }: { placement: Placement }): JSX.Element {
+  const commonCls = "absolute w-4 h-4 fill-white drop-shadow-sm";
+  if (placement === "below") {
+    // caret at top-center of tooltip pointing up
+    return (
+      <svg
+        className={commonCls}
+        style={{ top: -12, left: "50%", transform: "translateX(-50%)" }}
+        viewBox="0 0 16 8"
+      >
+        <polygon points="8,0 16,8 0,8" />
+      </svg>
+    );
+  }
+  if (placement === "above") {
+    // caret at bottom-center of tooltip pointing down
+    return (
+      <svg
+        className={commonCls}
+        style={{ bottom: -12, left: "50%", transform: "translateX(-50%)" }}
+        viewBox="0 0 16 8"
+      >
+        <polygon points="0,0 16,0 8,8" />
+      </svg>
+    );
+  }
+  if (placement === "right") {
+    // caret on left side of tooltip pointing left
+    return (
+      <svg
+        className={commonCls}
+        style={{ left: -12, top: "50%", transform: "translateY(-50%)" }}
+        viewBox="0 0 8 16"
+      >
+        <polygon points="8,0 8,16 0,8" />
+      </svg>
+    );
+  }
+  // "left" → caret on right side of tooltip pointing right
+  return (
+    <svg
+      className={commonCls}
+      style={{ right: -12, top: "50%", transform: "translateY(-50%)" }}
+      viewBox="0 0 8 16"
+    >
+      <polygon points="0,0 0,16 8,8" />
+    </svg>
+  );
+}
+
+/**
+ * CoachMark — Figma/Notion-style immersive spotlight overlay.
+ *
+ * @param props.targetRef - Ref to the element to spotlight
+ * @param props.message - Tooltip content (also accepts children)
+ * @param props.children - Alias for message
+ * @param props.onDismiss - Called on "Got it" (single hint mode)
+ * @param props.onNext - Called on "Next" (tour mode; presence enables tour UI)
+ * @param props.onSkipAll - Called on "Skip All" (tour mode)
+ * @param props.stepLabel - e.g. "1 of 4" shown in tour mode
+ * @param props.show - Controls visibility
+ * @param props.allowSpotlightInteraction - If true, spotlight area has no overlay so clicks pass through
+ */
+export default function CoachMark({
+  targetRef,
+  message,
+  children,
+  onDismiss,
+  onNext,
+  onSkipAll,
+  stepLabel,
+  show = true,
+  allowSpotlightInteraction = false,
+}: CoachMarkProps): React.ReactPortal {
+  const [rect, setRect] = useState<Rect | null>(null);
+  const [vpSize, setVpSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  const measureTarget = useCallback(() => {
+    if (!targetRef?.current) return;
+    const r = targetRef.current.getBoundingClientRect();
+    setRect({ top: r.top, left: r.left, right: r.right, bottom: r.bottom });
+    setVpSize({ w: window.innerWidth, h: window.innerHeight });
+  }, [targetRef]);
+
+  // Scroll target into view if off-screen, then measure
+  useEffect(() => {
+    if (!show || !targetRef?.current) return;
+
+    const el = targetRef.current;
+    const r = el.getBoundingClientRect();
+    const isOffScreen =
+      r.bottom < 0 || r.top > window.innerHeight ||
+      r.right < 0 || r.left > window.innerWidth;
+
+    if (isOffScreen) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [show, targetRef]);
+
+  // Measure on mount and whenever the target element resizes
+  useEffect(() => {
+    if (!show) return;
+
+    // Small delay to let any scrollIntoView settle before first measurement
+    const measureDelay = setTimeout(measureTarget, 80);
+
+    // ResizeObserver on the target element
+    if (targetRef?.current && typeof ResizeObserver !== "undefined") {
+      observerRef.current = new ResizeObserver(measureTarget);
+      observerRef.current.observe(targetRef.current);
+    }
+
+    // Also update on scroll / window resize
+    window.addEventListener("resize", measureTarget, { passive: true });
+    window.addEventListener("scroll", measureTarget, { passive: true, capture: true });
+
+    return () => {
+      clearTimeout(measureDelay);
+      observerRef.current?.disconnect();
+      window.removeEventListener("resize", measureTarget);
+      window.removeEventListener("scroll", measureTarget, { capture: true });
+    };
+  }, [show, measureTarget, targetRef]);
+
+  // Escape key dismisses the coachmark
+  useEffect(() => {
+    if (!show) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (onNext && onSkipAll) onSkipAll();
+        else if (onDismiss) onDismiss();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [show, onNext, onSkipAll, onDismiss]);
+
+  const isTourMode = typeof onNext === "function";
+  const content = children ?? message;
+  const { w: vpW, h: vpH } = vpSize;
+
+  // Derive spotlight and tooltip positions from the measured rect
+  let cutout: Rect | null = null;
+  let tooltipPos: TooltipPosition | null = null;
+  let placement: Placement = "below";
+  if (rect) {
+    cutout = buildClipPath(rect, vpW, vpH);
+    const pos = calcTooltipPosition(rect, vpW, vpH);
+    tooltipPos = pos;
+    placement = pos.placement;
+  }
+
+  // When allowSpotlightInteraction is true we render 4 separate dim
+  // rectangles around the cutout so the spotlight area has NO overlay
+  // and real pointer events pass through to the page elements.
+  // When false we use the original single-div + SVG-mask approach.
+  const renderBackdrop = () => {
+    if (!cutout) {
+      // No rect yet — dim whole screen
+      return (
+        <motion.div
+          key="coach-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0"
+          style={{ zIndex: 60 }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+        </motion.div>
+      );
+    }
+
+    if (allowSpotlightInteraction) {
+      // 4-rect approach: top, bottom, left, right strips around the cutout.
+      // The spotlight area is completely uncovered — real clicks pass through.
+      const dimStyle = "bg-black/60";
+      return (
+        <motion.div
+          key="coach-backdrop-interactive"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {/* Top strip: full width, from viewport top to cutout top */}
+          <div
+            className={`fixed ${dimStyle}`}
+            style={{ zIndex: 60, top: 0, left: 0, right: 0, height: cutout.top }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+          {/* Bottom strip: full width, from cutout bottom to viewport bottom */}
+          <div
+            className={`fixed ${dimStyle}`}
+            style={{ zIndex: 60, top: cutout.bottom, left: 0, right: 0, bottom: 0 }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+          {/* Left strip: between top and bottom strips, from left edge to cutout left */}
+          <div
+            className={`fixed ${dimStyle}`}
+            style={{ zIndex: 60, top: cutout.top, left: 0, width: cutout.left, height: cutout.bottom - cutout.top }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+          {/* Right strip: between top and bottom strips, from cutout right to right edge */}
+          <div
+            className={`fixed ${dimStyle}`}
+            style={{ zIndex: 60, top: cutout.top, left: cutout.right, right: 0, height: cutout.bottom - cutout.top }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+        </motion.div>
+      );
+    }
+
+    // Default: single overlay with SVG mask cutout (blocks all clicks)
+    return (
+      <motion.div
+        key="coach-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0"
+        style={{ zIndex: 60 }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <svg
+          width={vpW}
+          height={vpH}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+        >
+          <defs>
+            <mask id="coach-spotlight-mask">
+              <rect width={vpW} height={vpH} fill="white" />
+              <rect
+                x={cutout.left}
+                y={cutout.top}
+                width={cutout.right - cutout.left}
+                height={cutout.bottom - cutout.top}
+                rx={CUTOUT_RADIUS}
+                ry={CUTOUT_RADIUS}
+                fill="black"
+              />
+            </mask>
+          </defs>
+          <rect
+            width={vpW}
+            height={vpH}
+            fill="rgba(0,0,0,0.6)"
+            mask="url(#coach-spotlight-mask)"
+          />
+        </svg>
+      </motion.div>
+    );
+  };
+
+  const overlay = (
+    <AnimatePresence>
+      {show && (
+        <>
+          {renderBackdrop()}
+
+          {/* Tooltip card */}
+          {tooltipPos && (
+            <motion.div
+              key="coach-tooltip"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              style={{
+                position: "fixed",
+                top: tooltipPos.top,
+                left: tooltipPos.left,
+                width: TOOLTIP_WIDTH,
+                zIndex: 61,
+              }}
+              className="bg-white rounded-2xl shadow-xl px-5 py-4"
+            >
+              {/* Caret arrow pointing toward spotlight */}
+              <Caret placement={placement} />
+
+              {/* Step label (tour mode) */}
+              {stepLabel && (
+                <p className="text-xs font-medium text-gray-400 mb-1 select-none">
+                  {stepLabel}
+                </p>
+              )}
+
+              {/* Content */}
+              <div className="text-gray-800 text-sm leading-snug mb-4">
+                {content}
+              </div>
+
+              {/* Action buttons */}
+              {isTourMode ? (
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    onClick={onSkipAll}
+                    className="text-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    Skip All
+                  </button>
+                  <button
+                    onClick={onNext}
+                    className="px-5 py-2 bg-black text-white text-sm font-semibold rounded-full hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <button
+                    onClick={onDismiss}
+                    className="px-5 py-2 bg-black text-white text-sm font-semibold rounded-full hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Got it
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </>
+      )}
+    </AnimatePresence>
+  );
+
+  return createPortal(overlay, document.body);
+}
