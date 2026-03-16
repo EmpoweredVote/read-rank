@@ -593,6 +593,18 @@ body::before {
   padding: 1rem;
 }
 
+/* Matchup Full-Width Layout — hides sidebar during head-to-head */
+.matchup-full-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.matchup-full-main {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 /* ============================================
    Agreed Quotes Sidebar
    ============================================ */

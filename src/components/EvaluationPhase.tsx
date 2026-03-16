@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useMotionValue, MotionValue, animate } from 'framer-motion';
+import { useMotionValue, MotionValue, animate, motion } from 'framer-motion';
 import { useReadRankStore, type Quote } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
 import { SwipeInstructions } from './SwipeInstructions';
@@ -350,6 +350,56 @@ export const EvaluationPhase: React.FC = () => {
       )}
     </>
   );
+
+  // Desktop: End-of-evaluation centered layout
+  if (isComplete && !showMatchupMode && isMouseDevice) {
+    return (
+      <div>
+        <motion.div
+          className="max-w-2xl mx-auto space-y-5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="text-center mb-4">
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 600, fontSize: '1rem', color: '#00657c' }}>
+              All quotes evaluated
+            </p>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: '#94a3b8' }}>
+              {rankedQuotes.length} ranked &middot; {disagreedQuotes.length} disagreed
+            </p>
+          </div>
+          <RankedListSidebar ref={sidebarRef} />
+          {showResultsButton && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={handleComplete}
+                className="ev-button-primary animate-gentle-pulse"
+                style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+              >
+                See Your Results
+              </button>
+            </div>
+          )}
+        </motion.div>
+        {coachMarkOverlay}
+      </div>
+    );
+  }
+
+  // Desktop: Matchup full-width layout (hides sidebar)
+  if (showMatchupMode && isMouseDevice) {
+    return (
+      <div>
+        <div className="matchup-full-layout">
+          <div className="matchup-full-main">
+            {evaluationContent}
+          </div>
+        </div>
+        {coachMarkOverlay}
+      </div>
+    );
+  }
 
   // Desktop: Split layout
   if (isMouseDevice) {
