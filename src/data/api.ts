@@ -38,3 +38,36 @@ export function getQuotesForIssue(quotes: Quote[], issueId: string): Quote[] {
 export function getCandidateById(candidates: Candidate[], id: string): Candidate | undefined {
   return candidates.find(c => c.id === id);
 }
+
+export interface SearchPolitician {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface SearchPoliticiansResult {
+  status: string;
+  data: SearchPolitician[];
+  formattedAddress: string;
+  error?: string;
+}
+
+export async function searchPoliticians(query: string): Promise<SearchPoliticiansResult> {
+  try {
+    const res = await fetch(`${API_BASE}/essentials/politicians/search`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const status = res.headers.get('X-Data-Status') || res.headers.get('x-data-status') || '';
+    const formattedAddress = res.headers.get('X-Formatted-Address') || res.headers.get('x-formatted-address') || '';
+    if (!res.ok) {
+      return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '' };
+    }
+    const data: SearchPolitician[] = await res.json();
+    return { status: status || 'fresh', data, formattedAddress };
+  } catch (error) {
+    return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '' };
+  }
+}

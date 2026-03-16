@@ -79,6 +79,11 @@ export interface IssueProgress {
   activeMatchupPair: [string, string] | null; // current matchup pair IDs; null = swipe mode
 }
 
+export interface LocationFilter {
+  address: string;
+  politicianIds: string[];
+}
+
 interface ReadRankState {
   // Current navigation state
   phase: Phase;
@@ -94,6 +99,11 @@ interface ReadRankState {
   // Coach marks state
   coachMarksCompleted: boolean;
   completeCoachMarks: () => void;
+
+  // Location filter state
+  locationFilter: LocationFilter | null;
+  setLocationFilter: (filter: LocationFilter | null) => void;
+  clearLocationFilter: () => void;
 
   // Actions
   setPhase: (phase: Phase) => void;
@@ -150,6 +160,7 @@ const initialState = {
   practiceCompleted: false,
   practiceProgress: null as PracticeProgress | null,
   coachMarksCompleted: false,
+  locationFilter: null as LocationFilter | null,
 };
 
 export const useReadRankStore = create<ReadRankState>()(
@@ -545,6 +556,9 @@ export const useReadRankStore = create<ReadRankState>()(
 
       completeCoachMarks: () => set({ coachMarksCompleted: true }),
 
+      setLocationFilter: (filter) => set({ locationFilter: filter }),
+      clearLocationFilter: () => set({ locationFilter: null }),
+
       getCurrentIssueProgress: () => {
         const state = get();
         if (!state.currentIssueId) return null;
@@ -566,9 +580,9 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 6,
+      version: 7,
       migrate: (_persistedState, version) => {
-        // v6 migration: existing users (version > 0) skip practice and coach marks; new users see them
+        // v7 migration: existing users (version > 0) skip practice and coach marks; new users see them
         const isUpgrade = version > 0;
         return {
           phase: 'hub' as Phase,
@@ -577,6 +591,7 @@ export const useReadRankStore = create<ReadRankState>()(
           practiceCompleted: isUpgrade,
           practiceProgress: null as PracticeProgress | null,
           coachMarksCompleted: isUpgrade,
+          locationFilter: null,
         };
       },
       partialize: (state) => ({
@@ -586,6 +601,7 @@ export const useReadRankStore = create<ReadRankState>()(
         practiceCompleted: state.practiceCompleted,
         practiceProgress: state.practiceProgress,
         coachMarksCompleted: state.coachMarksCompleted,
+        locationFilter: state.locationFilter,
       }),
     }
   )
