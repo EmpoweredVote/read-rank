@@ -1,14 +1,39 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { SiteHeader } from '@chrisandrewsedu/ev-ui';
 import { PhaseContainer } from './components/PhaseContainer';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
 import { useAuthState } from './hooks/useAuthState';
 import { useReadRankStore } from './store/useReadRankStore';
+import { searchPoliticians } from './data/api';
 
 function MainApp() {
   const { isLoggedIn, userName, loading, logout } = useAuthState();
-  const { reset } = useReadRankStore();
+  const { reset, setLocationFilter } = useReadRankStore();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const address = searchParams.get('address');
+    if (!address) return;
+    const decoded = decodeURIComponent(address);
+    // Strip param immediately to avoid re-processing
+    setSearchParams(prev => {
+      prev.delete('address');
+      return prev;
+    }, { replace: true });
+    // Search for politicians and apply filter
+    searchPoliticians(decoded).then(result => {
+      if (result.data.length > 0) {
+        setLocationFilter({
+          address: decoded,
+          politicianIds: result.data.map(p => p.id),
+        });
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
   const handleClearReadRank = () => {
     if (!window.confirm("Clear all your Read & Rank progress? This can't be undone.")) return;

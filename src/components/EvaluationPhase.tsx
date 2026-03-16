@@ -19,10 +19,17 @@ export const EvaluationPhase: React.FC = () => {
     getCurrentIssueProgress,
     coachMarksCompleted,
     completeCoachMarks,
+    locationFilter,
   } = useReadRankStore();
 
   const progress = getCurrentIssueProgress();
   const quotesToEvaluate = progress?.quotesToEvaluate ?? [];
+  // When location filter is active, only show quotes from local representatives
+  const effectiveQuotesToEvaluate = locationFilter
+    ? quotesToEvaluate.filter(q =>
+        q.candidateId && locationFilter.politicianIds.includes(q.candidateId)
+      )
+    : quotesToEvaluate;
   const currentQuoteIndex = progress?.currentQuoteIndex ?? 0;
   const rankedQuotes = progress?.rankedQuotes ?? [];
   const disagreedQuotes = progress?.disagreedQuotes ?? [];
@@ -86,9 +93,9 @@ export const EvaluationPhase: React.FC = () => {
     });
   }, [dragX]);
 
-  const currentQuote = quotesToEvaluate[currentQuoteIndex];
-  const progressPercent = quotesToEvaluate.length > 0
-    ? Math.round(((currentQuoteIndex + 1) / quotesToEvaluate.length) * 100)
+  const currentQuote = effectiveQuotesToEvaluate[currentQuoteIndex];
+  const progressPercent = effectiveQuotesToEvaluate.length > 0
+    ? Math.round(((currentQuoteIndex + 1) / effectiveQuotesToEvaluate.length) * 100)
     : 0;
 
   const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
@@ -169,8 +176,8 @@ export const EvaluationPhase: React.FC = () => {
     setPhase('results');
   }, [setPhase]);
 
-  const isComplete = currentQuoteIndex >= quotesToEvaluate.length;
-  const isLastQuote = currentQuoteIndex >= quotesToEvaluate.length - 1;
+  const isComplete = currentQuoteIndex >= effectiveQuotesToEvaluate.length;
+  const isLastQuote = currentQuoteIndex >= effectiveQuotesToEvaluate.length - 1;
   // Results button only shows when all quotes evaluated AND no pending matchups
   const showResultsButton = (isLastQuote || isComplete) && activeMatchupPair === null;
 
@@ -179,7 +186,7 @@ export const EvaluationPhase: React.FC = () => {
       {/* Progress */}
       <div className="text-center">
         <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.375rem' }}>
-          {Math.min(currentQuoteIndex + 1, quotesToEvaluate.length)} of {quotesToEvaluate.length}
+          {Math.min(currentQuoteIndex + 1, effectiveQuotesToEvaluate.length)} of {effectiveQuotesToEvaluate.length}
         </p>
         <div className="w-full h-1 rounded-full" style={{ backgroundColor: '#e8e2d9' }}>
           <div

@@ -4,6 +4,7 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import type { IssueData, Quote } from '../store/useReadRankStore';
 import { fetchQuotesData, getQuotesForIssue } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
+import { AddressFilterInput } from './AddressFilterInput';
 
 const getProgressInfo = (
   _issueId: string,
@@ -33,7 +34,7 @@ const getProgressInfo = (
 };
 
 export const IssueHub: React.FC = () => {
-  const { issueProgress, selectIssue } = useReadRankStore();
+  const { issueProgress, selectIssue, locationFilter } = useReadRankStore();
   const [issues, setIssues] = useState<IssueData[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,8 +55,22 @@ export const IssueHub: React.FC = () => {
     selectIssue(issueId, shuffledQuotes, issue);
   };
 
+  // Filter issues to only show those with 2+ unique local politicians who have quotes
+  const filteredIssues = locationFilter
+    ? issues.filter(issue => {
+        const localPoliticianSet = new Set(locationFilter.politicianIds);
+        const uniqueLocalReps = new Set(
+          quotes
+            .filter(q => q.issue === issue.id && q.candidateId && localPoliticianSet.has(q.candidateId))
+            .map(q => q.candidateId as string)
+        );
+        return uniqueLocalReps.size >= 2;
+      })
+    : issues;
+
   const completedCount = Object.values(issueProgress).filter(p => p.completed).length;
   const totalIssues = issues.length;
+  const displayedIssues = filteredIssues;
 
   if (loading) {
     return (
@@ -119,6 +134,18 @@ export const IssueHub: React.FC = () => {
         </p>
       </motion.div>
 
+      {/* Address Filter Input */}
+      <AddressFilterInput />
+      {locationFilter && (
+        <p className="text-center mb-4" style={{
+          fontFamily: "'Manrope', sans-serif",
+          fontSize: '0.8125rem',
+          color: '#64748b',
+        }}>
+          Showing {displayedIssues.length} of {issues.length} issues
+        </p>
+      )}
+
       {/* Progress summary */}
       <motion.div
         className="max-w-md mx-auto mb-8"
@@ -153,7 +180,7 @@ export const IssueHub: React.FC = () => {
 
       {/* Issue Cards */}
       <div className="max-w-2xl mx-auto space-y-3">
-        {issues.map((issue, index) => {
+        {displayedIssues.map((issue, index) => {
           const progress = issueProgress[issue.id];
           const progressInfo = getProgressInfo(issue.id, progress);
           const isCompleted = progressInfo.status === 'completed';
