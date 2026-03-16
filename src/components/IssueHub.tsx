@@ -98,7 +98,7 @@ export const IssueHub: React.FC = () => {
         {/* Decorative quotation mark */}
         <div
           style={{
-            fontFamily: "'Fraunces', serif",
+            fontFamily: "'Manrope', sans-serif",
             fontSize: '4.5rem',
             lineHeight: 1,
             color: '#00657c',
@@ -112,8 +112,8 @@ export const IssueHub: React.FC = () => {
 
         <h1
           style={{
-            fontFamily: "'Fraunces', serif",
-            fontWeight: 700,
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 800,
             fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
             color: '#1a1a2e',
             marginBottom: '0.5rem',
@@ -208,8 +208,8 @@ export const IssueHub: React.FC = () => {
               <div className="p-4 md:p-5">
                 <div className="flex items-center justify-between gap-3 mb-1">
                   <h3 style={{
-                    fontFamily: "'Fraunces', serif",
-                    fontWeight: 600,
+                    fontFamily: "'Manrope', sans-serif",
+                    fontWeight: 700,
                     fontSize: '1.0625rem',
                     color: '#1a1a2e',
                   }}>

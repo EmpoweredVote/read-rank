@@ -217,7 +217,7 @@ export const EvaluationPhase: React.FC = () => {
         ) : (
           <div className="evaluation-complete-card">
             <div className="text-center py-8">
-              <div style={{ fontFamily: "'Fraunces', serif", fontSize: '2rem', color: '#00657c', marginBottom: '0.75rem' }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '2rem', color: '#00657c', marginBottom: '0.75rem' }}>
                 Done
               </div>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>

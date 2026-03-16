@@ -22,9 +22,9 @@ export const QuickConfirmation: React.FC<QuickConfirmationProps> = ({ onConfirm,
     >
       {/* Header */}
       <h3 style={{
-        fontFamily: "'Fraunces', serif",
+        fontFamily: "'Manrope', sans-serif",
         fontSize: '1.25rem',
-        fontWeight: 600,
+        fontWeight: 800,
         color: '#1a1a2e',
         marginTop: 0,
         marginBottom: '1rem',

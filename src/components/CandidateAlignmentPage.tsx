@@ -212,7 +212,7 @@ export const CandidateAlignmentPage: React.FC = () => {
               />
               <div className="text-center md:text-left">
                 <h1 style={{
-                  fontFamily: "'Fraunces', serif", fontWeight: 700,
+                  fontFamily: "'Manrope', sans-serif", fontWeight: 800,
                   fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: '#ffffff',
                   margin: '0 0 0.25rem',
                 }}>
@@ -253,7 +253,7 @@ export const CandidateAlignmentPage: React.FC = () => {
                       </svg>
                     </div>
                   </div>
-                  <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1.375rem', color: stat.color }}>
+                  <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.375rem', color: stat.color }}>
                     {stat.value}
                   </div>
                   <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.625rem', color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
@@ -284,7 +284,7 @@ export const CandidateAlignmentPage: React.FC = () => {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <h2 style={{
-            fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.25rem',
+            fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '1.25rem',
             color: '#1a1a2e', marginBottom: '1rem',
           }}>
             Issue-by-Issue Breakdown
@@ -312,7 +312,7 @@ export const CandidateAlignmentPage: React.FC = () => {
                 }}>
                   <div className="flex items-center justify-between">
                     <h3 style={{
-                      fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem',
+                      fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '1rem',
                       color: '#1a1a2e', margin: 0,
                     }}>
                       {issueData.issueTitle}

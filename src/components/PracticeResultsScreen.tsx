@@ -19,8 +19,8 @@ export const PracticeResultsScreen: React.FC = () => {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         <h2 style={{
-          fontFamily: "'Fraunces', serif",
-          fontWeight: 700,
+          fontFamily: "'Manrope', sans-serif",
+          fontWeight: 800,
           fontSize: 'clamp(1.5rem, 4vw, 2rem)',
           color: '#1a1a2e',
           marginBottom: '0.375rem',
@@ -52,7 +52,7 @@ export const PracticeResultsScreen: React.FC = () => {
             { label: 'Disagreed', value: disagreedQuotes.length, color: '#78716c' },
           ].map(stat => (
             <div key={stat.label}>
-              <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1.5rem', color: stat.color }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: stat.color }}>
                 {stat.value}
               </div>
               <div style={{
@@ -106,7 +106,7 @@ export const PracticeResultsScreen: React.FC = () => {
                         {character.avatar?.emoji ?? '🍕'}
                       </div>
                       <div>
-                        <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
+                        <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
                           {character.name}
                         </h3>
                         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
@@ -186,7 +186,7 @@ export const PracticeResultsScreen: React.FC = () => {
                         {character.avatar?.emoji ?? '🍕'}
                       </div>
                       <div>
-                        <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
+                        <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a2e', margin: 0 }}>
                           {character.name}
                         </h3>
                         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: '#64748b' }}>
