@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import type { Quote, Candidate, IssueProgress } from '../store/useReadRankStore';
 import { fetchQuotesData } from '../data/api';
 import { buildEssentialsProfileUrl } from '../utils/verdictFragment';
 
 // ============================================================
-// MegaParticles — copied from MatchCard.tsx (lines 12-64)
+// MegaParticles — copied from MatchCard.tsx
 // CRITICAL: inline --dx / --dy custom properties required so
 // megaBurst keyframe can read var(--dx) / var(--dy).
 // ============================================================
@@ -66,16 +66,14 @@ const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
 };
 
 // ============================================================
-// RevealResultCard
+// ResultCard — shows quote, identity, and CTA immediately
 // ============================================================
 
-interface RevealResultCardProps {
+interface ResultCardProps {
   quote: Quote;
   verdict: 'agreed' | 'disagreed';
   index: number;
   candidate: Candidate;
-  revealed: boolean;
-  revealPhase: 'idle' | 'anticipation' | 'revealing' | 'done';
   rank?: number;
   issueProgress: Record<string, IssueProgress>;
   topicId: string | null;
@@ -83,13 +81,11 @@ interface RevealResultCardProps {
   prefersReducedMotion: boolean | null;
 }
 
-const RevealResultCard: React.FC<RevealResultCardProps> = ({
+const ResultCard: React.FC<ResultCardProps> = ({
   quote,
   verdict,
   index,
   candidate,
-  revealed,
-  revealPhase,
   rank,
   issueProgress,
   topicId,
@@ -98,20 +94,17 @@ const RevealResultCard: React.FC<RevealResultCardProps> = ({
 }) => {
   const borderLeftColor = verdict === 'agreed' ? '#00657c' : '#d4cdc3';
 
-  // Particle burst active when this card's stagger slot has elapsed
-  const staggerDelay = prefersReducedMotion ? 0 : index * 200;
+  // Fire particle burst on card entry
   const [particlesActive, setParticlesActive] = useState(false);
-
   useEffect(() => {
-    if (revealPhase === 'revealing') {
-      const t = setTimeout(() => {
-        setParticlesActive(true);
-        // Burst lasts ~1s, then clear
-        setTimeout(() => setParticlesActive(false), 1000);
-      }, staggerDelay);
-      return () => clearTimeout(t);
-    }
-  }, [revealPhase, staggerDelay]);
+    if (prefersReducedMotion) return;
+    const delay = index * 80 + 400; // after card entry animation
+    const t = setTimeout(() => {
+      setParticlesActive(true);
+      setTimeout(() => setParticlesActive(false), 1000);
+    }, delay);
+    return () => clearTimeout(t);
+  }, [index, prefersReducedMotion]);
 
   const getStatusBadge = () => {
     if (verdict === 'agreed') {
@@ -206,121 +199,100 @@ const RevealResultCard: React.FC<RevealResultCardProps> = ({
         </p>
       </div>
 
-      {/* Revealed identity section */}
-      <AnimatePresence>
-        {revealed && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, scaleY: 0 }}
-            animate={{ opacity: 1, height: 'auto', scaleY: 1 }}
-            transition={{
-              delay: prefersReducedMotion ? 0 : index * 0.2,
-              duration: 0.4,
-              ease: [0.22, 1, 0.36, 1],
+      {/* Candidate identity */}
+      <div
+        style={{
+          padding: '0.75rem 1.25rem',
+          borderTop: '1px solid #e8e2d9',
+          borderBottom: '1px solid #e8e2d9',
+          backgroundColor: '#faf7f2',
+          position: 'relative',
+        }}
+      >
+        {!prefersReducedMotion && <MegaParticles active={particlesActive} />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img
+            src={candidate.photo}
+            alt={candidate.name}
+            style={{
+              width: '2.75rem',
+              height: '2.75rem',
+              borderRadius: '9999px',
+              objectFit: 'cover',
+              border: '2px solid #fffefb',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+              flexShrink: 0,
             }}
-            style={{ transformOrigin: 'top', overflow: 'hidden' }}
-          >
-            {/* Candidate identity */}
-            <div
-              style={{
-                padding: '0.75rem 1.25rem',
-                borderTop: '1px solid #e8e2d9',
-                borderBottom: '1px solid #e8e2d9',
-                backgroundColor: '#faf7f2',
-                position: 'relative',
-              }}
-            >
-              {!prefersReducedMotion && <MegaParticles active={particlesActive} />}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <img
-                  src={candidate.photo}
-                  alt={candidate.name}
-                  style={{
-                    width: '2.75rem',
-                    height: '2.75rem',
-                    borderRadius: '9999px',
-                    objectFit: 'cover',
-                    border: '2px solid #fffefb',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                    flexShrink: 0,
-                  }}
-                />
-                <div>
-                  <div style={{
-                    fontFamily: "'Manrope', sans-serif",
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    color: '#1a1a2e',
-                  }}>
-                    {candidate.name}
-                  </div>
-                  <div style={{
-                    fontFamily: "'Manrope', sans-serif",
-                    fontSize: '0.75rem',
-                    color: '#64748b',
-                  }}>
-                    {candidate.office}
-                  </div>
-                </div>
-              </div>
+          />
+          <div>
+            <div style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontWeight: 600,
+              fontSize: '1rem',
+              color: '#1a1a2e',
+            }}>
+              {candidate.name}
             </div>
+            <div style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.75rem',
+              color: '#64748b',
+            }}>
+              {candidate.office}
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Source link */}
-            {quote.sourceUrl && (
-              <div style={{ padding: '0.625rem 1.25rem 0' }}>
-                <a
-                  href={quote.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    fontFamily: "'Manrope', sans-serif",
-                    fontSize: '0.8125rem',
-                    color: '#00657c',
-                    textDecoration: 'none',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  <span>{quote.sourceName || 'Source'}</span>
-                </a>
-              </div>
-            )}
+      {/* Source link */}
+      {quote.sourceUrl && (
+        <div style={{ padding: '0.625rem 1.25rem 0' }}>
+          <a
+            href={quote.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.8125rem',
+              color: '#00657c',
+              textDecoration: 'none',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            <span>{quote.sourceName || 'Source'}</span>
+          </a>
+        </div>
+      )}
 
-            {/* CTA — View on Essentials — fades in after all reveals done */}
-            <motion.div
-              style={{ padding: '0.75rem 1.25rem 1.25rem' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: revealPhase === 'done' ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <a
-                href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined, address)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ev-button-primary"
-                style={{
-                  width: '100%',
-                  fontSize: '0.8125rem',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.375rem',
-                }}
-              >
-                View on Essentials
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* CTA — View on Essentials */}
+      <div style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
+        <a
+          href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined, address)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ev-button-primary"
+          style={{
+            width: '100%',
+            fontSize: '0.8125rem',
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.375rem',
+          }}
+        >
+          View on Essentials
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
     </motion.div>
   );
 };
@@ -333,8 +305,6 @@ export const ResultsPhase: React.FC = () => {
   const { goToHub, issueProgress, currentIssueId, getCurrentIssueProgress, locationFilter } = useReadRankStore();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [revealed, setRevealed] = useState(false);
-  const [revealPhase, setRevealPhase] = useState<'idle' | 'anticipation' | 'revealing' | 'done'>('idle');
   const prefersReducedMotion = useReducedMotion();
 
   const progress = getCurrentIssueProgress();
@@ -356,18 +326,6 @@ export const ResultsPhase: React.FC = () => {
     return result;
   }, [rankedQuotes, disagreedQuotes]);
 
-  const handleReveal = async () => {
-    if (revealPhase !== 'idle') return;
-    setRevealPhase('anticipation');
-    // 300ms anticipation pause (skip if reduced motion)
-    await new Promise(r => setTimeout(r, prefersReducedMotion ? 0 : 300));
-    setRevealed(true);
-    setRevealPhase('revealing');
-    // Wait for all card staggers to complete
-    const totalRevealTime = prefersReducedMotion ? 100 : (organizedQuotes.length * 200 + 400);
-    setTimeout(() => setRevealPhase('done'), totalRevealTime);
-  };
-
   if (loading) {
     return (
       <div className="text-center py-16">
@@ -378,7 +336,7 @@ export const ResultsPhase: React.FC = () => {
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         />
         <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, color: '#64748b', fontSize: '1rem' }}>
-          Revealing who said what...
+          Loading results...
         </p>
       </div>
     );
@@ -438,47 +396,18 @@ export const ResultsPhase: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Reveal Button — only shown when idle */}
-      <AnimatePresence>
-        {revealPhase === 'idle' && (
-          <motion.div
-            className="flex justify-center my-8"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <button
-              onClick={handleReveal}
-              disabled={revealPhase !== 'idle'}
-              className="ev-button-primary animate-gentle-pulse"
-              style={{
-                fontSize: '1.125rem',
-                padding: '1rem 2.5rem',
-                borderRadius: '0.75rem',
-                letterSpacing: '0.02em',
-              }}
-            >
-              Reveal Who Said It
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Result Cards */}
+      {/* Result Cards — identities shown immediately */}
       <div className="max-w-2xl mx-auto space-y-4">
         {organizedQuotes.map(({ quote, verdict, rank }, index) => {
           const candidate = candidates.find(c => c.id === quote.candidateId);
           if (!candidate) return null;
           return (
-            <RevealResultCard
+            <ResultCard
               key={quote.id}
               quote={quote}
               verdict={verdict}
               index={index}
               candidate={candidate}
-              revealed={revealed}
-              revealPhase={revealPhase}
               rank={rank}
               issueProgress={issueProgress}
               topicId={currentIssueId}
@@ -489,12 +418,12 @@ export const ResultsPhase: React.FC = () => {
         })}
       </div>
 
-      {/* Explore More Issues — appears after all reveals complete */}
+      {/* Explore More Issues */}
       <motion.div
         className="flex justify-center pt-8"
         initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: revealPhase === 'done' ? 1 : 0, y: revealPhase === 'done' ? 0 : 12 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: organizedQuotes.length * 0.08 + 0.5, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
         <button
           onClick={() => goToHub()}

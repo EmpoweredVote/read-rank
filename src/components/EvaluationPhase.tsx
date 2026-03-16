@@ -302,7 +302,7 @@ export const EvaluationPhase: React.FC = () => {
             className="ev-button-primary animate-gentle-pulse"
             style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
           >
-            See Your Results
+            See Who Said It
           </button>
         </div>
       )}
@@ -377,7 +377,7 @@ export const EvaluationPhase: React.FC = () => {
                 className="ev-button-primary animate-gentle-pulse"
                 style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
               >
-                See Your Results
+                See Who Said It
               </button>
             </div>
           )}
