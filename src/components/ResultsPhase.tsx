@@ -14,9 +14,10 @@ interface QuoteResultCardProps {
   issueProgress: Record<string, IssueProgress>;
   topicId: string | null;
   onViewAlignment: (candidateId: string) => void;
+  address?: string;
 }
 
-const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, verdict, index, candidates, issueProgress, topicId, onViewAlignment }) => {
+const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, verdict, index, candidates, issueProgress, topicId, onViewAlignment, address }) => {
   const candidate = candidates.find(c => c.id === quote.candidateId);
   if (!candidate) return null;
 
@@ -150,7 +151,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, verdict, index
           </svg>
         </button>
         <a
-          href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined)}
+          href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined, address)}
           target="_blank"
           rel="noopener noreferrer"
           className="ev-button-secondary"
@@ -168,7 +169,7 @@ const QuoteResultCard: React.FC<QuoteResultCardProps> = ({ quote, verdict, index
 
 export const ResultsPhase: React.FC = () => {
   const navigate = useNavigate();
-  const { goToHub, issueProgress, currentIssueId, getCurrentIssueProgress } = useReadRankStore();
+  const { goToHub, issueProgress, currentIssueId, getCurrentIssueProgress, locationFilter } = useReadRankStore();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
 
@@ -277,6 +278,7 @@ export const ResultsPhase: React.FC = () => {
             issueProgress={issueProgress}
             topicId={currentIssueId}
             onViewAlignment={handleViewAlignment}
+            address={locationFilter?.address}
           />
         ))}
       </div>

@@ -35,8 +35,10 @@ export function buildVerdictFragment(
 export function buildEssentialsProfileUrl(
   candidateId: string,
   issueProgress: Record<string, IssueProgress>,
-  topicId?: string
+  topicId?: string,
+  address?: string
 ): string {
   const fragment = buildVerdictFragment(issueProgress, topicId);
-  return `${ESSENTIALS_BASE}/politician/${candidateId}${fragment}`;
+  const query = address ? `?q=${encodeURIComponent(address)}` : '';
+  return `${ESSENTIALS_BASE}/politician/${candidateId}${query}${fragment}`;
 }
