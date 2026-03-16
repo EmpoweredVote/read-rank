@@ -66,7 +66,8 @@ const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
 };
 
 // ============================================================
-// ResultCard — shows quote, identity, and CTA immediately
+// ResultCard — compact layout with inline badge, source below
+// quote, and politician row with View on Essentials
 // ============================================================
 
 interface ResultCardProps {
@@ -92,13 +93,11 @@ const ResultCard: React.FC<ResultCardProps> = ({
   address,
   prefersReducedMotion,
 }) => {
-  const borderLeftColor = verdict === 'agreed' ? '#00657c' : '#d4cdc3';
-
   // Fire particle burst on card entry
   const [particlesActive, setParticlesActive] = useState(false);
   useEffect(() => {
     if (prefersReducedMotion) return;
-    const delay = index * 80 + 400; // after card entry animation
+    const delay = index * 80 + 400;
     const t = setTimeout(() => {
       setParticlesActive(true);
       setTimeout(() => setParticlesActive(false), 1000);
@@ -106,74 +105,13 @@ const ResultCard: React.FC<ResultCardProps> = ({
     return () => clearTimeout(t);
   }, [index, prefersReducedMotion]);
 
-  const getStatusBadge = () => {
-    if (verdict === 'agreed') {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-          <span style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontSize: '0.6875rem',
-            fontWeight: 600,
-            color: '#0e7490',
-            backgroundColor: '#ecfeff',
-            padding: '0.25rem 0.625rem',
-            borderRadius: '9999px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 13l4 4L19 7" />
-            </svg>
-            Agreed
-          </span>
-          {rank !== undefined && (
-            <span style={{
-              fontFamily: "'Manrope', sans-serif",
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              color: '#fffefb',
-              backgroundColor: '#00657c',
-              width: '1.25rem',
-              height: '1.25rem',
-              borderRadius: '9999px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {rank}
-            </span>
-          )}
-        </div>
-      );
-    }
-    return (
-      <span style={{
-        fontFamily: "'Manrope', sans-serif",
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-        color: '#78716c',
-        backgroundColor: '#f5f5f4',
-        padding: '0.25rem 0.625rem',
-        borderRadius: '9999px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-      }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-        Disagreed
-      </span>
-    );
-  };
+  const IMG_WIDTH = '3.5rem';
 
   return (
     <motion.div
       style={{
         backgroundColor: '#fffefb',
         border: '1px solid #e8e2d9',
-        borderLeft: `3px solid ${borderLeftColor}`,
         borderRadius: '0.625rem',
         overflow: 'hidden',
         opacity: verdict === 'disagreed' ? 0.7 : 1,
@@ -182,116 +120,166 @@ const ResultCard: React.FC<ResultCardProps> = ({
       animate={{ opacity: verdict === 'disagreed' ? 0.7 : 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Quote section */}
-      <div style={{ padding: '1.25rem 1.25rem 1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.625rem' }}>
-          {getStatusBadge()}
-        </div>
-        <p style={{
-          fontFamily: "'Manrope', sans-serif",
-          fontWeight: 500,
-          fontSize: '0.9375rem',
-          lineHeight: 1.6,
-          color: '#1a1a2e',
-          margin: 0,
+      {/* Quote row: rank column on left, quote + source on right */}
+      <div style={{ display: 'flex', alignItems: 'stretch' }}>
+        {/* Rank / verdict bar — muted blue background, same width as photo below */}
+        <div style={{
+          width: IMG_WIDTH,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: verdict === 'agreed' ? '#00657c' : '#a8a29e',
+          borderRadius: '0.375rem 0 0 0',
         }}>
-          &ldquo;{quote.text}&rdquo;
-        </p>
+          {verdict === 'agreed' && rank !== undefined ? (
+            <span style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              color: '#fffefb',
+            }}>
+              {rank}
+            </span>
+          ) : verdict === 'agreed' ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fffefb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fffefb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          )}
+        </div>
+
+        {/* Quote text + source — left padding matches politician row inner padding */}
+        <div style={{ flex: 1, padding: '0.875rem 1rem 0.75rem 1rem' }}>
+          <p style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 500,
+            fontSize: '0.9375rem',
+            lineHeight: 1.6,
+            color: '#1a1a2e',
+            margin: 0,
+          }}>
+            &ldquo;{quote.text}&rdquo;
+          </p>
+
+          {/* Source link — right below the quote */}
+          {quote.sourceUrl && (
+            <a
+              href={quote.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontFamily: "'Manrope', sans-serif",
+                fontSize: '0.75rem',
+                color: '#59b0c4',
+                textDecoration: 'none',
+                marginTop: '0.375rem',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span>{quote.sourceName || 'Source'}</span>
+            </a>
+          )}
+        </div>
       </div>
 
-      {/* Candidate identity */}
+      {/* Politician row — photo, name/office, and View on Essentials on same line */}
       <div
         style={{
-          padding: '0.75rem 1.25rem',
           borderTop: '1px solid #e8e2d9',
-          borderBottom: '1px solid #e8e2d9',
           backgroundColor: '#faf7f2',
           position: 'relative',
+          display: 'flex',
+          alignItems: 'stretch',
         }}
       >
         {!prefersReducedMotion && <MegaParticles active={particlesActive} />}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {candidate.photo ? (
           <img
             src={candidate.photo}
             alt={candidate.name}
             style={{
-              width: '2.75rem',
-              height: '2.75rem',
-              borderRadius: '9999px',
+              width: IMG_WIDTH,
+              height: '3.5rem',
+              borderRadius: '0 0 0 0.375rem',
               objectFit: 'cover',
-              border: '2px solid #fffefb',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
               flexShrink: 0,
             }}
           />
-          <div>
+        ) : (
+          <div style={{
+            width: IMG_WIDTH,
+            height: '3.5rem',
+            borderRadius: '0 0 0 0.375rem',
+            backgroundColor: '#e8e2d9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            color: '#94a3b8',
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '1rem',
+            fontWeight: 700,
+          }}>
+            {candidate.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1, minWidth: 0, padding: '0.5rem 1rem' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontFamily: "'Manrope', sans-serif",
               fontWeight: 600,
-              fontSize: '1rem',
+              fontSize: '0.875rem',
               color: '#1a1a2e',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}>
               {candidate.name}
             </div>
             <div style={{
               fontFamily: "'Manrope', sans-serif",
-              fontSize: '0.75rem',
+              fontSize: '0.6875rem',
               color: '#64748b',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}>
               {candidate.office}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Source link */}
-      {quote.sourceUrl && (
-        <div style={{ padding: '0.625rem 1.25rem 0' }}>
           <a
-            href={quote.sourceUrl}
+            href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined, address)}
             target="_blank"
             rel="noopener noreferrer"
             style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: '#00657c',
+              textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.25rem',
-              fontFamily: "'Manrope', sans-serif",
-              fontSize: '0.8125rem',
-              color: '#00657c',
-              textDecoration: 'none',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            View on Essentials
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            <span>{quote.sourceName || 'Source'}</span>
           </a>
         </div>
-      )}
-
-      {/* CTA — View on Essentials */}
-      <div style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-        <a
-          href={buildEssentialsProfileUrl(candidate.id, issueProgress, topicId || undefined, address)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ev-button-primary"
-          style={{
-            width: '100%',
-            fontSize: '0.8125rem',
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.375rem',
-          }}
-        >
-          View on Essentials
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
       </div>
     </motion.div>
   );
@@ -344,60 +332,30 @@ export const ResultsPhase: React.FC = () => {
 
   return (
     <div className="pb-12">
-      {/* Header */}
+      {/* Compact Header */}
       <motion.div
-        className="text-center max-w-2xl mx-auto mb-8"
-        initial={{ opacity: 0, y: 20 }}
+        className="text-center max-w-2xl mx-auto mb-4"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         <h2 style={{
           fontFamily: "'Manrope', sans-serif",
           fontWeight: 800,
-          fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+          fontSize: '1.5rem',
           color: '#1a1a2e',
-          marginBottom: '0.375rem',
+          marginBottom: '0.25rem',
           letterSpacing: '-0.02em',
         }}>
           Here&rsquo;s Who Said What
         </h2>
-        <p style={{ fontFamily: "'Manrope', sans-serif", color: '#64748b', fontSize: '0.9375rem' }}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", color: '#64748b', fontSize: '0.8125rem' }}>
           See how your preferences align with each candidate
         </p>
       </motion.div>
 
-      {/* Summary Stats */}
-      <motion.div
-        className="max-w-lg mx-auto mb-8"
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.15, duration: 0.5 }}
-        style={{
-          backgroundColor: '#fffefb',
-          border: '1px solid #e8e2d9',
-          borderRadius: '0.625rem',
-          padding: '1.25rem',
-        }}
-      >
-        <div className="grid grid-cols-2 gap-4 text-center">
-          {[
-            { label: 'Agreed', value: rankedQuotes.length, color: '#00657c' },
-            { label: 'Disagreed', value: disagreedQuotes.length, color: '#78716c' },
-          ].map(stat => (
-            <div key={stat.label}>
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: stat.color }}>
-                {stat.value}
-              </div>
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Result Cards — identities shown immediately */}
-      <div className="max-w-2xl mx-auto space-y-4">
+      {/* Result Cards */}
+      <div className="max-w-2xl mx-auto space-y-3">
         {organizedQuotes.map(({ quote, verdict, rank }, index) => {
           const candidate = candidates.find(c => c.id === quote.candidateId);
           if (!candidate) return null;
@@ -420,7 +378,7 @@ export const ResultsPhase: React.FC = () => {
 
       {/* Explore More Issues */}
       <motion.div
-        className="flex justify-center pt-8"
+        className="flex justify-center pt-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: organizedQuotes.length * 0.08 + 0.5, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -428,7 +386,7 @@ export const ResultsPhase: React.FC = () => {
         <button
           onClick={() => goToHub()}
           className="ev-button-secondary"
-          style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+          style={{ fontSize: '0.875rem', padding: '0.625rem 1.5rem' }}
         >
           Explore More Issues
         </button>

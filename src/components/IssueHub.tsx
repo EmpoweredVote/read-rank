@@ -88,95 +88,67 @@ export const IssueHub: React.FC = () => {
 
   return (
     <div className="pb-12">
-      {/* Editorial Header */}
+      {/* Compact Header */}
       <motion.div
-        className="text-center max-w-2xl mx-auto mb-10"
-        initial={{ opacity: 0, y: 20 }}
+        className="max-w-2xl mx-auto mb-4"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Decorative quotation mark */}
-        <div
-          style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontSize: '4.5rem',
-            lineHeight: 1,
-            color: '#00657c',
-            opacity: 0.12,
-            marginBottom: '-1.5rem',
-          }}
-          aria-hidden="true"
-        >
-          {'\u201C'}
-        </div>
-
         <h1
+          className="text-center"
           style={{
             fontFamily: "'Manrope', sans-serif",
             fontWeight: 800,
-            fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
+            fontSize: '1.5rem',
             color: '#1a1a2e',
-            marginBottom: '0.5rem',
             letterSpacing: '-0.02em',
+            margin: '0 0 0.25rem',
           }}
         >
-          Choose an Issue
+          Read &amp; Rank
         </h1>
-        <p style={{
+
+        <p className="text-center" style={{
           fontFamily: "'Manrope', sans-serif",
           color: '#64748b',
-          fontSize: '1rem',
-          lineHeight: 1.6,
-          maxWidth: '28rem',
-          margin: '0 auto',
-        }}>
-          Evaluate candidate positions on the issues that matter to you.
-        </p>
-      </motion.div>
-
-      {/* Address Filter Input */}
-      <AddressFilterInput />
-      {locationFilter && (
-        <p className="text-center mb-4" style={{
-          fontFamily: "'Manrope', sans-serif",
           fontSize: '0.8125rem',
-          color: '#64748b',
+          lineHeight: 1.5,
+          margin: '0 0 0.625rem',
         }}>
-          Showing {displayedIssues.length} of {issues.length} issues
+          Read real quotes, agree or disagree — then find out which candidates said what.
         </p>
-      )}
 
-      {/* Progress summary */}
-      <motion.div
-        className="max-w-md mx-auto mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        style={{
-          backgroundColor: '#fffefb',
-          border: '1px solid #e8e2d9',
-          borderRadius: '0.5rem',
-          padding: '1rem 1.25rem',
-        }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, fontSize: '0.8125rem', color: '#64748b' }}>
-            Progress
-          </span>
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.8125rem', color: '#00657c' }}>
+        {/* Progress bar with count */}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 flex-1">
+            {Array.from({ length: totalIssues }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 h-1 rounded-full transition-all duration-500"
+                style={{ backgroundColor: i < completedCount ? '#00657c' : '#e8e2d9' }}
+              />
+          ))}
+          </div>
+          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 600, fontSize: '0.6875rem', color: '#00657c', flexShrink: 0 }}>
             {completedCount}/{totalIssues}
           </span>
         </div>
-        <div className="flex gap-1">
-          {Array.from({ length: totalIssues }).map((_, i) => (
-            <div
-              key={i}
-              className="flex-1 h-1.5 rounded-full transition-all duration-500"
-              style={{ backgroundColor: i < completedCount ? '#00657c' : '#e8e2d9' }}
-            />
-          ))}
-        </div>
       </motion.div>
+
+      {/* Address Filter Input */}
+      <div className="max-w-2xl mx-auto">
+        <AddressFilterInput />
+        {locationFilter && (
+          <p className="text-center mb-2" style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.75rem',
+            color: '#64748b',
+          }}>
+            Showing {displayedIssues.length} of {issues.length} issues
+          </p>
+        )}
+      </div>
 
       {/* Issue Cards */}
       <div className="max-w-2xl mx-auto space-y-3">
@@ -185,6 +157,7 @@ export const IssueHub: React.FC = () => {
           const progressInfo = getProgressInfo(issue.id, progress);
           const isCompleted = progressInfo.status === 'completed';
           const isInProgress = progressInfo.status === 'in-progress';
+          const shortTitle = issue.title.includes(':') ? issue.title.split(':')[0].trim() : issue.title;
 
           return (
             <motion.button
@@ -205,15 +178,16 @@ export const IssueHub: React.FC = () => {
               whileHover={{ x: 4, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
               whileTap={{ scale: 0.995 }}
             >
-              <div className="p-4 md:p-5">
-                <div className="flex items-center justify-between gap-3 mb-1">
+              <div style={{ padding: '0.75rem 1rem' }}>
+                <div className="flex items-center justify-between gap-2">
                   <h3 style={{
                     fontFamily: "'Manrope', sans-serif",
                     fontWeight: 700,
-                    fontSize: '1.0625rem',
+                    fontSize: '0.9375rem',
                     color: '#1a1a2e',
+                    margin: 0,
                   }}>
-                    {issue.title}
+                    {shortTitle}
                   </h3>
 
                   {/* Status */}
@@ -221,9 +195,9 @@ export const IssueHub: React.FC = () => {
                     className="shrink-0"
                     style={{
                       fontFamily: "'Manrope', sans-serif",
-                      fontSize: '0.6875rem',
+                      fontSize: '0.625rem',
                       fontWeight: 600,
-                      padding: '0.25rem 0.625rem',
+                      padding: '0.125rem 0.5rem',
                       borderRadius: '9999px',
                       letterSpacing: '0.03em',
                       textTransform: 'uppercase' as const,
@@ -239,27 +213,11 @@ export const IssueHub: React.FC = () => {
                   fontFamily: "'Manrope', sans-serif",
                   fontSize: '0.8125rem',
                   color: '#64748b',
-                  lineHeight: 1.5,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical' as const,
-                  overflow: 'hidden',
+                  lineHeight: 1.4,
+                  margin: '0.25rem 0 0',
                 }}>
                   {issue.question}
                 </p>
-
-                {/* Progress bar for in-progress */}
-                {isInProgress && (
-                  <div className="mt-3 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#e8e2d9' }}>
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: '#ff5740' }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressInfo.percent}%` }}
-                      transition={{ duration: 0.4 }}
-                    />
-                  </div>
-                )}
               </div>
             </motion.button>
           );
