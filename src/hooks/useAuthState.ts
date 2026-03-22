@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react';
-
-// In dev, use relative URLs so Vite proxy handles /auth/* (same-origin cookies).
-// In production, use the full API URL.
-const AUTH_BASE = import.meta.env.DEV ? '' : (
-  (import.meta.env as Record<string, string>).VITE_API_URL || 'https://api.empowered.vote'
-);
+import { extractHashToken, getToken, apiFetch, clearToken } from '../lib/auth';
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -16,24 +11,35 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
   const [state, setState] = useState<AuthState>({ isLoggedIn: false, userName: null, loading: true });
 
   useEffect(() => {
-    fetch(`${AUTH_BASE}/auth/me`, { credentials: 'include' })
+    // Extract token from hash fragment first (Auth Hub redirect)
+    extractHashToken();
+
+    const token = getToken();
+    if (!token) {
+      setState({ isLoggedIn: false, userName: null, loading: false });
+      return;
+    }
+
+    apiFetch('/auth/me')
       .then(async res => {
-        if (res.ok) {
+        if (res && res.ok) {
           const data = await res.json();
-          setState({ isLoggedIn: true, userName: data.username ?? null, loading: false });
-        } else {
+          setState({ isLoggedIn: true, userName: data.display_name ?? null, loading: false });
+        } else if (res) {
           setState({ isLoggedIn: false, userName: null, loading: false });
         }
+        // If res is null, apiFetch already redirected (401)
       })
       .catch(() => setState({ isLoggedIn: false, userName: null, loading: false }));
   }, []);
 
   const logout = async () => {
     try {
-      await fetch(`${AUTH_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+      await apiFetch('/auth/logout', { method: 'POST' });
     } catch (err) {
       console.error('Logout error:', err);
     }
+    clearToken();
     setState({ isLoggedIn: false, userName: null, loading: false });
   };
 

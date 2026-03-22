@@ -1,7 +1,5 @@
 import type { IssueProgress } from '../store/useReadRankStore';
-
-const API_BASE = (import.meta.env as Record<string, string>).VITE_API_URL
-  || 'https://api.empowered.vote';
+import { apiFetch } from '../lib/auth';
 
 export interface VerdictPayload {
   quote_id: string;
@@ -32,12 +30,12 @@ export async function postVerdicts(
   if (payload.length === 0) return;
 
   try {
-    await fetch(`${API_BASE}/compass/verdicts`, {
+    const res = await apiFetch('/compass/verdicts', {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    // If res is null, apiFetch handled the 401 redirect
+    if (!res) return;
   } catch (err) {
     console.warn('Failed to sync verdicts to backend:', err);
   }
