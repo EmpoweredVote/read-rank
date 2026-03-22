@@ -7,6 +7,7 @@ import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
 import { useAuthState } from './hooks/useAuthState';
 import { useReadRankStore } from './store/useReadRankStore';
 import { searchPoliticians } from './data/api';
+import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
 
 function MainApp() {
   const { isLoggedIn, userName, loading, logout } = useAuthState();
@@ -15,6 +16,9 @@ function MainApp() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
+    // Extract token from hash fragment on initial load (Auth Hub redirect)
+    extractHashToken();
+
     const address = searchParams.get('address');
     if (!address) return;
     const decoded = decodeURIComponent(address);
@@ -50,7 +54,7 @@ function MainApp() {
             { label: 'Sign out', onClick: logout },
           ],
         }
-      : { label: 'Account', items: [{ label: 'Sign in', href: `${(import.meta.env as Record<string, string>).VITE_COMPASS_URL || 'https://compass.empowered.vote'}/login?returnTo=${encodeURIComponent(window.location.href)}` }] };
+      : { label: 'Account', items: [{ label: 'Sign in', href: `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}` }] };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#faf7f2' }}>
