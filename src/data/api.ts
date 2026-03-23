@@ -1,6 +1,9 @@
+import { apiFetch } from '../lib/auth';
 import type { Quote, Candidate, IssueData } from '../store/useReadRankStore';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.empowered.vote';
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
 
 interface QuotesResponse {
   quotes: Quote[];
@@ -54,12 +57,14 @@ export interface SearchPoliticiansResult {
 
 export async function searchPoliticians(query: string): Promise<SearchPoliticiansResult> {
   try {
-    const res = await fetch(`${API_BASE}/essentials/politicians/search`, {
+    const res = await apiFetch('/essentials/politicians/search', {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }),
     });
+    if (!res) {
+      // apiFetch handled 401 redirect
+      return { status: 'error', data: [], error: 'Unauthorized', formattedAddress: '' };
+    }
     const status = res.headers.get('X-Data-Status') || res.headers.get('x-data-status') || '';
     const formattedAddress = res.headers.get('X-Formatted-Address') || res.headers.get('x-formatted-address') || '';
     if (!res.ok) {
