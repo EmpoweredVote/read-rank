@@ -2,7 +2,7 @@ import { apiFetch } from '../lib/auth';
 import type { Quote, Candidate, IssueData } from '../store/useReadRankStore';
 
 const API_BASE = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
+  ? `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/api`
   : '/api';
 
 interface QuotesResponse {
@@ -57,7 +57,7 @@ export interface SearchPoliticiansResult {
 
 export async function searchPoliticians(query: string): Promise<SearchPoliticiansResult> {
   try {
-    const res = await apiFetch('/essentials/politicians/search', {
+    const res = await apiFetch('/essentials/candidates/search', {
       method: 'POST',
       body: JSON.stringify({ query }),
     });

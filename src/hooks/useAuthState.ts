@@ -20,7 +20,7 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
       return;
     }
 
-    apiFetch('/auth/me')
+    apiFetch('/account/me')
       .then(async res => {
         if (res && res.ok) {
           const data = await res.json();
