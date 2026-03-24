@@ -1,12 +1,32 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { searchPoliticians } from '../data/api';
+import { apiFetch } from '../lib/auth';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 
 interface AddressFilterInputProps {
   onFilterApplied?: (politicianIds: string[]) => void;
 }
+
+interface BrowseState {
+  abbreviation: string;
+  fips: string;
+  politician_count: number;
+}
+
+interface BrowseArea {
+  geo_id: string;
+  name: string;
+  mtfcc: string;
+  area_type: string;
+}
+
+const AREA_TYPE_LABELS: Record<string, string> = {
+  county: 'County',
+  city: 'City',
+  township: 'Township',
+};
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const { locationFilter, setLocationFilter, clearLocationFilter } = useReadRankStore();
@@ -15,6 +35,35 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const [noMatchWarning, setNoMatchWarning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Mode: 'address' or 'browse'
+  const [mode, setMode] = useState<'address' | 'browse'>('address');
+
+  // Browse state
+  const [states, setStates] = useState<BrowseState[]>([]);
+  const [areas, setAreas] = useState<BrowseArea[]>([]);
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedAreaType, setSelectedAreaType] = useState('');
+  const [selectedArea, setSelectedArea] = useState<BrowseArea | null>(null);
+  const [browseError, setBrowseError] = useState<string | null>(null);
+
+  // Load states on mount
+  useEffect(() => {
+    apiFetch('/essentials/browse/states')
+      .then((res) => res && res.ok ? res.json() : [])
+      .then((data: BrowseState[]) => setStates(Array.isArray(data) ? data : []))
+      .catch(() => setStates([]));
+  }, []);
+
+  // Load areas when state changes
+  useEffect(() => {
+    if (!selectedState) { setAreas([]); return; }
+    apiFetch(`/essentials/browse/states/${selectedState}/areas`)
+      .then((res) => res && res.ok ? res.json() : [])
+      .then((data: BrowseArea[]) => setAreas(Array.isArray(data) ? data : []))
+      .catch(() => setAreas([]));
+  }, [selectedState]);
+
+  // Address search handler
   const handlePlaceSelected = useCallback(async (formattedAddress: string) => {
     setSearching(true);
     setNoMatchWarning(false);
@@ -35,11 +84,76 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
 
+  // Browse handler
+  const handleBrowse = async () => {
+    if (!selectedArea) return;
+    setSearching(true);
+    setBrowseError(null);
+
+    try {
+      const res = await apiFetch('/essentials/browse/by-area', {
+        method: 'POST',
+        body: JSON.stringify({ geo_id: selectedArea.geo_id, mtfcc: selectedArea.mtfcc }),
+      });
+
+      if (!res || !res.ok) {
+        setBrowseError('No representatives found for this area.');
+        setSearching(false);
+        return;
+      }
+
+      const data = await res.json() as Array<{ id: string }>;
+      const politicianIds = data.map((p) => p.id);
+
+      if (politicianIds.length > 0) {
+        setLocationFilter({
+          address: `${selectedArea.name}, ${selectedState}`,
+          politicianIds,
+        });
+      } else {
+        setBrowseError('No representatives found with quotes for this area.');
+      }
+
+      onFilterApplied?.(politicianIds);
+    } catch {
+      setBrowseError('Something went wrong. Please try again.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const areaTypes = [...new Set(areas.map((a) => a.area_type))];
+  const filteredAreas = selectedAreaType ? areas.filter((a) => a.area_type === selectedAreaType) : [];
+
   const truncatedAddress = locationFilter?.address
     ? locationFilter.address.length > 40
       ? locationFilter.address.slice(0, 40) + '\u2026'
       : locationFilter.address
     : '';
+
+  // Shared styles
+  const selectStyle: React.CSSProperties = {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '0.875rem',
+    border: '1px solid #e8e2d9',
+    borderRadius: '0.5rem',
+    padding: '0.5rem 0.75rem',
+    backgroundColor: '#fffefb',
+    color: '#1a1a2e',
+    outline: 'none',
+  };
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '0.75rem',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    border: 'none',
+    cursor: 'pointer',
+    backgroundColor: active ? '#00657c' : '#e8e2d9',
+    color: active ? '#fff' : '#4a4a4a',
+    transition: 'background-color 0.2s, color 0.2s',
+  });
 
   return (
     <div style={{ maxWidth: '28rem', margin: '0 auto 1.5rem' }}>
@@ -63,47 +177,25 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 fontFamily: "'Manrope', sans-serif",
               }}
             >
-              {/* Pin icon */}
               <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#00657c"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="#00657c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 aria-hidden="true"
               >
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <span
-                style={{
-                  fontSize: '0.875rem',
-                  color: '#1a1a2e',
-                  fontWeight: 500,
-                }}
-              >
+              <span style={{ fontSize: '0.875rem', color: '#1a1a2e', fontWeight: 500 }}>
                 {truncatedAddress}
               </span>
               <button
-                onClick={clearLocationFilter}
-                aria-label="Clear address filter"
+                onClick={() => { clearLocationFilter(); setSelectedState(''); setSelectedAreaType(''); setSelectedArea(null); }}
+                aria-label="Clear filter"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '1.25rem',
-                  height: '1.25rem',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  fontSize: '1rem',
-                  lineHeight: 1,
-                  padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '1.25rem', height: '1.25rem', borderRadius: '9999px',
+                  border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
+                  color: '#64748b', fontSize: '1rem', lineHeight: 1, padding: 0,
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#1a1a2e'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#64748b'; }}
@@ -120,61 +212,130 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.2 }}
           >
-            <div style={{ position: 'relative' }}>
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Filter by address..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                style={{
-                  fontFamily: "'Manrope', sans-serif",
-                  fontSize: '0.9375rem',
-                  border: '1px solid #e8e2d9',
-                  borderRadius: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  width: '100%',
-                  backgroundColor: '#fffefb',
-                  color: '#1a1a2e',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => { (e.currentTarget as HTMLInputElement).style.borderColor = '#00657c'; }}
-                onBlur={(e) => { (e.currentTarget as HTMLInputElement).style.borderColor = '#e8e2d9'; }}
-              />
-              {searching && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: '0.875rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '1rem',
-                      height: '1rem',
-                      border: '2px solid #e8e2d9',
-                      borderTopColor: '#00657c',
-                      borderRadius: '9999px',
-                      animation: 'spin 0.7s linear infinite',
-                    }}
-                  />
-                </div>
-              )}
+            {/* Mode toggle */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', justifyContent: 'center' }}>
+              <button style={pillStyle(mode === 'address')} onClick={() => setMode('address')}>
+                Address
+              </button>
+              <button style={pillStyle(mode === 'browse')} onClick={() => setMode('browse')}>
+                Browse Location
+              </button>
             </div>
-            {noMatchWarning && (
-              <p
-                style={{
-                  color: '#e64a34',
-                  fontFamily: "'Manrope', sans-serif",
-                  fontSize: '0.8125rem',
-                  marginTop: '0.375rem',
-                }}
-              >
-                No representatives found with quotes for this address.
-              </p>
+
+            {mode === 'address' ? (
+              <>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Filter by address..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    style={{
+                      fontFamily: "'Manrope', sans-serif",
+                      fontSize: '0.9375rem',
+                      border: '1px solid #e8e2d9',
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem 1rem',
+                      width: '100%',
+                      backgroundColor: '#fffefb',
+                      color: '#1a1a2e',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={(e) => { (e.currentTarget as HTMLInputElement).style.borderColor = '#00657c'; }}
+                    onBlur={(e) => { (e.currentTarget as HTMLInputElement).style.borderColor = '#e8e2d9'; }}
+                  />
+                  {searching && (
+                    <div style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)' }}>
+                      <div style={{
+                        width: '1rem', height: '1rem',
+                        border: '2px solid #e8e2d9', borderTopColor: '#00657c',
+                        borderRadius: '9999px', animation: 'spin 0.7s linear infinite',
+                      }} />
+                    </div>
+                  )}
+                </div>
+                {noMatchWarning && (
+                  <p style={{ color: '#e64a34', fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', marginTop: '0.375rem' }}>
+                    No representatives found with quotes for this address.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <select
+                    value={selectedState}
+                    onChange={(e) => { setSelectedState(e.target.value); setSelectedAreaType(''); setSelectedArea(null); setBrowseError(null); }}
+                    style={{ ...selectStyle, flex: '1 1 auto', minWidth: '7rem' }}
+                  >
+                    <option value="">State</option>
+                    {states.map((s) => (
+                      <option key={s.abbreviation} value={s.abbreviation}>{s.abbreviation}</option>
+                    ))}
+                  </select>
+
+                  {selectedState && areaTypes.length > 0 && (
+                    <select
+                      value={selectedAreaType}
+                      onChange={(e) => { setSelectedAreaType(e.target.value); setSelectedArea(null); setBrowseError(null); }}
+                      style={{ ...selectStyle, flex: '1 1 auto', minWidth: '7rem' }}
+                    >
+                      <option value="">Type</option>
+                      {areaTypes.map((t) => (
+                        <option key={t} value={t}>{AREA_TYPE_LABELS[t] || t}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {selectedAreaType && filteredAreas.length > 0 && (
+                    <select
+                      value={selectedArea?.geo_id || ''}
+                      onChange={(e) => {
+                        const area = areas.find((a) => a.geo_id === e.target.value) || null;
+                        setSelectedArea(area);
+                        setBrowseError(null);
+                      }}
+                      style={{ ...selectStyle, flex: '2 1 auto', minWidth: '9rem' }}
+                    >
+                      <option value="">Select {AREA_TYPE_LABELS[selectedAreaType]?.toLowerCase() || 'area'}</option>
+                      {filteredAreas.map((a) => (
+                        <option key={a.geo_id} value={a.geo_id}>{a.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {selectedArea && (
+                  <button
+                    onClick={handleBrowse}
+                    disabled={searching}
+                    style={{
+                      fontFamily: "'Manrope', sans-serif",
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      backgroundColor: '#00657c',
+                      color: '#fff',
+                      cursor: searching ? 'not-allowed' : 'pointer',
+                      opacity: searching ? 0.5 : 1,
+                      transition: 'opacity 0.2s',
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    {searching ? 'Loading...' : 'Filter'}
+                  </button>
+                )}
+
+                {browseError && (
+                  <p style={{ color: '#e64a34', fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem' }}>
+                    {browseError}
+                  </p>
+                )}
+              </div>
             )}
           </motion.div>
         )}
