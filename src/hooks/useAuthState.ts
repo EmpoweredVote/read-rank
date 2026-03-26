@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react';
-import { extractHashToken, getToken, apiFetch, clearToken } from '../lib/auth';
+import { extractHashToken, getToken, setToken, apiFetch, clearToken, AUTH_HUB_URL } from '../lib/auth';
 
 export interface AuthState {
   isLoggedIn: boolean;
   userName: string | null;
   loading: boolean;
+}
+
+async function loadProfile(setState: (s: AuthState) => void) {
+  apiFetch('/account/me')
+    .then(async res => {
+      if (res && res.ok) {
+        const data = await res.json();
+        setState({ isLoggedIn: true, userName: data.display_name ?? null, loading: false });
+      } else if (res) {
+        setState({ isLoggedIn: false, userName: null, loading: false });
+      }
+    })
+    .catch(() => setState({ isLoggedIn: false, userName: null, loading: false }));
 }
 
 export function useAuthState(): AuthState & { logout: () => Promise<void> } {
@@ -15,27 +28,44 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
     extractHashToken();
 
     const token = getToken();
-    if (!token) {
-      setState({ isLoggedIn: false, userName: null, loading: false });
+    if (token) {
+      loadProfile(setState);
       return;
     }
 
-    apiFetch('/account/me')
+    // No local token — try silent SSO via accounts.empowered.vote session cookie
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    fetch(`${AUTH_HUB_URL}/api/auth/session`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
       .then(async res => {
-        if (res && res.ok) {
-          const data = await res.json();
-          setState({ isLoggedIn: true, userName: data.display_name ?? null, loading: false });
-        } else if (res) {
+        clearTimeout(timeout);
+        if (res.ok) {
+          const { access_token } = await res.json();
+          setToken(access_token);
+          loadProfile(setState);
+        } else {
           setState({ isLoggedIn: false, userName: null, loading: false });
         }
-        // If res is null, apiFetch already redirected (401)
       })
-      .catch(() => setState({ isLoggedIn: false, userName: null, loading: false }));
+      .catch(err => {
+        clearTimeout(timeout);
+        if (err.name !== 'AbortError') console.warn('[SSO]', err);
+        setState({ isLoggedIn: false, userName: null, loading: false });
+      });
   }, []);
 
   const logout = async () => {
+    const token = getToken();
     try {
-      await apiFetch('/auth/logout', { method: 'POST' });
+      await fetch(`${AUTH_HUB_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
     } catch (err) {
       console.error('Logout error:', err);
     }
