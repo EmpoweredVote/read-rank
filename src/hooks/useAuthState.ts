@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { extractHashToken, getToken, setToken, apiFetch, clearToken, AUTH_HUB_URL } from '../lib/auth';
+import { extractHashToken, getToken, setToken, apiFetch, clearToken, API_HUB_URL } from '../lib/auth';
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -37,7 +37,7 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
 
-    fetch(`${AUTH_HUB_URL}/api/auth/session`, {
+    fetch(`${API_HUB_URL}/api/auth/session`, {
       credentials: 'include',
       signal: controller.signal,
     })
@@ -61,7 +61,7 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
   const logout = async () => {
     const token = getToken();
     try {
-      await fetch(`${AUTH_HUB_URL}/api/auth/logout`, {
+      await fetch(`${API_HUB_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
