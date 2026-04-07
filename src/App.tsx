@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { SiteHeader } from '@chrisandrewsedu/ev-ui';
+import { SiteHeader } from '@empoweredvote/ev-ui';
 import { PhaseContainer } from './components/PhaseContainer';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';

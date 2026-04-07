@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/',
   resolve: {
-    alias: useLocalEvUi ? { '@chrisandrewsedu/ev-ui': localEvUi } : {},
+    alias: useLocalEvUi ? { '@empoweredvote/ev-ui': localEvUi } : {},
     dedupe: ['react', 'react-dom', '@react-spring/web'],
   },
   server: {
