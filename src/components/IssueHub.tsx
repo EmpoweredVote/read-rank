@@ -34,7 +34,7 @@ const getProgressInfo = (
 };
 
 export const IssueHub: React.FC = () => {
-  const { issueProgress, selectIssue, locationFilter } = useReadRankStore();
+  const { issueProgress, selectIssue, locationFilter, clearLocationFilter } = useReadRankStore();
   const [issues, setIssues] = useState<IssueData[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +149,42 @@ export const IssueHub: React.FC = () => {
           </p>
         )}
       </div>
+
+      {/* Zero-state: location filter active but no qualifying issues (D-06) */}
+      {locationFilter !== null && displayedIssues.length === 0 && (
+        <motion.div
+          className="max-w-2xl mx-auto text-center py-12"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.9375rem',
+            fontWeight: 700,
+            color: '#1a1a2e',
+            marginBottom: '0.5rem',
+          }}>
+            No issues with local quotes for this area
+          </p>
+          <p style={{
+            fontFamily: "'Manrope', sans-serif",
+            fontSize: '0.8125rem',
+            fontWeight: 400,
+            color: '#64748b',
+            lineHeight: 1.5,
+            marginBottom: '1rem',
+          }}>
+            We don&apos;t have quotes from your representatives for any issues yet.
+          </p>
+          <button
+            className="ev-button-secondary"
+            onClick={clearLocationFilter}
+          >
+            Clear location filter
+          </button>
+        </motion.div>
+      )}
 
       {/* Issue Cards */}
       <div className="max-w-2xl mx-auto space-y-3">
