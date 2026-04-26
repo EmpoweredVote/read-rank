@@ -51,16 +51,18 @@ const getPageTransition = (phase: string, prefersReducedMotion: boolean | null) 
 
 export const PhaseContainer: React.FC = () => {
   const { phase, issueProgress, practiceCompleted, startPractice } = useReadRankStore();
-  const { isLoggedIn } = useAuthState();
+  const { isLoggedIn, userId } = useAuthState();
   const hasSynced = useRef(false);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (phase === 'results' && isLoggedIn && !hasSynced.current) {
       hasSynced.current = true;
-      postVerdicts(issueProgress);
+      // Pass userId so postVerdicts can mirror to the authed ev-context slice
+      // (260426-mc5).
+      postVerdicts(issueProgress, userId);
     }
-  }, [phase, isLoggedIn, issueProgress]);
+  }, [phase, isLoggedIn, userId, issueProgress]);
 
   // Auto-redirect first-time users to practice
   useEffect(() => {

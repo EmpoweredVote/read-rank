@@ -4,6 +4,7 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { searchPoliticians } from '../data/api';
 import { apiFetch } from '../lib/auth';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
+import { useAuthState } from '../hooks/useAuthState';
 import { evContext } from '@empoweredvote/ev-ui';
 
 // Pulls a USPS 2-letter state code out of a formatted address. Looks for the
@@ -22,13 +23,20 @@ function parseStateFromAddress(addr: string): string | null {
 
 // Push the current address to ev-context, merging with any existing top-level keys
 // so we don't clobber compass/verdicts state owned by other apps.
-function writeAddressToContext(addr: string) {
+//
+// When `userId` is provided (authed user, 260426-mc5), additionally mirror into
+// the userId-stamped authed slice so cross-subdomain hydration is namespaced.
+function writeAddressToContext(addr: string, userId?: string | null) {
   const state = parseStateFromAddress(addr);
   if (!state) return; // need state to be useful for filtering apps
+  const payload = { addr, state, ts: Date.now() };
   evContext.get().then((current) => {
-    const next = { ...(current || {}), address: { addr, state, ts: Date.now() } };
+    const next = { ...(current || {}), address: payload };
     evContext.set(next).catch(() => {});
   }).catch(() => {});
+  if (userId) {
+    evContext.setAuthedSlice(userId, { address: payload }).catch(() => {});
+  }
 }
 
 interface AddressFilterInputProps {
@@ -56,6 +64,7 @@ const AREA_TYPE_LABELS: Record<string, string> = {
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const { locationFilter, setLocationFilter, clearLocationFilter } = useReadRankStore();
+  const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [noMatchWarning, setNoMatchWarning] = useState(false);
@@ -99,7 +108,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
     if (politicianIds.length > 0) {
       setLocationFilter({ address: formattedAddress, politicianIds });
-      writeAddressToContext(formattedAddress);
+      writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
     } else {
       setNoMatchWarning(true);
       setTimeout(() => setNoMatchWarning(false), 3000);
@@ -107,7 +116,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
     setSearching(false);
     onFilterApplied?.(politicianIds);
-  }, [setLocationFilter, onFilterApplied]);
+  }, [setLocationFilter, onFilterApplied, isLoggedIn, userId]);
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
 
@@ -115,19 +124,34 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   // essentials/compass/etc.) and the user hasn't already chosen a filter, apply
   // it as if they typed it. A subsequent address search replaces it via
   // writeAddressToContext, so user intent always wins.
+  //
+  // Authed users (260426-mc5): prefer the userId-stamped authed slice; fall
+  // back to the guest slice when missing or on userId mismatch.
   const autoAppliedRef = useRef(false);
   useEffect(() => {
     if (autoAppliedRef.current) return;
     if (locationFilter) return; // user-chosen filter already exists
+    const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+    const tryHydrate = async () => {
+      try {
+        if (isLoggedIn && userId) {
+          const slice = await evContext.getAuthedSlice(userId);
+          const a = slice && (slice as { address?: { addr?: string; ts?: number } }).address;
+          if (a && typeof a.addr === 'string' && (!a.ts || Date.now() - a.ts <= TTL_MS)) {
+            handlePlaceSelected(a.addr);
+            return;
+          }
+        }
+        const shared = await evContext.get();
+        const a = shared && (shared as { address?: { addr?: string; ts?: number } }).address;
+        if (!a || typeof a.addr !== 'string') return;
+        if (a.ts && Date.now() - a.ts > TTL_MS) return;
+        handlePlaceSelected(a.addr);
+      } catch { /* broker offline — silent fallthrough */ }
+    };
     autoAppliedRef.current = true;
-    evContext.get().then((shared) => {
-      const a = shared && (shared as { address?: { addr?: string; ts?: number } }).address;
-      if (!a || typeof a.addr !== 'string') return;
-      const TTL_MS = 30 * 24 * 60 * 60 * 1000;
-      if (a.ts && Date.now() - a.ts > TTL_MS) return;
-      handlePlaceSelected(a.addr);
-    }).catch(() => {});
-  }, [locationFilter, handlePlaceSelected]);
+    tryHydrate();
+  }, [locationFilter, handlePlaceSelected, isLoggedIn, userId]);
 
   // Browse handler
   const handleBrowse = async () => {
@@ -153,7 +177,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
       if (politicianIds.length > 0) {
         const addrLabel = `${selectedArea.name}, ${selectedState}`;
         setLocationFilter({ address: addrLabel, politicianIds });
-        writeAddressToContext(addrLabel);
+        writeAddressToContext(addrLabel, isLoggedIn ? userId : null);
       } else {
         setBrowseError('No representatives found with quotes for this area.');
       }

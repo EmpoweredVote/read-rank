@@ -100,6 +100,11 @@ declare module '@empoweredvote/ev-ui' {
   export const breakpoints: Record<string, string>;
 
   // Cross-subdomain shared client state via the ev-context broker iframe.
+  export interface EvAuthedSlice {
+    compass?: Record<string, unknown>;
+    address?: Record<string, unknown>;
+    verdicts?: Record<string, unknown>;
+  }
   export const evContext: {
     configure(opts: { brokerUrl?: string }): void;
     preload(): Promise<void>;
@@ -107,5 +112,9 @@ declare module '@empoweredvote/ev-ui' {
     set(value: Record<string, unknown>): Promise<boolean>;
     clear(): Promise<boolean>;
     subscribe(fn: (value: Record<string, unknown> | null) => void): () => void;
+    // userId-stamped authed slice helpers (260426-mc5).
+    getAuthedSlice(userId: string): Promise<EvAuthedSlice | null>;
+    setAuthedSlice(userId: string, patch: EvAuthedSlice): Promise<boolean>;
+    clearAuthedSlice(): Promise<boolean>;
   };
 }

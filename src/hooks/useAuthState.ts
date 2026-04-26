@@ -4,6 +4,9 @@ import { extractHashToken, getToken, setToken, apiFetch, clearToken, API_HUB_URL
 export interface AuthState {
   isLoggedIn: boolean;
   userName: string | null;
+  // userId is captured from /account/me so consumers can stamp ev-context
+  // authed-slice writes (260426-mc5).
+  userId: string | null;
   loading: boolean;
 }
 
@@ -12,16 +15,21 @@ async function loadProfile(setState: (s: AuthState) => void) {
     .then(async res => {
       if (res && res.ok) {
         const data = await res.json();
-        setState({ isLoggedIn: true, userName: data.display_name ?? null, loading: false });
+        setState({
+          isLoggedIn: true,
+          userName: data.display_name ?? null,
+          userId: data.id ?? null,
+          loading: false,
+        });
       } else if (res) {
-        setState({ isLoggedIn: false, userName: null, loading: false });
+        setState({ isLoggedIn: false, userName: null, userId: null, loading: false });
       }
     })
-    .catch(() => setState({ isLoggedIn: false, userName: null, loading: false }));
+    .catch(() => setState({ isLoggedIn: false, userName: null, userId: null, loading: false }));
 }
 
 export function useAuthState(): AuthState & { logout: () => Promise<void> } {
-  const [state, setState] = useState<AuthState>({ isLoggedIn: false, userName: null, loading: true });
+  const [state, setState] = useState<AuthState>({ isLoggedIn: false, userName: null, userId: null, loading: true });
 
   useEffect(() => {
     // Extract token from hash fragment first (Auth Hub redirect)
@@ -48,13 +56,13 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
           setToken(access_token);
           loadProfile(setState);
         } else {
-          setState({ isLoggedIn: false, userName: null, loading: false });
+          setState({ isLoggedIn: false, userName: null, userId: null, loading: false });
         }
       })
       .catch(err => {
         clearTimeout(timeout);
         if (err.name !== 'AbortError') console.warn('[SSO]', err);
-        setState({ isLoggedIn: false, userName: null, loading: false });
+        setState({ isLoggedIn: false, userName: null, userId: null, loading: false });
       });
   }, []);
 
@@ -70,7 +78,7 @@ export function useAuthState(): AuthState & { logout: () => Promise<void> } {
       console.error('Logout error:', err);
     }
     clearToken();
-    setState({ isLoggedIn: false, userName: null, loading: false });
+    setState({ isLoggedIn: false, userName: null, userId: null, loading: false });
   };
 
   return { ...state, logout };
