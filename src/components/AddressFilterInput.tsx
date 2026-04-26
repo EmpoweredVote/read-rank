@@ -5,7 +5,7 @@ import { searchPoliticians } from '../data/api';
 import { apiFetch } from '../lib/auth';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 import { useAuthState } from '../hooks/useAuthState';
-import { evContext } from '@empoweredvote/ev-ui';
+import { evContext, useEvContextPromotion } from '@empoweredvote/ev-ui';
 
 // Pulls a USPS 2-letter state code out of a formatted address. Looks for the
 // 2-letter token directly preceding the ZIP, or any 2-letter all-caps segment.
@@ -120,6 +120,31 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
 
+  // 260426-mw6 — guest → authed promotion: when the user is logged in, has no
+  // active locationFilter, and ev-context has a guest address, surface a
+  // banner offering to apply it. apiWriter routes through the same
+  // handlePlaceSelected path so the existing search/save/sync logic runs.
+  const addressPromoteWriter = useCallback(async (addressPayload: unknown) => {
+    const a = addressPayload as { addr?: string; formatted?: string } | null;
+    const addr = (a && (a.formatted || a.addr)) || '';
+    if (!addr) throw new Error('Missing address');
+    await handlePlaceSelected(addr);
+  }, [handlePlaceSelected]);
+  const {
+    shouldPrompt: promoteAddressShouldPrompt,
+    payload: promoteAddressPayload,
+    promote: promoteAddress,
+    dismiss: dismissAddressPromotion,
+    status: promoteAddressStatus,
+    error: promoteAddressError,
+  } = useEvContextPromotion({
+    domain: 'address',
+    isLoggedIn,
+    userId,
+    apiData: locationFilter, // null when nothing applied; truthy object when set
+    apiWriter: addressPromoteWriter,
+  });
+
   // Silent auto-apply on mount: if a saved address exists in ev-context (from
   // essentials/compass/etc.) and the user hasn't already chosen a filter, apply
   // it as if they typed it. A subsequent address search replaces it via
@@ -225,6 +250,16 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
   return (
     <div style={{ maxWidth: '28rem', margin: '0 auto 1.5rem' }}>
+      {/* 260426-mw6 — guest → authed address promotion banner */}
+      {promoteAddressShouldPrompt && (
+        <AddressPromotionBanner
+          payload={promoteAddressPayload}
+          onSave={promoteAddress}
+          onDismiss={dismissAddressPromotion}
+          status={promoteAddressStatus}
+          error={promoteAddressError}
+        />
+      )}
       <AnimatePresence mode="wait">
         {locationFilter !== null ? (
           <motion.div
@@ -408,6 +443,66 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// 260426-mw6 — inline banner shown above the address input when the user is
+// logged in but read-rank has no locationFilter and ev-context has a guest
+// address.
+interface AddressPromotionBannerProps {
+  payload: unknown;
+  onSave: () => void;
+  onDismiss: () => void;
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  error: Error | null;
+}
+function AddressPromotionBanner({ payload, onSave, onDismiss, status, error }: AddressPromotionBannerProps) {
+  const a = (payload && typeof payload === 'object') ? payload as { addr?: string; formatted?: string } : null;
+  const addr = (a && (a.formatted || a.addr)) || '';
+  if (!addr) return null;
+  const saving = status === 'saving';
+  return (
+    <div
+      role="status"
+      style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem',
+        padding: '0.5rem 0.75rem', marginBottom: '0.5rem',
+        background: '#e8f4f6', borderRadius: '0.5rem',
+        fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem',
+        color: '#003E4D',
+      }}
+    >
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        Use <strong>{addr}</strong>?
+        {status === 'error' && error && (
+          <span style={{ color: '#e64a34', marginLeft: 6 }}>({error.message})</span>
+        )}
+      </span>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        style={{
+          padding: '0.25rem 0.75rem', borderRadius: '9999px', border: 'none',
+          background: '#00657c', color: '#fff', fontWeight: 600, fontSize: '0.75rem',
+          cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1,
+        }}
+      >
+        {saving ? 'Saving…' : 'Use it'}
+      </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        disabled={saving}
+        aria-label="Dismiss"
+        style={{
+          padding: '0.125rem 0.375rem', border: 'none', background: 'transparent',
+          color: '#64748b', fontSize: '1rem', lineHeight: 1, cursor: 'pointer',
+        }}
+      >
+        ×
+      </button>
     </div>
   );
 }
