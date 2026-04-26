@@ -104,6 +104,8 @@ declare module '@empoweredvote/ev-ui' {
     compass?: Record<string, unknown>;
     address?: Record<string, unknown>;
     verdicts?: Record<string, unknown>;
+    // 260426-mw6 — per-userId per-domain dismissal stamp for promotion banner.
+    promotionDismissed?: { compass?: boolean; address?: boolean; verdicts?: boolean };
   }
   export const evContext: {
     configure(opts: { brokerUrl?: string }): void;
@@ -117,4 +119,27 @@ declare module '@empoweredvote/ev-ui' {
     setAuthedSlice(userId: string, patch: EvAuthedSlice): Promise<boolean>;
     clearAuthedSlice(): Promise<boolean>;
   };
+
+  // 260426-mw6 — guest → authed promotion hook.
+  export type EvPromotionDomain = 'compass' | 'address' | 'verdicts';
+  export type EvPromotionStatus = 'idle' | 'saving' | 'saved' | 'error';
+  export interface UseEvContextPromotionArgs {
+    domain: EvPromotionDomain;
+    isLoggedIn: boolean;
+    userId: string | null | undefined;
+    apiData: unknown;
+    apiWriter: (payload: unknown) => Promise<unknown>;
+    enabled?: boolean;
+  }
+  export interface UseEvContextPromotionReturn {
+    shouldPrompt: boolean;
+    payload: unknown;
+    promote: () => Promise<void>;
+    dismiss: () => Promise<void>;
+    status: EvPromotionStatus;
+    error: Error | null;
+  }
+  export function useEvContextPromotion(
+    args: UseEvContextPromotionArgs
+  ): UseEvContextPromotionReturn;
 }

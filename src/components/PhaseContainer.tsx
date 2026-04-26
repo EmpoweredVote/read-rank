@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { useAuthState } from '../hooks/useAuthState';
 import { postVerdicts } from '../utils/verdictSync';
+import { apiFetch } from '../lib/auth';
+import { useEvContextPromotion } from '@empoweredvote/ev-ui';
 import { IssueHub } from './IssueHub';
 import { EvaluationPhase } from './EvaluationPhase';
 import { ResultsPhase } from './ResultsPhase';
@@ -64,6 +66,52 @@ export const PhaseContainer: React.FC = () => {
     }
   }, [phase, isLoggedIn, userId, issueProgress]);
 
+  // 260426-mw6 — guest → authed verdicts promotion. Build the API-empty signal
+  // from the local store: if no issueProgress entries have any ranked or
+  // disagreed quotes, treat the API as empty for this domain. (We don't fetch
+  // /compass/verdicts on mount in this view — postVerdicts is the only write
+  // path — so the local store is the best available proxy.)
+  const localVerdictMap = useMemo(() => {
+    const m: Record<string, 'agreed' | 'disagreed'> = {};
+    for (const progress of Object.values(issueProgress)) {
+      for (const q of progress.rankedQuotes) m[q.id] = 'agreed';
+      for (const q of progress.disagreedQuotes) m[q.id] = 'disagreed';
+    }
+    return m;
+  }, [issueProgress]);
+
+  const verdictsPromoteWriter = async (verdictPayload: unknown) => {
+    const map = (verdictPayload && typeof verdictPayload === 'object')
+      ? verdictPayload as Record<string, string>
+      : {};
+    const body = Object.entries(map)
+      .filter(([_q, v]) => v === 'agreed' || v === 'disagreed')
+      .map(([quote_id, verdict]) => ({ quote_id, verdict }));
+    if (body.length === 0) return;
+    const res = await apiFetch('/compass/verdicts', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!res || !res.ok) {
+      throw new Error(`Promotion failed: ${res?.status ?? 'no response'}`);
+    }
+  };
+
+  const {
+    shouldPrompt: promoteVerdictsShouldPrompt,
+    payload: promoteVerdictsPayload,
+    promote: promoteVerdicts,
+    dismiss: dismissVerdictsPromotion,
+    status: promoteVerdictsStatus,
+    error: promoteVerdictsError,
+  } = useEvContextPromotion({
+    domain: 'verdicts',
+    isLoggedIn,
+    userId,
+    apiData: localVerdictMap,
+    apiWriter: verdictsPromoteWriter,
+  });
+
   // Auto-redirect first-time users to practice
   useEffect(() => {
     if (!practiceCompleted && phase === 'hub') {
@@ -88,6 +136,15 @@ export const PhaseContainer: React.FC = () => {
 
   return (
     <div className="min-h-[60vh]">
+      {phase === 'results' && promoteVerdictsShouldPrompt && (
+        <VerdictsPromotionBanner
+          payload={promoteVerdictsPayload}
+          onSave={promoteVerdicts}
+          onDismiss={dismissVerdictsPromotion}
+          status={promoteVerdictsStatus}
+          error={promoteVerdictsError}
+        />
+      )}
       <AnimatePresence mode="wait">
         <motion.div
           key={phase}
@@ -96,6 +153,77 @@ export const PhaseContainer: React.FC = () => {
           {renderPhase()}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+};
+
+// 260426-mw6 — inline banner shown on the results screen when ev-context has
+// guest verdicts but the local store is empty for this user.
+interface VerdictsPromotionBannerProps {
+  payload: unknown;
+  onSave: () => void;
+  onDismiss: () => void;
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  error: Error | null;
+}
+const VerdictsPromotionBanner: React.FC<VerdictsPromotionBannerProps> = ({
+  payload, onSave, onDismiss, status, error,
+}) => {
+  const map = (payload && typeof payload === 'object') ? payload as Record<string, unknown> : {};
+  const count = Object.keys(map).length;
+  if (count === 0) return null;
+  const saving = status === 'saving';
+  return (
+    <div
+      role="status"
+      style={{
+        margin: '0 auto 1rem',
+        maxWidth: '32rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        padding: '0.75rem 1rem',
+        borderRadius: '0.5rem',
+        backgroundColor: '#e8f4f6',
+        border: '1px solid #bcdde4',
+        fontFamily: "'Manrope', sans-serif",
+        fontSize: '0.875rem',
+        color: '#003E4D',
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        Save your earlier <strong>{count}</strong> verdict{count === 1 ? '' : 's'} to your account?
+        {status === 'error' && error && (
+          <div style={{ color: '#e64a34', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+            Couldn't save: {error.message}. Try again?
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        style={{
+          padding: '0.4rem 1rem', borderRadius: '9999px', border: 'none',
+          backgroundColor: '#00657c', color: '#fff',
+          fontFamily: "'Manrope', sans-serif", fontWeight: 600, fontSize: '0.8125rem',
+          cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1,
+        }}
+      >
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        disabled={saving}
+        aria-label="Dismiss"
+        style={{
+          padding: '0.25rem 0.5rem', border: 'none', background: 'transparent',
+          color: '#64748b', fontSize: '1.125rem', lineHeight: 1, cursor: 'pointer',
+        }}
+      >
+        ×
+      </button>
     </div>
   );
 };
