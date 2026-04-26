@@ -98,4 +98,14 @@ declare module '@empoweredvote/ev-ui' {
   export const borderRadius: Record<string, string>;
   export const shadows: Record<string, string>;
   export const breakpoints: Record<string, string>;
+
+  // Cross-subdomain shared client state via the ev-context broker iframe.
+  export const evContext: {
+    configure(opts: { brokerUrl?: string }): void;
+    preload(): Promise<void>;
+    get(): Promise<Record<string, unknown> | null>;
+    set(value: Record<string, unknown>): Promise<boolean>;
+    clear(): Promise<boolean>;
+    subscribe(fn: (value: Record<string, unknown> | null) => void): () => void;
+  };
 }

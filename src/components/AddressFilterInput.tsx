@@ -4,6 +4,32 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { searchPoliticians } from '../data/api';
 import { apiFetch } from '../lib/auth';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
+import { evContext } from '@empoweredvote/ev-ui';
+
+// Pulls a USPS 2-letter state code out of a formatted address. Looks for the
+// 2-letter token directly preceding the ZIP, or any 2-letter all-caps segment.
+function parseStateFromAddress(addr: string): string | null {
+  if (!addr) return null;
+  const m = addr.match(/\b([A-Z]{2})\b\s*\d{5}(?:-\d{4})?/);
+  if (m) return m[1];
+  const segs = addr.split(',').map((s) => s.trim());
+  for (const seg of segs) {
+    const sm = seg.match(/^([A-Z]{2})(?:\s+\d{5}.*)?$/);
+    if (sm) return sm[1];
+  }
+  return null;
+}
+
+// Push the current address to ev-context, merging with any existing top-level keys
+// so we don't clobber compass/verdicts state owned by other apps.
+function writeAddressToContext(addr: string) {
+  const state = parseStateFromAddress(addr);
+  if (!state) return; // need state to be useful for filtering apps
+  evContext.get().then((current) => {
+    const next = { ...(current || {}), address: { addr, state, ts: Date.now() } };
+    evContext.set(next).catch(() => {});
+  }).catch(() => {});
+}
 
 interface AddressFilterInputProps {
   onFilterApplied?: (politicianIds: string[]) => void;
@@ -73,6 +99,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
 
     if (politicianIds.length > 0) {
       setLocationFilter({ address: formattedAddress, politicianIds });
+      writeAddressToContext(formattedAddress);
     } else {
       setNoMatchWarning(true);
       setTimeout(() => setNoMatchWarning(false), 3000);
@@ -83,6 +110,24 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   }, [setLocationFilter, onFilterApplied]);
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
+
+  // Silent auto-apply on mount: if a saved address exists in ev-context (from
+  // essentials/compass/etc.) and the user hasn't already chosen a filter, apply
+  // it as if they typed it. A subsequent address search replaces it via
+  // writeAddressToContext, so user intent always wins.
+  const autoAppliedRef = useRef(false);
+  useEffect(() => {
+    if (autoAppliedRef.current) return;
+    if (locationFilter) return; // user-chosen filter already exists
+    autoAppliedRef.current = true;
+    evContext.get().then((shared) => {
+      const a = shared && (shared as { address?: { addr?: string; ts?: number } }).address;
+      if (!a || typeof a.addr !== 'string') return;
+      const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+      if (a.ts && Date.now() - a.ts > TTL_MS) return;
+      handlePlaceSelected(a.addr);
+    }).catch(() => {});
+  }, [locationFilter, handlePlaceSelected]);
 
   // Browse handler
   const handleBrowse = async () => {
@@ -106,10 +151,9 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
       const politicianIds = data.map((p) => p.id);
 
       if (politicianIds.length > 0) {
-        setLocationFilter({
-          address: `${selectedArea.name}, ${selectedState}`,
-          politicianIds,
-        });
+        const addrLabel = `${selectedArea.name}, ${selectedState}`;
+        setLocationFilter({ address: addrLabel, politicianIds });
+        writeAddressToContext(addrLabel);
       } else {
         setBrowseError('No representatives found with quotes for this area.');
       }
