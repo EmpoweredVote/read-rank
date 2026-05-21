@@ -70,7 +70,10 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
     if (!res.ok) {
       return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '' };
     }
-    const data: SearchPolitician[] = await res.json();
+    const raw = await res.json();
+    // Phase 132 SCHEMA-03: backend now wraps response as { politicians, tribal_land }.
+    // Stay tolerant of either shape so read-rank keeps working through the rollout window.
+    const data: SearchPolitician[] = Array.isArray(raw) ? raw : (raw?.politicians ?? []);
     return { status: status || 'fresh', data, formattedAddress };
   } catch (error) {
     return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '' };
