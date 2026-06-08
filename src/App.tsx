@@ -8,6 +8,33 @@ import { useAuthState } from './hooks/useAuthState';
 import { useReadRankStore } from './store/useReadRankStore';
 import { searchPoliticians } from './data/api';
 import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
+import { ThemeProvider, useTheme } from './ThemeProvider';
+
+function ThemeToggle() {
+  const { isDark, toggle } = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className="theme-toggle-btn"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={isDark ? 'Light mode' : 'Dark mode'}
+    >
+      {isDark ? (
+        // Sun
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+        </svg>
+      ) : (
+        // Moon
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 function MainApp() {
   const { isLoggedIn, userName, loading, logout } = useAuthState();
@@ -57,11 +84,11 @@ function MainApp() {
       : { label: 'Account', items: [{ label: 'Sign in', href: `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}` }] };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#faf7f2' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <SiteHeader
         logoSrc={`${import.meta.env.BASE_URL}EVLogo.svg`}
-        {...({ profileMenu } as any)}
+        {...({ profileMenu, secondaryAction: <ThemeToggle /> } as any)}
       />
       <DevHelper />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -73,12 +100,14 @@ function MainApp() {
 
 function App() {
   return (
-    <BrowserRouter basename="/">
-      <Routes>
-        <Route path="/" element={<MainApp />} />
-        <Route path="/candidate/:candidateId/alignment" element={<CandidateAlignmentPage />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter basename="/">
+        <Routes>
+          <Route path="/" element={<MainApp />} />
+          <Route path="/candidate/:candidateId/alignment" element={<CandidateAlignmentPage />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

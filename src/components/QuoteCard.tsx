@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, animate, MotionValue } from 'framer-motion';
-import { useReadRankStore, type Quote } from '../store/useReadRankStore';
+import type { BlindQuote } from '../store/useReadRankStore';
 
 interface QuoteCardProps {
-  quote: Quote;
+  quote: BlindQuote;
   isStacked?: boolean;
   stackIndex?: number;
   displayNumber?: number;
   onDragStateChange?: (isDragging: boolean, x: MotionValue<number>) => void;
   externalAnimating?: boolean;
-  onAgree?: (quote: Quote) => void;
-  onDisagree?: (quote: Quote) => void;
+  onAgree: (quote: BlindQuote) => void;
+  onDisagree: (quote: BlindQuote) => void;
 }
 
 export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
   ({ quote, isStacked = false, stackIndex = 0, displayNumber, onDragStateChange, externalAnimating = false, onAgree, onDisagree }, ref) => {
-  const store = useReadRankStore();
-  const handleAgree = onAgree ?? store.agreeWithQuote;
-  const handleDisagree = onDisagree ?? store.disagreeWithQuote;
+  const handleAgree = onAgree;
+  const handleDisagree = onDisagree;
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
