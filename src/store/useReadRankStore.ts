@@ -1,82 +1,61 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { arrayMove } from '@dnd-kit/sortable';
-import { getPendingMatchups, computeRankings, makePairKey } from '../utils/matchupAlgorithm';
 
-export interface Quote {
+// ============================================
+// Types — race -> topics -> blind quotes
+// ============================================
+
+/** A de-identified quote. Identity is withheld behind candidateToken until the reveal. */
+export interface BlindQuote {
   id: string;
   text: string;
-  candidateId?: string;
-  issue: string;
-  sourceUrl?: string;
-  sourceName?: string;
+  candidateToken: string; // opaque, stable per-candidate within a race
+  topicKey: string;
 }
 
-export interface RankedQuote extends Quote {
-  rank: number;
-  timestamp: number;
+/** An agreed quote in the race-wide pile. Position in the `agreed` array IS the rank. */
+export interface AgreedQuote extends BlindQuote {
+  addedAt: number;
 }
 
-export interface Candidate {
-  id: string;
-  name: string;
-  party: string;
-  office: string;
-  photo: string;
-  alignmentPercent: number;
-  issuesAligned: number;
-  totalIssues: number;
+export interface TopicProgress {
+  topicKey: string;
+  title: string;
+  question: string;
+  quotesToEvaluate: BlindQuote[];
+  currentIndex: number;
+  disagreed: BlindQuote[];
 }
 
-export interface MatchingResult {
-  candidateId: string;
-  name: string;
-  party: string;
-  office: string;
-  photo: string;
-  alignmentPercent: number;
-  issuesAligned: number;
-  totalIssues: number;
-  rankedQuoteMatches: Array<{
-    userRank: number;
-    quoteId: string;
-    points: number;
+export interface RaceProgress {
+  raceId: string;
+  positionName: string;
+  topics: Record<string, TopicProgress>;
+  topicOrder: string[];
+  currentTopicKey: string | null;
+  /** ONE race-wide ordered pile. Index 0 = #1; first 3 = podium. */
+  agreed: AgreedQuote[];
+  phase: 'evaluation' | 'results';
+  completed: boolean;
+}
+
+/** Shape returned by fetchRaceQuotes / mock data, consumed by selectRace. */
+export interface RacePayload {
+  raceId: string;
+  positionName: string;
+  topics: Array<{
+    topicKey: string;
+    title: string;
+    question: string;
+    quotes: BlindQuote[];
   }>;
 }
 
-export interface IssueData {
-  id: string;
-  title: string;
-  question: string;
-}
-
-export type Phase = 'hub' | 'practice' | 'evaluation' | 'results';
-
 export interface PracticeProgress {
-  phase: 'evaluation' | 'results';
-  currentQuoteIndex: number;
-  rankedQuotes: RankedQuote[];
-  disagreedQuotes: Quote[];
-  matchupWins: Record<string, number>;
-  completedMatchupPairs: string[];
-  activeMatchupPair: [string, string] | null;
-}
-
-// Progress state for a single issue
-export interface IssueProgress {
-  issueId: string;
-  phase: 'evaluation' | 'results';
-  quotesToEvaluate: Quote[];
-  currentQuoteIndex: number;
-  disagreedQuotes: Quote[];
-  rankedQuotes: RankedQuote[];  // Single source of truth for agreed quotes
-  pendingRankQuoteId: string | null;  // Newly agreed quote awaiting user placement
-  rankSkipCount: number;  // Tracks how many times user skipped rank prompt for pending quote
-  candidateMatches: MatchingResult[];
-  completed: boolean;
-  matchupWins: Record<string, number>;       // quoteId -> win count
-  completedMatchupPairs: string[];           // canonical pair keys (string[], NOT Set)
-  activeMatchupPair: [string, string] | null; // current matchup pair IDs; null = swipe mode
+  quotesToEvaluate: BlindQuote[];
+  currentIndex: number;
+  disagreed: BlindQuote[];
+  agreed: AgreedQuote[];
 }
 
 export interface LocationFilter {
@@ -84,84 +63,124 @@ export interface LocationFilter {
   politicianIds: string[];
 }
 
+export type Phase = 'hub' | 'practice' | 'evaluation' | 'results';
+
+/** A single user verdict for backend sync (rank-bearing format). */
+export interface VerdictRecord {
+  quote_id: string;
+  supported: boolean;
+  rank: number | null;
+  session_size: number;
+}
+
 interface ReadRankState {
-  // Current navigation state
+  // Navigation
   phase: Phase;
-  currentIssueId: string | null;
+  currentRaceId: string | null;
 
-  // Per-issue progress tracking
-  issueProgress: Record<string, IssueProgress>;
+  // Per-race progress
+  raceProgress: Record<string, RaceProgress>;
 
-  // Practice state
+  // Practice
   practiceCompleted: boolean;
   practiceProgress: PracticeProgress | null;
 
-  // Coach marks state
+  // Onboarding
   coachMarksCompleted: boolean;
   completeCoachMarks: () => void;
 
-  // Location filter state
+  // Location filter
   locationFilter: LocationFilter | null;
   setLocationFilter: (filter: LocationFilter | null) => void;
   clearLocationFilter: () => void;
 
-  // Actions
+  // Race actions
   setPhase: (phase: Phase) => void;
-  selectIssue: (issueId: string, quotes: Quote[], issueData: IssueData) => void;
-  nextQuote: () => void;
-  agreeWithQuote: (quote: Quote) => void;
-  disagreeWithQuote: (quote: Quote) => void;
-  insertAtRank: (quoteId: string, targetIndex: number) => void;
-  skipRankPrompt: () => void;
-  dismissPending: () => void;
-  reorderRankedQuotes: (newOrder: RankedQuote[]) => void;
-  recordMatchupWin: (winnerId: string, loserId: string) => void;
-  setCandidateMatches: (matches: MatchingResult[]) => void;
+  selectRace: (payload: RacePayload) => void;
+  setCurrentTopic: (topicKey: string) => void;
+  nextTopic: () => void;
+  agree: (quote: BlindQuote) => void;
+  disagree: (quote: BlindQuote) => void;
+  reorderAgreed: (orderedIds: string[]) => void;
+  finishRace: () => void;
   goToHub: () => void;
   reset: () => void;
-  resetIssue: (issueId: string) => void;
+  resetRace: (raceId: string) => void;
 
   // Practice actions
-  startPractice: () => void;
-  agreePracticeQuote: (quote: Quote) => void;
-  disagreePracticeQuote: (quote: Quote) => void;
-  nextPracticeQuote: () => void;
-  recordPracticeMatchupWin: (winnerId: string, loserId: string) => void;
+  startPractice: (quotes: BlindQuote[]) => void;
+  agreePractice: (quote: BlindQuote) => void;
+  disagreePractice: (quote: BlindQuote) => void;
+  reorderPracticeAgreed: (orderedIds: string[]) => void;
   completePractice: () => void;
   skipPractice: () => void;
 
   // Helpers
-  getCurrentIssueProgress: () => IssueProgress | null;
-  getIssueProgress: (issueId: string) => IssueProgress | null;
-  getAllIssueProgress: () => Record<string, IssueProgress>;
+  getCurrentRaceProgress: () => RaceProgress | null;
+  getRaceProgress: (raceId: string) => RaceProgress | null;
+  getCurrentTopicProgress: () => TopicProgress | null;
+  getRaceVerdicts: (raceId: string) => VerdictRecord[];
   getPracticeProgress: () => PracticeProgress | null;
 }
 
-const createEmptyIssueProgress = (issueId: string): IssueProgress => ({
-  issueId,
-  phase: 'evaluation',
-  quotesToEvaluate: [],
-  currentQuoteIndex: 0,
-  disagreedQuotes: [],
-  rankedQuotes: [],
-  pendingRankQuoteId: null,
-  rankSkipCount: 0,
-  candidateMatches: [],
-  completed: false,
-  matchupWins: {},
-  completedMatchupPairs: [],
-  activeMatchupPair: null,
-});
+// ============================================
+// Helpers
+// ============================================
+
+function buildRaceProgress(payload: RacePayload): RaceProgress {
+  const topics: Record<string, TopicProgress> = {};
+  const topicOrder: string[] = [];
+  for (const t of payload.topics) {
+    topics[t.topicKey] = {
+      topicKey: t.topicKey,
+      title: t.title,
+      question: t.question,
+      quotesToEvaluate: t.quotes,
+      currentIndex: 0,
+      disagreed: [],
+    };
+    topicOrder.push(t.topicKey);
+  }
+  return {
+    raceId: payload.raceId,
+    positionName: payload.positionName,
+    topics,
+    topicOrder,
+    currentTopicKey: topicOrder[0] ?? null,
+    agreed: [],
+    phase: 'evaluation',
+    completed: false,
+  };
+}
 
 const initialState = {
   phase: 'hub' as Phase,
-  currentIssueId: null as string | null,
-  issueProgress: {} as Record<string, IssueProgress>,
+  currentRaceId: null as string | null,
+  raceProgress: {} as Record<string, RaceProgress>,
   practiceCompleted: false,
   practiceProgress: null as PracticeProgress | null,
   coachMarksCompleted: false,
   locationFilter: null as LocationFilter | null,
 };
+
+// Immutably update the current race's progress.
+function withCurrentRace(
+  state: ReadRankState,
+  fn: (race: RaceProgress) => RaceProgress
+): Partial<ReadRankState> | null {
+  const raceId = state.currentRaceId;
+  if (!raceId || !state.raceProgress[raceId]) return null;
+  return {
+    raceProgress: {
+      ...state.raceProgress,
+      [raceId]: fn(state.raceProgress[raceId]),
+    },
+  };
+}
+
+// ============================================
+// Store
+// ============================================
 
 export const useReadRankStore = create<ReadRankState>()(
   persist(
@@ -170,434 +189,228 @@ export const useReadRankStore = create<ReadRankState>()(
 
       setPhase: (phase) => {
         const state = get();
-        const issueId = state.currentIssueId;
-
-        if (issueId && state.issueProgress[issueId]) {
-          // Update the phase within the current issue's progress
-          if (phase !== 'hub') {
-            set({
-              phase,
-              issueProgress: {
-                ...state.issueProgress,
-                [issueId]: {
-                  ...state.issueProgress[issueId],
-                  phase: phase as 'evaluation' | 'results',
-                  completed: phase === 'results' ? true : state.issueProgress[issueId].completed,
-                },
-              },
-            });
-          } else {
-            set({ phase });
+        if (phase !== 'hub') {
+          const patch = withCurrentRace(state, (race) => ({
+            ...race,
+            phase: phase as 'evaluation' | 'results',
+            completed: phase === 'results' ? true : race.completed,
+          }));
+          if (patch) {
+            set({ phase, ...patch });
+            return;
           }
-        } else {
-          set({ phase });
         }
+        set({ phase });
       },
 
-      selectIssue: (issueId, quotes, _issueData) => {
+      selectRace: (payload) => {
         const state = get();
-
-        // Check if we have existing progress for this issue
-        let progress = state.issueProgress[issueId];
-
-        if (!progress) {
-          // Create new progress for this issue
-          progress = createEmptyIssueProgress(issueId);
-          progress.quotesToEvaluate = quotes;
-        }
-
+        const existing = state.raceProgress[payload.raceId];
+        const race = existing ?? buildRaceProgress(payload);
         set({
-          currentIssueId: issueId,
-          phase: progress.phase,
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: progress,
+          currentRaceId: payload.raceId,
+          phase: race.phase,
+          raceProgress: {
+            ...state.raceProgress,
+            [payload.raceId]: race,
           },
         });
       },
 
-      nextQuote: () => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
+      setCurrentTopic: (topicKey) => {
+        const patch = withCurrentRace(get(), (race) =>
+          race.topics[topicKey] ? { ...race, currentTopicKey: topicKey } : race
+        );
+        if (patch) set(patch);
+      },
 
-        const progress = state.issueProgress[issueId];
-        const nextIndex = progress.currentQuoteIndex + 1;
+      nextTopic: () => {
+        const patch = withCurrentRace(get(), (race) => {
+          if (!race.currentTopicKey) return race;
+          const idx = race.topicOrder.indexOf(race.currentTopicKey);
+          const next = race.topicOrder[idx + 1];
+          return next ? { ...race, currentTopicKey: next } : race;
+        });
+        if (patch) set(patch);
+      },
 
-        // Cap the index — EvaluationPhase.handleComplete handles explicit phase transitions
-        const cappedIndex = Math.min(nextIndex, progress.quotesToEvaluate.length);
+      agree: (quote) => {
+        const patch = withCurrentRace(get(), (race) => {
+          if (race.agreed.some((q) => q.id === quote.id)) return race;
+          const topic = race.topics[quote.topicKey];
+          const updatedTopic = topic
+            ? { ...topic, currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length) }
+            : topic;
+          return {
+            ...race,
+            agreed: [...race.agreed, { ...quote, addedAt: Date.now() }],
+            topics: topic ? { ...race.topics, [quote.topicKey]: updatedTopic } : race.topics,
+          };
+        });
+        if (patch) set(patch);
+      },
 
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              currentQuoteIndex: cappedIndex,
+      disagree: (quote) => {
+        const patch = withCurrentRace(get(), (race) => {
+          const topic = race.topics[quote.topicKey];
+          if (!topic) return race;
+          return {
+            ...race,
+            topics: {
+              ...race.topics,
+              [quote.topicKey]: {
+                ...topic,
+                disagreed: [...topic.disagreed, quote],
+                currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length),
+              },
             },
-          },
+          };
         });
+        if (patch) set(patch);
       },
 
-      agreeWithQuote: (quote) => {
+      reorderAgreed: (orderedIds) => {
+        const patch = withCurrentRace(get(), (race) => {
+          const byId = new Map(race.agreed.map((q) => [q.id, q]));
+          const next = orderedIds.map((id) => byId.get(id)).filter(Boolean) as AgreedQuote[];
+          // Append any not present in orderedIds (defensive).
+          for (const q of race.agreed) if (!orderedIds.includes(q.id)) next.push(q);
+          return { ...race, agreed: next };
+        });
+        if (patch) set(patch);
+      },
+
+      finishRace: () => {
         const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const newRank = progress.rankedQuotes.length + 1;
-        const rankedQuote: RankedQuote = {
-          ...quote,
-          rank: newRank,
-          timestamp: Date.now(),
-        };
-
-        const updatedRankedQuotes = [...progress.rankedQuotes, rankedQuote];
-
-        // Check for pending matchups if we now have 2+ agreed quotes
-        let activeMatchupPair: [string, string] | null = progress.activeMatchupPair;
-        if (updatedRankedQuotes.length >= 2) {
-          const pending = getPendingMatchups(updatedRankedQuotes, progress.completedMatchupPairs);
-          activeMatchupPair = pending.length > 0 ? pending[0] : null;
-        }
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              rankedQuotes: updatedRankedQuotes,
-              pendingRankQuoteId: quote.id,
-              rankSkipCount: 0,
-              activeMatchupPair,
-            },
-          },
-        });
-        get().nextQuote();
+        const patch = withCurrentRace(state, (race) => ({
+          ...race,
+          phase: 'results',
+          completed: true,
+        }));
+        if (patch) set({ phase: 'results', ...patch });
+        else set({ phase: 'results' });
       },
 
-      disagreeWithQuote: (quote) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const updatedDisagreedQuotes = [...progress.disagreedQuotes, quote];
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              disagreedQuotes: updatedDisagreedQuotes,
-            },
-          },
-        });
-        get().nextQuote();
-      },
-
-      insertAtRank: (quoteId, targetIndex) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const currentIndex = progress.rankedQuotes.findIndex(q => q.id === quoteId);
-        if (currentIndex === -1) return;
-
-        const reordered = arrayMove(progress.rankedQuotes, currentIndex, targetIndex);
-        const withUpdatedRanks = reordered.map((q, i) => ({ ...q, rank: i + 1 }));
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              rankedQuotes: withUpdatedRanks,
-              pendingRankQuoteId: null,
-            },
-          },
-        });
-      },
-
-      skipRankPrompt: () => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const newSkipCount = progress.rankSkipCount + 1;
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              rankSkipCount: newSkipCount,
-              // After 2 skips, dismiss the pending state (quote stays at bottom)
-              pendingRankQuoteId: newSkipCount > 1 ? null : progress.pendingRankQuoteId,
-            },
-          },
-        });
-      },
-
-      dismissPending: () => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              pendingRankQuoteId: null,
-              rankSkipCount: 0,
-            },
-          },
-        });
-      },
-
-      reorderRankedQuotes: (newOrder) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-        const withUpdatedRanks = newOrder.map((q, i) => ({ ...q, rank: i + 1 }));
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              rankedQuotes: withUpdatedRanks,
-            },
-          },
-        });
-      },
-
-      recordMatchupWin: (winnerId, loserId) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-
-        // Update win count for winner
-        const newWins = {
-          ...progress.matchupWins,
-          [winnerId]: (progress.matchupWins[winnerId] ?? 0) + 1,
-        };
-
-        // Record completed pair
-        const pairKey = makePairKey(winnerId, loserId);
-        const newCompletedPairs = [...progress.completedMatchupPairs, pairKey];
-
-        // Rerank by wins
-        const reranked = computeRankings(progress.rankedQuotes, newWins);
-
-        // Find next pending matchup
-        const pending = getPendingMatchups(reranked, newCompletedPairs);
-        const nextPair: [string, string] | null = pending.length > 0 ? pending[0] : null;
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              matchupWins: newWins,
-              completedMatchupPairs: newCompletedPairs,
-              rankedQuotes: reranked,
-              activeMatchupPair: nextPair,
-            },
-          },
-        });
-      },
-
-      setCandidateMatches: (matches) => {
-        const state = get();
-        const issueId = state.currentIssueId;
-        if (!issueId || !state.issueProgress[issueId]) return;
-
-        const progress = state.issueProgress[issueId];
-
-        set({
-          issueProgress: {
-            ...state.issueProgress,
-            [issueId]: {
-              ...progress,
-              candidateMatches: matches,
-              completed: true,
-            },
-          },
-        });
-      },
-
-      goToHub: () => {
-        set({
-          phase: 'hub',
-          currentIssueId: null,
-        });
-      },
+      goToHub: () => set({ phase: 'hub', currentRaceId: null }),
 
       reset: () => set(initialState),
 
-      resetIssue: (issueId: string) => {
+      resetRace: (raceId) => {
         const state = get();
-        const newProgress = { ...state.issueProgress };
-        delete newProgress[issueId];
-        set({ issueProgress: newProgress });
+        const next = { ...state.raceProgress };
+        delete next[raceId];
+        set({ raceProgress: next });
       },
 
-      startPractice: () => {
+      // ---- Practice ----
+
+      startPractice: (quotes) => {
         set({
-          phase: 'practice' as Phase,
+          phase: 'practice',
           practiceProgress: {
-            phase: 'evaluation',
-            currentQuoteIndex: 0,
-            rankedQuotes: [],
-            disagreedQuotes: [],
-            matchupWins: {},
-            completedMatchupPairs: [],
-            activeMatchupPair: null,
+            quotesToEvaluate: quotes,
+            currentIndex: 0,
+            disagreed: [],
+            agreed: [],
           },
         });
       },
 
-      agreePracticeQuote: (quote) => {
-        const state = get();
-        const progress = state.practiceProgress;
-        if (!progress) return;
-
-        const newRank = progress.rankedQuotes.length + 1;
-        const rankedQuote: RankedQuote = { ...quote, rank: newRank, timestamp: Date.now() };
-        const updatedRanked = [...progress.rankedQuotes, rankedQuote];
-
-        let activeMatchupPair: [string, string] | null = progress.activeMatchupPair;
-        if (updatedRanked.length >= 2) {
-          const pending = getPendingMatchups(updatedRanked, progress.completedMatchupPairs);
-          activeMatchupPair = pending.length > 0 ? pending[0] : null;
-        }
-
+      agreePractice: (quote) => {
+        const p = get().practiceProgress;
+        if (!p) return;
+        if (p.agreed.some((q) => q.id === quote.id)) return;
         set({
           practiceProgress: {
-            ...progress,
-            rankedQuotes: updatedRanked,
-            currentQuoteIndex: progress.currentQuoteIndex + 1,
-            activeMatchupPair,
+            ...p,
+            agreed: [...p.agreed, { ...quote, addedAt: Date.now() }],
+            currentIndex: Math.min(p.currentIndex + 1, p.quotesToEvaluate.length),
           },
         });
       },
 
-      disagreePracticeQuote: (quote) => {
-        const state = get();
-        const progress = state.practiceProgress;
-        if (!progress) return;
-
+      disagreePractice: (quote) => {
+        const p = get().practiceProgress;
+        if (!p) return;
         set({
           practiceProgress: {
-            ...progress,
-            disagreedQuotes: [...progress.disagreedQuotes, quote],
-            currentQuoteIndex: progress.currentQuoteIndex + 1,
+            ...p,
+            disagreed: [...p.disagreed, quote],
+            currentIndex: Math.min(p.currentIndex + 1, p.quotesToEvaluate.length),
           },
         });
       },
 
-      nextPracticeQuote: () => {
-        // No-op — index already advanced in agree/disagree actions
+      reorderPracticeAgreed: (orderedIds) => {
+        const p = get().practiceProgress;
+        if (!p) return;
+        const byId = new Map(p.agreed.map((q) => [q.id, q]));
+        const next = orderedIds.map((id) => byId.get(id)).filter(Boolean) as AgreedQuote[];
+        for (const q of p.agreed) if (!orderedIds.includes(q.id)) next.push(q);
+        set({ practiceProgress: { ...p, agreed: next } });
       },
 
-      recordPracticeMatchupWin: (winnerId, loserId) => {
-        const state = get();
-        const progress = state.practiceProgress;
-        if (!progress) return;
-
-        const newWins = {
-          ...progress.matchupWins,
-          [winnerId]: (progress.matchupWins[winnerId] ?? 0) + 1,
-        };
-
-        const pairKey = makePairKey(winnerId, loserId);
-        const newCompletedPairs = [...progress.completedMatchupPairs, pairKey];
-
-        const reranked = computeRankings(progress.rankedQuotes, newWins);
-
-        const pending = getPendingMatchups(reranked, newCompletedPairs);
-        const nextPair: [string, string] | null = pending.length > 0 ? pending[0] : null;
-
-        set({
-          practiceProgress: {
-            ...progress,
-            matchupWins: newWins,
-            completedMatchupPairs: newCompletedPairs,
-            rankedQuotes: reranked,
-            activeMatchupPair: nextPair,
-          },
-        });
-      },
-
-      completePractice: () => {
-        set({
-          phase: 'hub' as Phase,
-          practiceCompleted: true,
-          practiceProgress: null,
-        });
-      },
-
-      skipPractice: () => {
-        set({
-          phase: 'hub' as Phase,
-          practiceCompleted: true,
-          practiceProgress: null,
-        });
-      },
+      completePractice: () => set({ phase: 'hub', practiceCompleted: true, practiceProgress: null }),
+      skipPractice: () => set({ phase: 'hub', practiceCompleted: true, practiceProgress: null }),
 
       completeCoachMarks: () => set({ coachMarksCompleted: true }),
 
       setLocationFilter: (filter) => set({ locationFilter: filter }),
       clearLocationFilter: () => set({ locationFilter: null }),
 
-      getCurrentIssueProgress: () => {
+      // ---- Helpers ----
+
+      getCurrentRaceProgress: () => {
         const state = get();
-        if (!state.currentIssueId) return null;
-        return state.issueProgress[state.currentIssueId] || null;
+        if (!state.currentRaceId) return null;
+        return state.raceProgress[state.currentRaceId] ?? null;
       },
 
-      getIssueProgress: (issueId: string) => {
-        const state = get();
-        return state.issueProgress[issueId] || null;
+      getRaceProgress: (raceId) => get().raceProgress[raceId] ?? null,
+
+      getCurrentTopicProgress: () => {
+        const race = get().getCurrentRaceProgress();
+        if (!race || !race.currentTopicKey) return null;
+        return race.topics[race.currentTopicKey] ?? null;
       },
 
-      getAllIssueProgress: () => {
-        return get().issueProgress;
+      getRaceVerdicts: (raceId) => {
+        const race = get().raceProgress[raceId];
+        if (!race) return [];
+        const disagreed = Object.values(race.topics).flatMap((t) => t.disagreed);
+        const sessionSize = race.agreed.length + disagreed.length;
+        const verdicts: VerdictRecord[] = [];
+        race.agreed.forEach((q, i) => {
+          verdicts.push({ quote_id: q.id, supported: true, rank: i + 1, session_size: sessionSize });
+        });
+        for (const q of disagreed) {
+          verdicts.push({ quote_id: q.id, supported: false, rank: null, session_size: sessionSize });
+        }
+        return verdicts;
       },
 
-      getPracticeProgress: () => {
-        return get().practiceProgress;
-      },
+      getPracticeProgress: () => get().practiceProgress,
     }),
     {
       name: 'ev_readrank',
-      version: 7,
-      migrate: (_persistedState, version) => {
-        // v7 migration: existing users (version > 0) skip practice and coach marks; new users see them
+      version: 8,
+      migrate: (persistedState, version) => {
+        // v8: race-scoped model. The old issue-scoped shape cannot be mapped
+        // (no race_id, matchup-derived ranks). Reset progress; preserve
+        // onboarding flags + location so returning users don't re-onboard.
         const isUpgrade = version > 0;
+        const prev = (persistedState ?? {}) as Partial<typeof initialState>;
         return {
-          phase: 'hub' as Phase,
-          currentIssueId: null as string | null,
-          issueProgress: {} as Record<string, IssueProgress>,
+          ...initialState,
           practiceCompleted: isUpgrade,
-          practiceProgress: null as PracticeProgress | null,
           coachMarksCompleted: isUpgrade,
-          locationFilter: null,
+          locationFilter: prev.locationFilter ?? null,
         };
       },
       partialize: (state) => ({
         phase: state.phase,
-        currentIssueId: state.currentIssueId,
-        issueProgress: state.issueProgress,
+        currentRaceId: state.currentRaceId,
+        raceProgress: state.raceProgress,
         practiceCompleted: state.practiceCompleted,
         practiceProgress: state.practiceProgress,
         coachMarksCompleted: state.coachMarksCompleted,

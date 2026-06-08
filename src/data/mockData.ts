@@ -1,171 +1,246 @@
-import type { Quote, Candidate, IssueData } from '../store/useReadRankStore';
+import type { RacePayload, BlindQuote, VerdictRecord } from '../store/useReadRankStore';
+import type { RaceSummary, RevealResult, BallotEntry } from './api';
 
-// All available issues
-export const allIssues: IssueData[] = [
+// ============================================================
+// Mock race — 2024 Indiana Governor. Used as an offline / dev
+// fallback so the full blind → rank → reveal flow works without
+// the backend. The blind payload exposes ONLY de-identified text
+// + an opaque candidateToken; identities live in MOCK_IDENTITIES
+// and are revealed by buildMockReveal().
+// ============================================================
+
+export const MOCK_RACE_ID = 'mock-in-gov-2024';
+
+interface MockIdentity {
+  candidateId: string;
+  name: string;
+  party: string;
+  office: string;
+  photo: string;
+}
+
+const MOCK_IDENTITIES: Record<string, MockIdentity> = {
+  'tok-rainwater': {
+    candidateId: 'donald-rainwater',
+    name: 'Donald Rainwater',
+    party: 'Libertarian Party',
+    office: 'Candidate for Indiana Governor',
+    photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/DonaldRainwater2024.jpg',
+  },
+  'tok-mccormick': {
+    candidateId: 'jennifer-mccormick',
+    name: 'Jennifer McCormick',
+    party: 'Democratic Party',
+    office: 'Candidate for Indiana Governor',
+    photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Jennifer_McCormick.jpg',
+  },
+  'tok-braun': {
+    candidateId: 'mike-braun',
+    name: 'Mike Braun',
+    party: 'Republican Party',
+    office: 'Candidate for Indiana Governor',
+    photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Mike_Braun.png',
+  },
+  'tok-bauer': {
+    candidateId: 'maureen-bauer',
+    name: 'Maureen Bauer',
+    party: 'Democratic Party',
+    office: 'Candidate for Indiana Governor',
+    photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/200/300/Mar3020201125PM_80182230_1BA7F9ECD19D4A52829D0F47A0BE6754.jpeg',
+  },
+};
+
+interface MockTopicMeta {
+  topicKey: string;
+  title: string;
+  question: string;
+}
+
+const MOCK_TOPICS: MockTopicMeta[] = [
   {
-    id: "cannabis-legalization",
-    title: "Cannabis Legalization",
-    question: "Do you support Indiana legalizing marijuana use, either medicinal, recreational, or both?"
+    topicKey: 'cannabis-legalization',
+    title: 'Cannabis Legalization',
+    question: 'Should Indiana legalize marijuana — medicinal, recreational, or both?',
   },
   {
-    id: "education-funding",
-    title: "Education Funding",
-    question: "How should Indiana approach public school funding and teacher compensation?"
+    topicKey: 'education-funding',
+    title: 'Education Funding',
+    question: 'How should Indiana approach public school funding and school choice?',
   },
   {
-    id: "abortion-rights",
-    title: "Abortion Rights",
-    question: "What is your position on abortion access in Indiana?"
-  }
+    topicKey: 'abortion-rights',
+    title: 'Abortion Rights',
+    question: 'What is your position on abortion access in Indiana?',
+  },
 ];
 
-// Legacy single issue export for backwards compatibility
-export const mockIssueData = allIssues[0];
+interface MockQuoteFull {
+  id: string;
+  text: string; // de-identified — never names the speaker
+  token: string;
+  topicKey: string;
+  sourceUrl?: string;
+  sourceName?: string;
+}
 
-// Each candidate has ONE quote per issue
-export const mockQuotes: Quote[] = [
-  // ========== CANNABIS LEGALIZATION ==========
-  {
-    id: "rainwater-cannabis",
-    text: "We don't need to expand government. We don't need a new commission. We don't need new regulations. We can make cannabis in all forms — medicinal and recreational — legal right now. If legislators are not prepared, that is their fault, and we should probably replace them. We should make this legal now, and, as governor, I would make sure that all nonviolent criminal cannabis-related offenses are expunged.",
-    candidateId: "donald-rainwater",
-    issue: "cannabis-legalization",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "mccormick-cannabis",
-    text: "I'm aware 80% of Hoosiers support legalization. My cannabis plan calls for a conversation on medical use before a conversation on adult use. On adult use, Indiana is losing out on $177 million in tax revenue and hundreds of thousands of jobs because surrounding states have legalized marijuana. Indiana needs a commission on cannabis use.",
-    candidateId: "jennifer-mccormick",
-    issue: "cannabis-legalization",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "braun-cannabis",
-    text: "Marijuana use medicinally and recreationally is cascading across the county, and Indiana needs to address it seriously. I'd have to think about whether to allow adult use. On medicinal use, we're probably ready for it. On both counts, I'm going to listen to law enforcement because they will have to enforce it and put up with any issues.",
-    candidateId: "mike-braun",
-    issue: "cannabis-legalization",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "bauer-cannabis",
-    text: "Now that the Drug Enforcement Administration plans to reclassify marijuana... I believe it is time for Indiana to follow suit with decriminalization and legalization for adult use.",
-    candidateId: "maureen-bauer",
-    issue: "cannabis-legalization",
-    sourceUrl: "https://wsbt.com/news/local/indiana-leaders-reassess-marijuana-stance-as-dea-proposes-historic-reclassification",
-    sourceName: "WSBT News"
-  },
+const MOCK_QUOTES: MockQuoteFull[] = [
+  // ===== CANNABIS =====
+  { id: 'rainwater-cannabis', token: 'tok-rainwater', topicKey: 'cannabis-legalization',
+    text: "We don't need to expand government, add a new commission, or write new regulations. We can make cannabis legal in all forms — medicinal and recreational — right now, and expunge all nonviolent cannabis-related offenses.",
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'mccormick-cannabis', token: 'tok-mccormick', topicKey: 'cannabis-legalization',
+    text: 'About 80% of residents support legalization. My plan calls for a conversation on medical use before adult use. The state is losing out on roughly $177 million in tax revenue because surrounding states have legalized. We need a commission on cannabis use.',
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'braun-cannabis', token: 'tok-braun', topicKey: 'cannabis-legalization',
+    text: 'Marijuana use is cascading across the country and the state needs to address it seriously. I would have to think about adult use; on medicinal use we are probably ready. On both counts I am going to listen to law enforcement.',
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'bauer-cannabis', token: 'tok-bauer', topicKey: 'cannabis-legalization',
+    text: 'Now that federal authorities plan to reclassify marijuana, I believe it is time for the state to follow suit with decriminalization and legalization for adult use.',
+    sourceUrl: 'https://wsbt.com/news/local/indiana-leaders-reassess-marijuana-stance-as-dea-proposes-historic-reclassification', sourceName: 'WSBT News' },
 
-  // ========== EDUCATION FUNDING ==========
-  {
-    id: "rainwater-education",
-    text: "I believe in universal school choice. Indiana's public school system is failing; only 63% of children passed statewide tests in math and English. The state constitution allows for the funding of public and private schools.",
-    candidateId: "donald-rainwater",
-    issue: "education-funding",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "mccormick-education",
-    text: "Make no mistake, this isn't about parents choosing, this is about a school choosing. The admission policies need to be looked at. If I showed up with a child and the school doesn't like the academic performance, or the color of their skin, or how they identify LGBTQ, or their religious belief, they do not have to take them. Public dollars need to go to public schools.",
-    candidateId: "jennifer-mccormick",
-    issue: "education-funding",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "braun-education",
-    text: "Indiana has a leading edge on school choice and competition, and also puts the parents as the main stakeholders in their children's education. When you have one size fits all, it's a monopoly. If you're not for choice, competition, and vouchers to make it doable, it's not a zero-sum game.",
-    candidateId: "mike-braun",
-    issue: "education-funding",
-    sourceUrl: "https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/",
-    sourceName: "WISH-TV Governor's Debate"
-  },
-  {
-    id: "bauer-education",
-    text: "To improve outcomes for Hoosier children, we need to make early childhood education available to all families, provide fair and adequate funding for K-12 public education and teacher salaries, and reduce food insecurities through expanded school breakfast and lunch programs.",
-    candidateId: "maureen-bauer",
-    issue: "education-funding",
-    sourceUrl: "https://www.maureenbauer.com",
-    sourceName: "Maureen Bauer Campaign Website"
-  },
+  // ===== EDUCATION =====
+  { id: 'rainwater-education', token: 'tok-rainwater', topicKey: 'education-funding',
+    text: 'I believe in universal school choice. The public school system is failing — only 63% of children passed statewide tests in math and English. The state constitution allows funding for public and private schools.',
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'mccormick-education', token: 'tok-mccormick', topicKey: 'education-funding',
+    text: "This isn't about parents choosing — it's about a school choosing. Admission policies need to be examined; a school can turn a child away over academics, race, how they identify, or religious belief. Public dollars need to go to public schools.",
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'braun-education', token: 'tok-braun', topicKey: 'education-funding',
+    text: 'The state has a leading edge on school choice and competition, and it puts parents as the main stakeholders in their children’s education. One size fits all is a monopoly; choice, competition, and vouchers make it work.',
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+  { id: 'bauer-education', token: 'tok-bauer', topicKey: 'education-funding',
+    text: 'To improve outcomes we need early childhood education available to all families, fair and adequate funding for K-12 and teacher salaries, and reduced food insecurity through expanded school meal programs.',
+    sourceUrl: 'https://www.maureenbauer.com', sourceName: 'Campaign Website' },
 
-  // ========== ABORTION RIGHTS ==========
-  {
-    id: "rainwater-abortion",
-    text: "I am pro-life. I believe that the American College of Pediatrics, I believe it was in 2017, issued their opinion, saying that at conception, new DNA is created. I believe that we in this country believe in the unalienable rights of life, liberty and the pursuit of happiness. Life, if it is new DNA, scientifically, would then start at conception. And if we are going to protect life, then we should protect it from its beginning.",
-    candidateId: "donald-rainwater",
-    issue: "abortion-rights",
-    sourceUrl: "https://www.indystar.com/story/news/politics/elections/2024/01/10/2024-indiana-governor-race-qa-with-libertarian-donald-rainwater/71756787007/",
-    sourceName: "IndyStar - 2024"
-  },
-  {
-    id: "mccormick-abortion",
-    text: "I trust women; I trust health care providers. I believe in the standards set by Roe. It’s time we return to that.",
-    candidateId: "jennifer-mccormick",
-    issue: "abortion-rights",
-    sourceUrl: "https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/",
-    sourceName: "ABC7 Chicago - Governor's Debate"
-  },
-  {
-    id: "braun-abortion",
-    text: "We’re a right-to-life state, backing the sanctity of life. When our Legislature took it on they talked to their constituents, to Hoosiers. It has withstood the courts weighing in. The people have spoken. Legislators have listened, and we got a bill that seems to be working for Hoosiers.",
-    candidateId: "mike-braun",
-    issue: "abortion-rights",
-    sourceUrl: "https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/",
-    sourceName: "ABC7 Chicago - Governor's Debate"
-  },
-  {
-    id: "bauer-abortion",
-    text: "Forced birth is not freedom. Forcing government to decide women's health care decisions but not a man's is not equal. Forcing a survivor of rape to give birth to her abuser's child is not dignity. Government's role is to ensure we are providing access to quality and essential health care services, especially to the vulnerable.",
-    candidateId: "maureen-bauer",
-    issue: "abortion-rights",
-    sourceUrl: "https://iga.in.gov/session/2022ss1/video/house",
-    sourceName: "Indiana House Debate - August 5, 2022"
-  }
+  // ===== ABORTION =====
+  { id: 'rainwater-abortion', token: 'tok-rainwater', topicKey: 'abortion-rights',
+    text: 'I am pro-life. If new DNA is created at conception, then scientifically life starts at conception, and if we are going to protect life we should protect it from its beginning.',
+    sourceUrl: 'https://www.indystar.com/story/news/politics/elections/2024/01/10/2024-indiana-governor-race-qa-with-libertarian-donald-rainwater/71756787007/', sourceName: 'IndyStar' },
+  { id: 'mccormick-abortion', token: 'tok-mccormick', topicKey: 'abortion-rights',
+    text: 'I trust women; I trust health care providers. I believe in the standards set by Roe, and it is time we return to that.',
+    sourceUrl: 'https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/', sourceName: "ABC7 Governor's Debate" },
+  { id: 'braun-abortion', token: 'tok-braun', topicKey: 'abortion-rights',
+    text: 'We are a right-to-life state, backing the sanctity of life. The legislature took it on, talked to constituents, and it has withstood the courts. The people have spoken and we got a bill that seems to be working.',
+    sourceUrl: 'https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/', sourceName: "ABC7 Governor's Debate" },
+  { id: 'bauer-abortion', token: 'tok-bauer', topicKey: 'abortion-rights',
+    text: 'Forced birth is not freedom. Forcing government to decide a woman’s health care decisions but not a man’s is not equal. Government’s role is to ensure access to quality, essential health care, especially for the vulnerable.',
+    sourceUrl: 'https://iga.in.gov/session/2022ss1/video/house', sourceName: 'Indiana House Debate' },
 ];
 
-export const mockCandidates: Candidate[] = [
-  {
-    id: "donald-rainwater",
-    name: "Donald Rainwater",
-    party: "Libertarian Party",
-    office: "Indiana Governor",
-    photo: "https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/DonaldRainwater2024.jpg",
-    alignmentPercent: 0,
-    issuesAligned: 0,
-    totalIssues: 1
-  },
-  {
-    id: "jennifer-mccormick",
-    name: "Jennifer McCormick",
-    party: "Democratic Party",
-    office: "Indiana Governor",
-    photo: "https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Jennifer_McCormick.jpg",
-    alignmentPercent: 0,
-    issuesAligned: 0,
-    totalIssues: 1
-  },
-  {
-    id: "mike-braun",
-    name: "Mike Braun",
-    party: "Republican Party",
-    office: "Indiana Governor",
-    photo: "https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Mike_Braun.png",
-    alignmentPercent: 0,
-    issuesAligned: 0,
-    totalIssues: 1
-  },
-  {
-    id: "maureen-bauer",
-    name: "Maureen Bauer",
-    party: "Democratic Party",
-    office: "Indiana State Representative",
-    photo: "https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/200/300/Mar3020201125PM_80182230_1BA7F9ECD19D4A52829D0F47A0BE6754.jpeg",
-    alignmentPercent: 0,
-    issuesAligned: 0,
-    totalIssues: 1
+export const mockRaceSummary: RaceSummary = {
+  raceId: MOCK_RACE_ID,
+  positionName: 'Governor',
+  electionName: '2024 Indiana Governor (demo)',
+  electionDate: '2024-11-05',
+  state: 'IN',
+  jurisdictionLevel: 'state',
+  candidateCount: Object.keys(MOCK_IDENTITIES).length,
+  topicCount: MOCK_TOPICS.length,
+  isLocal: false,
+};
+
+export function buildMockRacePayload(): RacePayload {
+  return {
+    raceId: MOCK_RACE_ID,
+    positionName: mockRaceSummary.positionName,
+    topics: MOCK_TOPICS.map((t) => ({
+      topicKey: t.topicKey,
+      title: t.title,
+      question: t.question,
+      quotes: MOCK_QUOTES.filter((q) => q.topicKey === t.topicKey).map<BlindQuote>((q) => ({
+        id: q.id,
+        text: q.text,
+        candidateToken: q.token,
+        topicKey: q.topicKey,
+      })),
+    })),
+  };
+}
+
+/** Client-side mock of the verdict+rank candidate-match scoring. */
+export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
+  const quoteById = new Map(MOCK_QUOTES.map((q) => [q.id, q]));
+  const verdictByQuote = new Map(verdicts.map((v) => [v.quote_id, v]));
+
+  interface Agg {
+    token: string;
+    agreementCount: number;
+    firstPlaceCount: number;
+    topicsWithAgreement: Set<string>;
+    score: number;
+    perTopic: Map<string, BallotEntry['perTopic'][number]>;
   }
-];
+  const aggs = new Map<string, Agg>();
+  const ensure = (token: string): Agg => {
+    let a = aggs.get(token);
+    if (!a) {
+      a = { token, agreementCount: 0, firstPlaceCount: 0, topicsWithAgreement: new Set(), score: 0, perTopic: new Map() };
+      aggs.set(token, a);
+    }
+    return a;
+  };
+
+  const rankBonus = (rank: number | null) => (rank === 1 ? 3 : rank === 2 ? 2 : rank === 3 ? 1 : 0.5);
+
+  // Per-topic winner = the agreed quote with the best (lowest) rank in that topic.
+  const topicBest: Record<string, { token: string; rank: number }> = {};
+
+  for (const v of verdicts) {
+    const q = quoteById.get(v.quote_id);
+    if (!q || !v.supported) continue;
+    const a = ensure(q.token);
+    a.agreementCount += 1;
+    a.topicsWithAgreement.add(q.topicKey);
+    a.score += rankBonus(v.rank);
+    if (v.rank === 1) a.firstPlaceCount += 1;
+    if (v.rank != null) {
+      const best = topicBest[q.topicKey];
+      if (!best || v.rank < best.rank) topicBest[q.topicKey] = { token: q.token, rank: v.rank };
+    }
+  }
+
+  // Build per-topic detail for every candidate the user agreed with.
+  for (const a of aggs.values()) {
+    for (const t of MOCK_TOPICS) {
+      const quotes = MOCK_QUOTES.filter((q) => q.token === a.token && q.topicKey === t.topicKey)
+        .map((q) => {
+          const v = verdictByQuote.get(q.id);
+          return v ? { quoteId: q.id, text: q.text, supported: v.supported, rank: v.rank, sourceName: q.sourceName, sourceUrl: q.sourceUrl } : null;
+        })
+        .filter(Boolean) as BallotEntry['perTopic'][number]['quotes'];
+      if (quotes.length === 0) continue;
+      a.perTopic.set(t.topicKey, {
+        topicKey: t.topicKey,
+        title: t.title,
+        userTopWinner: topicBest[t.topicKey]?.token === a.token,
+        quotes,
+      });
+    }
+  }
+
+  const ranked = [...aggs.values()].sort(
+    (x, y) => y.score - x.score || y.agreementCount - x.agreementCount || y.firstPlaceCount - x.firstPlaceCount
+  );
+
+  const ballot: BallotEntry[] = ranked.map((a, i) => {
+    const id = MOCK_IDENTITIES[a.token];
+    return {
+      rank: i + 1,
+      candidateId: id.candidateId,
+      name: id.name,
+      party: id.party,
+      office: id.office,
+      photo: id.photo,
+      essentialsUrl: `https://essentials.empowered.vote/politician/${id.candidateId}`,
+      evidence: {
+        agreementCount: a.agreementCount,
+        firstPlaceCount: a.firstPlaceCount,
+        topicsWithAgreement: a.topicsWithAgreement.size,
+      },
+      perTopic: [...a.perTopic.values()],
+      score: a.score,
+    };
+  });
+
+  return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.positionName, ballot };
+}
