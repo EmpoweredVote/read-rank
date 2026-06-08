@@ -104,7 +104,7 @@ export const RaceHub: React.FC = () => {
           const progress = raceProgress[race.raceId];
           const isCompleted = progress?.completed;
           const isInProgress = progress && !progress.completed;
-          const accent = isCompleted ? 'var(--color-ev-muted-blue)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--border-medium)';
+          const accent = isCompleted ? 'var(--text-link)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--border-medium)';
           const statusText = isCompleted ? 'Completed' : isInProgress ? 'In progress' : `${race.candidateCount} candidates · ${race.topicCount} topics`;
 
           return (
@@ -132,7 +132,7 @@ export const RaceHub: React.FC = () => {
                     {race.positionName}
                     {race.isLocal && (
                       <span style={{
-                        marginLeft: '0.5rem', fontSize: '0.5625rem', fontWeight: 700, letterSpacing: '0.06em',
+                        marginLeft: '0.5rem', fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em',
                         textTransform: 'uppercase', color: 'var(--color-ev-coral)', backgroundColor: 'color-mix(in srgb, var(--color-ev-coral) 12%, transparent)',
                         padding: '0.125rem 0.375rem', borderRadius: '9999px', verticalAlign: 'middle',
                       }}>
@@ -144,7 +144,7 @@ export const RaceHub: React.FC = () => {
                     fontFamily: "'Manrope', sans-serif", fontSize: '0.625rem', fontWeight: 600,
                     padding: '0.125rem 0.5rem', borderRadius: '9999px', letterSpacing: '0.03em', textTransform: 'uppercase',
                     backgroundColor: isCompleted ? 'var(--agree-bg)' : isInProgress ? 'color-mix(in srgb, var(--color-ev-coral) 12%, transparent)' : 'var(--surface-raised)',
-                    color: isCompleted ? 'var(--color-ev-muted-blue)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--text-tertiary)',
+                    color: isCompleted ? 'var(--text-link)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--text-tertiary)',
                   }}>
                     {isCompleted || isInProgress ? statusText : 'Play'}
                   </span>

@@ -42,8 +42,9 @@
   --text-ink: #1a1a2e;
   --text-heading: #1a1a2e;
   --text-strong: #2d2d44;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
+  --text-secondary: #525c6b; /* ~6.3:1 on card — AA normal */
+  --text-tertiary: #5f6877;  /* ~5.6:1 on card — AA normal (was #94a3b8 ~2.7:1, failed) */
+  --text-link: #00657c;      /* ~6.5:1 on light surfaces */
 
   --border-subtle: #e8e2d9;
   --border-medium: #d4cdc3;
@@ -84,8 +85,9 @@
   --text-ink: #e8e6e1;
   --text-heading: #f4f2ee;
   --text-strong: #d8d6d1;
-  --text-secondary: #9aa5b1;
-  --text-tertiary: #6b7684;
+  --text-secondary: #aab4c0; /* ~8:1 on dark card */
+  --text-tertiary: #8b95a4;  /* ~5.3:1 on dark card (was #6b7684 ~3.2:1, failed) */
+  --text-link: #6cc6db;      /* ~8:1 on dark surfaces */
 
   --border-subtle: #2a323d;
   --border-medium: #38424f;
@@ -227,19 +229,19 @@ body::before {
 
 .ev-button-secondary {
   background-color: transparent;
-  color: var(--color-ev-muted-blue);
+  color: var(--text-link);
   font-family: 'Manrope', sans-serif;
   font-weight: 600;
   border-radius: 0.5rem;
   padding: 0.625rem 1.5rem;
   transition: all 0.2s ease;
-  border: 1.5px solid var(--color-ev-muted-blue);
+  border: 1.5px solid var(--text-link);
   cursor: pointer;
 }
 
 .ev-button-secondary:hover {
-  background-color: var(--color-ev-muted-blue);
-  color: white;
+  background-color: var(--text-link);
+  color: var(--surface-card);
 }
 
 /* ============================================
