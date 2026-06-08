@@ -79,7 +79,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact }) => {
             style={{
               fontFamily: "'Manrope', sans-serif",
               fontWeight: 700,
-              fontSize: '0.5625rem',
+              fontSize: '0.625rem',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               color: 'var(--text-tertiary)',

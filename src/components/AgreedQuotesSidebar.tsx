@@ -26,7 +26,7 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement>((_props, ref) 
         {agreed.length > 0 && (
           <span style={{
             fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.625rem',
-            letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-ev-muted-blue)',
+            letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-link)',
             backgroundColor: 'var(--agree-bg)', padding: '2px 8px', borderRadius: '4px',
           }}>
             {agreed.length} agreed

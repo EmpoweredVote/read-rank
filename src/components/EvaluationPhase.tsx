@@ -157,7 +157,7 @@ export const EvaluationPhase: React.FC = () => {
         ) : (
           <div className="evaluation-complete-card">
             <div className="text-center py-8">
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--color-ev-muted-blue)', marginBottom: '0.5rem' }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-link)', marginBottom: '0.5rem' }}>
                 {isLastTopic ? 'All topics done' : 'Topic complete'}
               </div>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>

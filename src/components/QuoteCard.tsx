@@ -106,7 +106,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
             fontFamily: "'Manrope', sans-serif",
             fontWeight: 600,
             fontSize: '0.6875rem',
-            color: '#94a3b8',
+            color: 'var(--text-tertiary)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase' as const,
           }}>
@@ -116,7 +116,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
             <span style={{
               fontFamily: "'Manrope', sans-serif",
               fontSize: '0.625rem',
-              color: '#94a3b8',
+              color: 'var(--text-tertiary)',
               opacity: 0.6,
             }}>
               Preview

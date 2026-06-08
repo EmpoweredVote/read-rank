@@ -143,7 +143,7 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
         ) : <span />}
         <a href={buildEssentialsProfileUrl(entry.candidateId, verdictMap, undefined, address)} target="_blank" rel="noopener noreferrer"
           style={{
-            fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-ev-muted-blue)',
+            fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-link)',
             textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap',
           }}>
           View on Essentials
@@ -162,7 +162,7 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
                 <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-heading)' }}>{t.title}</span>
                 {t.userTopWinner && (
                   <span style={{
-                    fontFamily: "'Manrope', sans-serif", fontSize: '0.5625rem', fontWeight: 700, letterSpacing: '0.06em',
+                    fontFamily: "'Manrope', sans-serif", fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em',
                     textTransform: 'uppercase', color: 'var(--podium-silver)', border: '1px solid var(--border-subtle)',
                     padding: '0.0625rem 0.375rem', borderRadius: '9999px',
                   }}>Your #1 here</span>
@@ -177,7 +177,7 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
                   &ldquo;{q.text}&rdquo;
                   {q.sourceUrl && (
                     <a href={q.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                      style={{ marginLeft: '0.375rem', fontSize: '0.6875rem', color: 'var(--color-ev-light-blue)', textDecoration: 'none' }}>
+                      style={{ marginLeft: '0.375rem', fontSize: '0.6875rem', color: 'var(--text-link)', textDecoration: 'none' }}>
                       {q.sourceName || 'Source'}
                     </a>
                   )}
