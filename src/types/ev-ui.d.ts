@@ -17,13 +17,29 @@ declare module '@empoweredvote/ev-ui' {
     href: string;
   }
 
+  export interface ProfileMenuItem {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  }
+
+  export interface ProfileMenu {
+    label: string | null;
+    items: ProfileMenuItem[];
+  }
+
   export interface HeaderProps {
     logoSrc?: string;
     logoAlt?: string;
+    logoHref?: string;
     navItems?: NavItem[];
     ctaButton?: CTAButton;
     currentPath?: string;
     onNavigate?: (href: string) => void;
+    profileMenu?: ProfileMenu;
+    secondaryAction?: ReactNode | { label: string; href: string; target?: string; rel?: string } | false;
+    darkMode?: boolean;
+    navCollapseBreakpoint?: number;
     style?: CSSProperties;
   }
 
