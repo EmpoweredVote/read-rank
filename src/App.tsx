@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { SiteHeader } from '@empoweredvote/ev-ui';
+import { Header } from '@empoweredvote/ev-ui';
 import { PhaseContainer } from './components/PhaseContainer';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
@@ -39,6 +39,7 @@ function ThemeToggle() {
 function MainApp() {
   const { isLoggedIn, userName, loading, logout } = useAuthState();
   const { reset, setLocationFilter } = useReadRankStore();
+  const { isDark } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -85,10 +86,14 @@ function MainApp() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <SiteHeader
+      <Header
         logoSrc={`${import.meta.env.BASE_URL}EVLogo.svg`}
-        {...({ profileMenu, secondaryAction: <ThemeToggle /> } as any)}
+        logoHref="https://empowered.vote"
+        navItems={[]}
+        darkMode={isDark}
+        profileMenu={profileMenu}
+        secondaryAction={<ThemeToggle />}
+        onNavigate={(href) => { window.location.href = href; }}
       />
       <DevHelper />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
