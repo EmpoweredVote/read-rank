@@ -33,4 +33,12 @@ describe('RankDock', () => {
     await userEvent.click(dock);
     expect(onOpen).toHaveBeenCalledOnce();
   });
+
+  it('frames filled slots by tier', () => {
+    const agreed = [quote('a', 'Alpha quote.'), quote('b', 'Bravo quote.')];
+    render(<RankDock agreed={agreed} disagreedCount={0} onOpen={vi.fn()} />);
+    expect(screen.getByText('Alpha quote.').closest('.rank-dock-slot')).toHaveClass('rank-dock-slot-diamond');
+    expect(screen.getByText('Bravo quote.').closest('.rank-dock-slot')).toHaveClass('rank-dock-slot-gold');
+    expect(screen.getByText('3rd')).toBeInTheDocument();
+  });
 });

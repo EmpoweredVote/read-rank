@@ -1,6 +1,7 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { motion, useAnimate, useReducedMotion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
+import { tierForIndex } from '../utils/tiers';
 
 const GHOST_LABELS = ['1st', '2nd', '3rd'];
 
@@ -45,8 +46,9 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
         <span className="rank-dock-row">
           {[0, 1, 2].map((i) => {
             const q = agreed[i];
+            const tier = tierForIndex(i);
             return (
-              <span key={i} className={`rank-dock-slot ${q ? '' : 'rank-dock-slot-empty'}`}>
+              <span key={i} className={`rank-dock-slot ${q ? `rank-dock-slot-${tier}` : 'rank-dock-slot-empty'}`}>
                 <span className="rank-dock-slot-rank" aria-hidden="true">{i + 1}</span>
                 {q ? (
                   <span className="rank-dock-slot-stub">{q.text}</span>

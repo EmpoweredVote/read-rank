@@ -30,6 +30,7 @@ describe('RankRail', () => {
   it('shows three ghost slots before anything is ranked', () => {
     render(<RankRail variant="sidebar" />);
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
+    expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
   });
 
   it('severs Iron below a labeled divider', async () => {
