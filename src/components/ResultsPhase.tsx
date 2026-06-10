@@ -3,6 +3,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
+import { SourceLine } from './SourceLine';
+import { SourceInfoButton } from './SourceExplainer';
 
 // ============================================================
 // MegaParticles — celebratory burst on the #1 card.
@@ -54,7 +56,7 @@ interface BallotCardProps {
   prefersReducedMotion: boolean | null;
 }
 
-const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion }) => {
+export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion }) => {
   const [expanded, setExpanded] = useState(false);
   const [particles, setParticles] = useState(false);
   const [imgOk, setImgOk] = useState(true);
@@ -175,11 +177,10 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
                   paddingLeft: '0.625rem', borderLeft: `2px solid ${q.supported ? 'var(--agree)' : 'var(--border-medium)'}`,
                 }}>
                   &ldquo;{q.text}&rdquo;
-                  {q.sourceUrl && (
-                    <a href={q.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                      style={{ marginLeft: '0.375rem', fontSize: '0.6875rem', color: 'var(--color-ev-light-blue)', textDecoration: 'none' }}>
-                      {q.sourceName || 'Source'}
-                    </a>
+                  {q.sourceName && (
+                    <span style={{ marginLeft: '0.375rem' }}>
+                      <SourceLine sourceName={q.sourceName} sourceUrl={q.sourceUrl} variant="compact" />
+                    </span>
                   )}
                 </p>
               ))}
@@ -243,6 +244,9 @@ export const ResultsPhase: React.FC = () => {
         <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
           Based only on what you agreed with and how you ranked it — this is the order your choices produce.
         </p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.125rem' }}>
+          <SourceInfoButton showLabel />
+        </div>
       </motion.div>
 
       {ballot.length === 0 ? (
