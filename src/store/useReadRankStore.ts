@@ -102,6 +102,8 @@ interface ReadRankState {
   agree: (quote: BlindQuote) => void;
   disagree: (quote: BlindQuote) => void;
   reorderAgreed: (orderedIds: string[]) => void;
+  /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
+  reAgree: (quote: BlindQuote) => void;
   finishRace: () => void;
   goToHub: () => void;
   reset: () => void;
@@ -276,6 +278,26 @@ export const useReadRankStore = create<ReadRankState>()(
           // Append any not present in orderedIds (defensive).
           for (const q of race.agreed) if (!orderedIds.includes(q.id)) next.push(q);
           return { ...race, agreed: next };
+        });
+        if (patch) set(patch);
+      },
+
+      reAgree: (quote) => {
+        const patch = withCurrentRace(get(), (race) => {
+          if (race.agreed.some((q) => q.id === quote.id)) return race;
+          const topic = race.topics[quote.topicKey];
+          if (!topic) return race;
+          return {
+            ...race,
+            agreed: [...race.agreed, { ...quote, addedAt: Date.now() }],
+            topics: {
+              ...race.topics,
+              [quote.topicKey]: {
+                ...topic,
+                disagreed: topic.disagreed.filter((q) => q.id !== quote.id),
+              },
+            },
+          };
         });
         if (patch) set(patch);
       },

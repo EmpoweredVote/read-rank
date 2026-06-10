@@ -5,6 +5,33 @@ import { vi } from 'vitest';
 
 afterEach(cleanup);
 
+// Node 26 exposes an experimental globalThis.localStorage getter that returns
+// undefined (requires --localstorage-file). This shadows jsdom's localStorage
+// and breaks zustand/persist in tests. Replace it with a minimal in-memory stub
+// so store tests work without the Node flag.
+if (typeof localStorage === 'undefined') {
+  const store: Record<string, string> = {};
+  const stub: Storage = {
+    length: 0,
+    clear() {
+      for (const k of Object.keys(store)) delete store[k];
+    },
+    getItem(key) {
+      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null;
+    },
+    setItem(key, value) {
+      store[key] = String(value);
+    },
+    removeItem(key) {
+      delete store[key];
+    },
+    key(index) {
+      return Object.keys(store)[index] ?? null;
+    },
+  };
+  Object.defineProperty(globalThis, 'localStorage', { value: stub, writable: true });
+}
+
 // jsdom has no matchMedia; framer-motion's useReducedMotion needs it.
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
