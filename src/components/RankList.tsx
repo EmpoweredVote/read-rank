@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -34,9 +34,12 @@ interface RowProps {
   quote: AgreedQuote;
   index: number;
   compact?: boolean;
+  onMove?: (from: number, dir: -1 | 1) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, compact }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
   const rank = index + 1;
   const isPodium = index < 3;
@@ -105,6 +108,29 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact }) => {
           {quote.text}
         </div>
       </div>
+
+      {onMove && (
+        <span style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.125rem' }}>
+          <button
+            type="button"
+            className="rank-move-button"
+            aria-label={`Move up — currently ranked ${rank}`}
+            disabled={isFirst}
+            onClick={() => onMove(index, -1)}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6" /></svg>
+          </button>
+          <button
+            type="button"
+            className="rank-move-button"
+            aria-label={`Move down — currently ranked ${rank}`}
+            disabled={isLast}
+            onClick={() => onMove(index, 1)}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+        </span>
+      )}
     </div>
   );
 };
@@ -114,13 +140,29 @@ interface RankListProps {
   onReorder: (orderedIds: string[]) => void;
   compact?: boolean;
   emptyHint?: string;
+  /** 250ms long-press drag activation — use inside scrollable sheets. */
+  longPressDrag?: boolean;
+  /** Pointer-free reorder: 44px up/down buttons per row. */
+  showMoveButtons?: boolean;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons }) => {
+  const [announcement, setAnnouncement] = useState('');
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: longPressDrag ? { delay: 250, tolerance: 8 } : { distance: 6 },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const handleMove = (from: number, dir: -1 | 1) => {
+    const to = from + dir;
+    if (to < 0 || to >= items.length) return;
+    const ids = items.map((q) => q.id);
+    [ids[from], ids[to]] = [ids[to], ids[from]];
+    onReorder(ids);
+    setAnnouncement(`Moved to position ${to + 1} of ${ids.length}`);
+  };
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -161,10 +203,19 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
       <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
         <motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           {items.map((q, i) => (
-            <SortableRow key={q.id} quote={q} index={i} compact={compact} />
+            <SortableRow
+              key={q.id}
+              quote={q}
+              index={i}
+              compact={compact}
+              onMove={showMoveButtons ? handleMove : undefined}
+              isFirst={i === 0}
+              isLast={i === items.length - 1}
+            />
           ))}
         </motion.div>
       </SortableContext>
+      <div className="sr-only" role="status">{announcement}</div>
     </DndContext>
   );
 };
