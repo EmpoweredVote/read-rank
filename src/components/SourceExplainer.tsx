@@ -43,6 +43,8 @@ const SourceExplainerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) =
         background: 'var(--surface-card)',
         margin: 'auto',
         userSelect: 'text',
+        // The reveal header centers text; the dialog must not inherit that.
+        textAlign: 'left',
       }}
     >
       <h2
