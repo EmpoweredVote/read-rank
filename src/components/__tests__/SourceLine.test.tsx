@@ -33,4 +33,12 @@ describe('SourceLine', () => {
     await userEvent.click(screen.getByRole('link'));
     expect(onParentClick).not.toHaveBeenCalled();
   });
+
+  it('renders the verify link in compact variant', () => {
+    render(<SourceLine sourceName="WSBT News" sourceUrl="https://example.com/wsbt" variant="compact" />);
+    expect(screen.getByRole('link', { name: /verify source: WSBT News/i })).toHaveAttribute(
+      'href',
+      'https://example.com/wsbt'
+    );
+  });
 });

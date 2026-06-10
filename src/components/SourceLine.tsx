@@ -40,6 +40,7 @@ export const SourceLine: React.FC<SourceLineProps> = ({ sourceName, sourceUrl, v
         display: 'inline-flex',
         alignItems: 'center',
         gap: '0.25rem',
+        minHeight: '2.75rem',
         padding: variant === 'compact' ? '0.125rem 0' : '0.375rem 0',
       }}
     >
