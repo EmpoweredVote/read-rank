@@ -206,6 +206,10 @@ body::before {
    Button Styles
    ============================================ */
 
+dialog::backdrop {
+  background: rgba(28, 28, 28, 0.45);
+}
+
 .ev-button-primary {
   background-color: var(--color-ev-coral);
   color: white;

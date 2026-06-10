@@ -36,6 +36,7 @@ const SourceExplainerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) =
         padding: '1.5rem',
         fontFamily: "'Manrope', sans-serif",
         color: 'var(--text-ink)',
+        background: 'var(--surface-card)',
       }}
     >
       <h2
