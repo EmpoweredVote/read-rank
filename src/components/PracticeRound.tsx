@@ -146,6 +146,7 @@ export const PracticeRound: React.FC = () => {
           <SwipeBackground dragX={dragX} isDragging={isDragging} />
           <div className="flex justify-center relative z-10">
             <QuoteCard key={currentQuote.id} quote={currentQuote} displayNumber={currentIndex + 1}
+              showTrustFooter={false}
               onDragStateChange={handleDragStateChange} externalAnimating={isAnimating}
               onAgree={agreePractice} onDisagree={disagreePractice} />
           </div>
