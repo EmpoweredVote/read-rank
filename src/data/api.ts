@@ -1,5 +1,5 @@
 import { apiFetch } from '../lib/auth';
-import type { RacePayload, VerdictRecord } from '../store/useReadRankStore';
+import type { BlindQuote, RacePayload, VerdictRecord } from '../store/useReadRankStore';
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/api`
@@ -81,12 +81,37 @@ export async function fetchRaces(politicianIds?: string[]): Promise<RaceSummary[
   }
 }
 
+/**
+ * Structural blindness guard: rebuild the payload with exactly the BlindQuote
+ * keys so an over-returning backend (sourceName, party, candidate name, ...)
+ * can never leak provenance into the store before the reveal.
+ */
+function sanitizeRacePayload(raw: RacePayload): RacePayload {
+  return {
+    raceId: raw.raceId,
+    positionName: raw.positionName,
+    topics: (raw.topics ?? []).map((topic) => ({
+      topicKey: topic.topicKey,
+      title: topic.title,
+      question: topic.question,
+      quotes: (topic.quotes ?? []).map(
+        (quote): BlindQuote => ({
+          id: quote.id,
+          text: quote.text,
+          candidateToken: quote.candidateToken,
+          topicKey: quote.topicKey,
+        })
+      ),
+    })),
+  };
+}
+
 /** Blind, topic-grouped quotes for a race. Never returns candidate identities. */
 export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
   try {
     const res = await fetch(`${API_BASE}/readrank/races/${encodeURIComponent(raceId)}/quotes`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return (await res.json()) as RacePayload;
+    return sanitizeRacePayload((await res.json()) as RacePayload);
   } catch (err) {
     console.error('Failed to fetch race quotes, falling back to mock', err);
     const { buildMockRacePayload } = await import('./mockData');
