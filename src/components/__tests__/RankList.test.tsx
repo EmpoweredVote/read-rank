@@ -30,18 +30,23 @@ describe('RankList move buttons', () => {
     expect(onReorder).toHaveBeenCalledWith(['a', 'c', 'b']);
   });
 
-  it('disables the boundary buttons', () => {
-    render(<RankList items={items} onReorder={vi.fn()} showMoveButtons />);
-    expect(screen.getByRole('button', { name: /move up.*ranked 1/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /move down.*ranked 3/i })).toBeDisabled();
+  it('disables the boundary buttons via aria-disabled and does not call onReorder when clicked', async () => {
+    const onReorder = vi.fn();
+    render(<RankList items={items} onReorder={onReorder} showMoveButtons />);
+    const moveUpFirst = screen.getByRole('button', { name: /move up.*ranked 1/i });
+    const moveDownLast = screen.getByRole('button', { name: /move down.*ranked 3/i });
+    expect(moveUpFirst).toHaveAttribute('aria-disabled', 'true');
+    expect(moveDownLast).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(moveUpFirst);
+    expect(onReorder).not.toHaveBeenCalled();
   });
 
   it('announces moves through a status region', async () => {
     render(<RankList items={items} onReorder={vi.fn()} showMoveButtons />);
     await userEvent.click(screen.getByRole('button', { name: /move down.*ranked 1/i }));
     const statusRegions = screen.getAllByRole('status');
-    const announcement = statusRegions.find((el) => /moved to position 2 of 3/i.test(el.textContent ?? ''));
+    const announcement = statusRegions.find((el) => /moved .*to position 2 of 3/i.test(el.textContent ?? ''));
     expect(announcement).toBeTruthy();
-    expect(announcement).toHaveTextContent(/moved to position 2 of 3/i);
+    expect(announcement).toHaveTextContent(/moved .*to position 2 of 3/i);
   });
 });

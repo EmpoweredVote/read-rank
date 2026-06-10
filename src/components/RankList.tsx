@@ -114,18 +114,18 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
           <button
             type="button"
             className="rank-move-button"
-            aria-label={`Move up — currently ranked ${rank}`}
-            disabled={isFirst}
-            onClick={() => onMove(index, -1)}
+            aria-label={`Move up, currently ranked ${rank}`}
+            aria-disabled={isFirst || undefined}
+            onClick={() => { if (!isFirst) onMove(index, -1); }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6" /></svg>
           </button>
           <button
             type="button"
             className="rank-move-button"
-            aria-label={`Move down — currently ranked ${rank}`}
-            disabled={isLast}
-            onClick={() => onMove(index, 1)}
+            aria-label={`Move down, currently ranked ${rank}`}
+            aria-disabled={isLast || undefined}
+            onClick={() => { if (!isLast) onMove(index, 1); }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
           </button>
@@ -158,10 +158,12 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
   const handleMove = (from: number, dir: -1 | 1) => {
     const to = from + dir;
     if (to < 0 || to >= items.length) return;
+    const moved = items[from];
+    const stub = moved.text.length > 40 ? moved.text.slice(0, 40) + '…' : moved.text;
     const ids = items.map((q) => q.id);
     [ids[from], ids[to]] = [ids[to], ids[from]];
     onReorder(ids);
-    setAnnouncement(`Moved to position ${to + 1} of ${ids.length}`);
+    setAnnouncement(`Moved "${stub}" to position ${to + 1} of ${ids.length}`);
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
