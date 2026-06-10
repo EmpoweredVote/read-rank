@@ -50,7 +50,9 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: [transition, 'border-color 0.25s ease, background-color 0.25s ease']
+          .filter(Boolean)
+          .join(', '),
         padding: compact ? '0.5rem 0.625rem' : '0.625rem 0.75rem',
         display: 'flex',
         alignItems: 'center',
@@ -101,7 +103,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
           <button
             type="button"
             className="rank-move-button"
-            aria-label={`Move up, currently ranked ${rank}`}
+            aria-label={`Move up, currently ranked ${rank}, ${meta.name}`}
             aria-disabled={isFirst || undefined}
             onClick={() => { if (!isFirst) onMove(index, -1); }}
           >
@@ -110,7 +112,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
           <button
             type="button"
             className="rank-move-button"
-            aria-label={`Move down, currently ranked ${rank}`}
+            aria-label={`Move down, currently ranked ${rank}, ${meta.name}`}
             aria-disabled={isLast || undefined}
             onClick={() => { if (!isLast) onMove(index, 1); }}
           >
