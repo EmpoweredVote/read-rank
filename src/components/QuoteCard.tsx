@@ -143,6 +143,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
           Capture-phase stop keeps pointer events from starting a card drag. */}
       {showTrustFooter && (
         <div
+          data-no-drag
           onPointerDownCapture={(e) => e.stopPropagation()}
           style={{
             marginTop: '1.25rem',

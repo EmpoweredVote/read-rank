@@ -36,4 +36,10 @@ describe('QuoteCard blind-trust footer', () => {
     fireEvent.pointerDown(screen.getByText(/verified quote/i));
     expect(dragSpy).not.toHaveBeenCalled();
   });
+
+  it('still opens the explainer when the footer info button is clicked', () => {
+    render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);
+  });
 });
