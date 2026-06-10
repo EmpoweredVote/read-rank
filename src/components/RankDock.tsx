@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import React, { useEffect, useImperativeHandle, useRef } from 'react';
+import { motion, useAnimate, useReducedMotion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
 
 const GHOST_LABELS = ['1st', '2nd', '3rd'];
@@ -19,29 +19,27 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
   ({ agreed, disagreedCount, onOpen }, ref) => {
     const prefersReducedMotion = useReducedMotion();
     const prevCount = useRef(agreed.length);
-    const [pulse, setPulse] = useState(false);
+    const [scope, animate] = useAnimate();
+
+    // Expose the button node to the forwarded ref for focus return / coach-mark targeting
+    useImperativeHandle(ref, () => scope.current as HTMLButtonElement);
 
     useEffect(() => {
-      if (agreed.length > prevCount.current) {
-        setPulse(true);
-        const t = setTimeout(() => setPulse(false), 500);
-        prevCount.current = agreed.length;
-        return () => clearTimeout(t);
+      if (agreed.length > prevCount.current && !prefersReducedMotion && scope.current) {
+        animate(scope.current, { scale: [1, 1.02, 1] }, { duration: 0.5 });
       }
       prevCount.current = agreed.length;
-    }, [agreed.length]);
+    }, [agreed.length, animate, prefersReducedMotion, scope]);
 
     const overflow = Math.max(0, agreed.length - 3);
 
     return (
       <motion.button
-        ref={ref}
+        ref={scope}
         type="button"
         className="rank-dock"
         onClick={onOpen}
         aria-label={`Open your ranking. ${agreed.length} ranked, ${disagreedCount} disagreed.`}
-        animate={pulse && !prefersReducedMotion ? { scale: [1, 1.02, 1] } : { scale: 1 }}
-        transition={{ duration: 0.5 }}
       >
         <span className="rank-dock-handle" aria-hidden="true" />
         <span className="rank-dock-row">

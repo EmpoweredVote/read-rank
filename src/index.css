@@ -870,6 +870,10 @@ dialog::backdrop {
   min-height: 3.5rem;
 }
 
+.dark .rank-dock {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+}
+
 .rank-dock-handle {
   width: 2.25rem;
   height: 0.25rem;
