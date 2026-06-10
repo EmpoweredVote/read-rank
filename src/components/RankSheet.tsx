@@ -82,6 +82,7 @@ const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResu
             <button
               type="button"
               className="rank-sheet-iron-toggle"
+              aria-label={`Disagreed (${disagreed.length})`}
               aria-expanded={showDisagreed}
               onClick={() => setShowDisagreed((p) => !p)}
             >

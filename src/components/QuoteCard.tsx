@@ -77,7 +77,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
   return (
     <motion.div
       ref={ref}
-      drag={isDraggable && !isCurrentlyAnimating}
+      drag={isDraggable && !isCurrentlyAnimating ? 'x' : false}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.7}
       onDragStart={isDraggable ? handleDragStart : undefined}
@@ -88,6 +88,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
         opacity,
         scale: scaleValue,
         zIndex: zIndexValue,
+        touchAction: 'pan-y',
         boxShadow: isStacked
           ? `${stackIndex * 3}px ${stackIndex * 3}px 0 rgba(0,0,0,0.04)`
           : undefined
@@ -95,7 +96,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
       className={`
         ev-quote-card w-full max-w-lg md:max-w-xl relative
         ${isDraggable && !isCurrentlyAnimating ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
-        select-none touch-none
+        select-none
         ${isCurrentlyAnimating ? 'pointer-events-none' : ''}
         ${isDragging ? 'ev-quote-card-dragging' : ''}
       `}

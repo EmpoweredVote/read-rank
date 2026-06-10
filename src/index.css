@@ -609,9 +609,15 @@ dialog::backdrop {
   box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.2);
 }
 
-/* Mobile: Hide action buttons on touch devices */
-@media (pointer: coarse) and (hover: none) {
-  .action-buttons-container { display: none; }
+@media (pointer: coarse) {
+  .action-button {
+    min-height: 3.5rem;
+    flex: 1 1 0;
+  }
+  .action-buttons-container {
+    width: 100%;
+    gap: 0.625rem;
+  }
 }
 
 /* ============================================
@@ -636,6 +642,10 @@ dialog::backdrop {
 /* ============================================
    Split Layout — Desktop Evaluation + Sidebar
    ============================================ */
+
+.evaluation-mobile {
+  padding-bottom: 5.5rem;
+}
 
 .evaluation-split-layout {
   display: flex;
@@ -828,23 +838,6 @@ dialog::backdrop {
   .action-button { padding: 0.5rem 0.75rem; }
   .action-button-icon { width: 16px; height: 16px; }
   .action-button-label { font-size: 0.8125rem; }
-}
-
-/* ============================================
-   Inline Rank Panel (mobile)
-   ============================================ */
-
-.inline-rank-panel {
-  background-color: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.625rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.inline-rank-panel .pending-card {
-  border-left: 3px solid var(--color-ev-muted-blue);
-  background-color: var(--agree-bg);
 }
 
 /* ============================================

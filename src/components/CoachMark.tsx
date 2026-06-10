@@ -19,7 +19,7 @@ const TOOLTIP_HEIGHT = 140;
 const VIEWPORT_MARGIN = 12;
 
 interface CoachMarkProps {
-  targetRef: React.RefObject<HTMLDivElement | null>;
+  targetRef: React.RefObject<HTMLElement | null>;
   message?: React.ReactNode;
   children?: React.ReactNode;
   onDismiss?: () => void;

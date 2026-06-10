@@ -40,6 +40,7 @@ describe('RankSheet', () => {
     render(<RankSheet open allDone={false} onClose={onClose} onSeeResults={vi.fn()} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('First agreed quote.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /see results/i })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^done$/i }));
     expect(onClose).toHaveBeenCalled();
   });
@@ -51,6 +52,8 @@ describe('RankSheet', () => {
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
     expect(race.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
     expect(race.topics.housing.disagreed).toEqual([]);
+    expect(screen.queryByRole('button', { name: /disagreed \(/i })).not.toBeInTheDocument();
+    expect(screen.getByText('A disagreed quote.')).toBeInTheDocument();
   });
 
   it('pins See Results in the completion state', async () => {
