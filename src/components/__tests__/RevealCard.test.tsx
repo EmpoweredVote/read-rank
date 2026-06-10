@@ -21,7 +21,7 @@ describe('RevealCard', () => {
     );
     expect(screen.getByText('A quote.')).toBeInTheDocument();
     expect(screen.queryByText(/jane doe/i)).not.toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/jane/i);
+    expect(document.body.innerHTML).not.toMatch(/jane|example\.com\/jane|kqed/i);
     expect(screen.getByRole('button', { name: /reveal/i })).toBeInTheDocument();
   });
 
@@ -52,5 +52,15 @@ describe('RevealCard', () => {
     );
     const link = screen.getByRole('link', { name: /view candidate/i });
     expect(link).toHaveAttribute('href', 'https://example.com/jane');
+  });
+
+  it('moves focus to the revealed card so keyboard users keep their place', () => {
+    const { rerender } = render(
+      <RevealCard quoteText="A quote." index={0} identity={identity} revealed={false} onReveal={vi.fn()} />
+    );
+    rerender(
+      <RevealCard quoteText="A quote." index={0} identity={identity} revealed onReveal={vi.fn()} />
+    );
+    expect(screen.getByText('Jane Doe').closest('.tier-row')).toHaveFocus();
   });
 });

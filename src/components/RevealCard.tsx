@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { TIER_META, tierForIndex } from '../utils/tiers';
 import { TierIcon } from './TierIcon';
@@ -26,6 +26,15 @@ export const RevealCard: React.FC<RevealCardProps> = ({ quoteText, index, identi
   const tier = tierForIndex(index);
   const meta = TIER_META[tier];
   const [imgOk, setImgOk] = useState(true);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const wasRevealed = useRef(revealed);
+  useEffect(() => {
+    if (revealed && !wasRevealed.current) {
+      rootRef.current?.focus();
+    }
+    wasRevealed.current = revealed;
+  }, [revealed]);
 
   const frame = (
     <>
@@ -57,6 +66,8 @@ export const RevealCard: React.FC<RevealCardProps> = ({ quoteText, index, identi
 
   return (
     <motion.div
+      ref={rootRef}
+      tabIndex={-1}
       className={`tier-row tier-row-${tier} reveal-card reveal-card-revealed`}
       initial={prefersReducedMotion ? false : { rotateY: 90, opacity: 0.4 }}
       animate={{ rotateY: 0, opacity: 1 }}
