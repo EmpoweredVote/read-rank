@@ -18,26 +18,28 @@ interface MockIdentity {
   photo: string;
 }
 
+// Tokens are deliberately meaningless — the blind payload is visible in
+// devtools, so nothing in an id or token may hint at the speaker.
 const MOCK_IDENTITIES: Record<string, MockIdentity> = {
-  'tok-rainwater': {
+  'tok-a3f8': {
     candidateId: 'donald-rainwater',
     name: 'Donald Rainwater',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/DonaldRainwater2024.jpg',
   },
-  'tok-mccormick': {
+  'tok-c7e2': {
     candidateId: 'jennifer-mccormick',
     name: 'Jennifer McCormick',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Jennifer_McCormick.jpg',
   },
-  'tok-braun': {
+  'tok-9d4b': {
     candidateId: 'mike-braun',
     name: 'Mike Braun',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Mike_Braun.png',
   },
-  'tok-bauer': {
+  'tok-5b61': {
     candidateId: 'maureen-bauer',
     name: 'Maureen Bauer',
     office: 'Candidate for Indiana Governor',
@@ -80,44 +82,44 @@ interface MockQuoteFull {
 
 const MOCK_QUOTES: MockQuoteFull[] = [
   // ===== CANNABIS =====
-  { id: 'rainwater-cannabis', token: 'tok-rainwater', topicKey: 'cannabis-legalization',
+  { id: 'q-101', token: 'tok-a3f8', topicKey: 'cannabis-legalization',
     text: "We don't need to expand government, add a new commission, or write new regulations. We can make cannabis legal in all forms — medicinal and recreational — right now, and expunge all nonviolent cannabis-related offenses.",
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'mccormick-cannabis', token: 'tok-mccormick', topicKey: 'cannabis-legalization',
+  { id: 'q-102', token: 'tok-c7e2', topicKey: 'cannabis-legalization',
     text: 'About 80% of residents support legalization. My plan calls for a conversation on medical use before adult use. The state is losing out on roughly $177 million in tax revenue because surrounding states have legalized. We need a commission on cannabis use.',
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'braun-cannabis', token: 'tok-braun', topicKey: 'cannabis-legalization',
+  { id: 'q-103', token: 'tok-9d4b', topicKey: 'cannabis-legalization',
     text: 'Marijuana use is cascading across the country and the state needs to address it seriously. I would have to think about adult use; on medicinal use we are probably ready. On both counts I am going to listen to law enforcement.',
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'bauer-cannabis', token: 'tok-bauer', topicKey: 'cannabis-legalization',
+  { id: 'q-104', token: 'tok-5b61', topicKey: 'cannabis-legalization',
     text: 'Now that federal authorities plan to reclassify marijuana, I believe it is time for the state to follow suit with decriminalization and legalization for adult use.',
     sourceUrl: 'https://wsbt.com/news/local/indiana-leaders-reassess-marijuana-stance-as-dea-proposes-historic-reclassification', sourceName: 'WSBT News' },
 
   // ===== EDUCATION =====
-  { id: 'rainwater-education', token: 'tok-rainwater', topicKey: 'education-funding',
+  { id: 'q-105', token: 'tok-a3f8', topicKey: 'education-funding',
     text: 'I believe in universal school choice. The public school system is failing — only 63% of children passed statewide tests in math and English. The state constitution allows funding for public and private schools.',
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'mccormick-education', token: 'tok-mccormick', topicKey: 'education-funding',
+  { id: 'q-106', token: 'tok-c7e2', topicKey: 'education-funding',
     text: "This isn't about parents choosing — it's about a school choosing. Admission policies need to be examined; a school can turn a child away over academics, race, how they identify, or religious belief. Public dollars need to go to public schools.",
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'braun-education', token: 'tok-braun', topicKey: 'education-funding',
+  { id: 'q-107', token: 'tok-9d4b', topicKey: 'education-funding',
     text: 'The state has a leading edge on school choice and competition, and it puts parents as the main stakeholders in their children’s education. One size fits all is a monopoly; choice, competition, and vouchers make it work.',
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
-  { id: 'bauer-education', token: 'tok-bauer', topicKey: 'education-funding',
+  { id: 'q-108', token: 'tok-5b61', topicKey: 'education-funding',
     text: 'To improve outcomes we need early childhood education available to all families, fair and adequate funding for K-12 and teacher salaries, and reduced food insecurity through expanded school meal programs.',
     sourceUrl: 'https://www.maureenbauer.com', sourceName: 'Campaign Website' },
 
   // ===== ABORTION =====
-  { id: 'rainwater-abortion', token: 'tok-rainwater', topicKey: 'abortion-rights',
+  { id: 'q-109', token: 'tok-a3f8', topicKey: 'abortion-rights',
     text: 'I am pro-life. If new DNA is created at conception, then scientifically life starts at conception, and if we are going to protect life we should protect it from its beginning.',
     sourceUrl: 'https://www.indystar.com/story/news/politics/elections/2024/01/10/2024-indiana-governor-race-qa-with-libertarian-donald-rainwater/71756787007/', sourceName: 'IndyStar' },
-  { id: 'mccormick-abortion', token: 'tok-mccormick', topicKey: 'abortion-rights',
+  { id: 'q-110', token: 'tok-c7e2', topicKey: 'abortion-rights',
     text: 'I trust women; I trust health care providers. I believe in the standards set by Roe, and it is time we return to that.',
     sourceUrl: 'https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/', sourceName: "ABC7 Governor's Debate" },
-  { id: 'braun-abortion', token: 'tok-braun', topicKey: 'abortion-rights',
+  { id: 'q-111', token: 'tok-9d4b', topicKey: 'abortion-rights',
     text: 'We are a right-to-life state, backing the sanctity of life. The legislature took it on, talked to constituents, and it has withstood the courts. The people have spoken and we got a bill that seems to be working.',
     sourceUrl: 'https://abc7chicago.com/post/2024-election-indiana-governor-candidates-jennifer-mccormick-mike-braun-donald-rainwater-debate-abortion-ban-economics/15466415/', sourceName: "ABC7 Governor's Debate" },
-  { id: 'bauer-abortion', token: 'tok-bauer', topicKey: 'abortion-rights',
+  { id: 'q-112', token: 'tok-5b61', topicKey: 'abortion-rights',
     text: 'Forced birth is not freedom. Forcing government to decide a woman’s health care decisions but not a man’s is not equal. Government’s role is to ensure access to quality, essential health care, especially for the vulnerable.',
     sourceUrl: 'https://iga.in.gov/session/2022ss1/video/house', sourceName: 'Indiana House Debate' },
 ];

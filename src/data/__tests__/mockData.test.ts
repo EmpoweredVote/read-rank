@@ -13,6 +13,25 @@ describe('structural blindness and anti-partisanship', () => {
     }
   });
 
+  it('blind payload ids and tokens never contain a candidate surname', () => {
+    const payload = buildMockRacePayload();
+    // Derive surnames from the reveal — the only sanctioned place identities appear.
+    const verdicts: VerdictRecord[] = payload.topics.flatMap((t) =>
+      t.quotes.map((q, i) => ({ quote_id: q.id, supported: true, rank: i + 1, session_size: 4 }))
+    );
+    const reveal = buildMockReveal(verdicts);
+    const nameParts = reveal.ballot.flatMap((b) => b.name.toLowerCase().split(/\s+/));
+    expect(nameParts.length).toBeGreaterThan(0);
+    for (const topic of payload.topics) {
+      for (const quote of topic.quotes) {
+        for (const part of nameParts) {
+          expect(quote.id.toLowerCase()).not.toContain(part);
+          expect(quote.candidateToken.toLowerCase()).not.toContain(part);
+        }
+      }
+    }
+  });
+
   it('reveal ballot entries carry no party field', () => {
     const payload = buildMockRacePayload();
     const verdicts: VerdictRecord[] = payload.topics.flatMap((t) =>
