@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useMotionValue, MotionValue, animate } from 'framer-motion';
 import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
@@ -76,17 +76,17 @@ export const EvaluationPhase: React.FC = () => {
     }
   }, [isMouseDevice, allTopicsDone]);
 
-  const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
+  const handleDragStateChange = (dragging: boolean, x: MotionValue<number>) => {
     setIsDragging(dragging);
     cardXRef.current = x;
     return x.on('change', (latest) => dragX.set(latest));
-  }, [dragX]);
+  };
 
   const progressPercent = quotesToEvaluate.length > 0
     ? Math.round((Math.min(currentIndex, quotesToEvaluate.length) / quotesToEvaluate.length) * 100)
     : 0;
 
-  const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
+  const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
     const offScreenX = direction === 'agree' ? 500 : -500;
@@ -97,22 +97,30 @@ export const EvaluationPhase: React.FC = () => {
     cardXRef.current.set(0);
     dragX.set(0);
     setIsAnimating(false);
-  }, [isAnimating, currentQuote, agree, disagree, dragX, tourStep]);
+  };
+
+  // Keep a ref to handleButtonSwipe so the keydown effect can call the latest
+  // version without re-registering the listener on every render.
+  const handleButtonSwipeRef = useRef(handleButtonSwipe);
+  useLayoutEffect(() => {
+    handleButtonSwipeRef.current = handleButtonSwipe;
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
-      if (isAnimating || !currentQuote) return;
+      if (isAnimating || !currentQuote || sheetOpen) return;
+      if (document.querySelector('dialog[open]')) return;
       switch (event.key) {
         case 'ArrowLeft': case 'a': case 'A':
-          event.preventDefault(); handleButtonSwipe('disagree'); break;
+          event.preventDefault(); handleButtonSwipeRef.current('disagree'); break;
         case 'ArrowRight': case 'd': case 'D':
-          event.preventDefault(); handleButtonSwipe('agree'); break;
+          event.preventDefault(); handleButtonSwipeRef.current('agree'); break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleButtonSwipe, isAnimating, currentQuote]);
+  }, [isAnimating, currentQuote, sheetOpen]);
 
   const handleCardAgree = useCallback((q: BlindQuote) => {
     agree(q);
