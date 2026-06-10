@@ -848,6 +848,94 @@ dialog::backdrop {
 }
 
 /* ============================================
+   Rank Dock (mobile collapsed strip)
+   ============================================ */
+
+.rank-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background-color: var(--surface-card);
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -4px 16px rgba(28, 28, 28, 0.08);
+  padding: 0.25rem 0.875rem calc(0.5rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  cursor: pointer;
+  min-height: 3.5rem;
+}
+
+.rank-dock-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+  margin: 0.25rem auto 0;
+}
+
+.rank-dock-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.rank-dock-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.375rem;
+  background-color: var(--surface-sunken);
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+.rank-dock-slot-empty {
+  border-style: dashed;
+  background: none;
+  opacity: 0.7;
+}
+
+.rank-dock-slot-rank {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-dock-slot-stub,
+.rank-dock-slot-ghost {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  color: var(--text-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-dock-slot-ghost { color: var(--text-tertiary); }
+
+.rank-dock-counter {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-dock-counter-iron { color: var(--text-tertiary); }
+
+.rank-dock-chevron { color: var(--text-tertiary); flex-shrink: 0; }
+
+/* ============================================
    Counter Pill
    ============================================ */
 
