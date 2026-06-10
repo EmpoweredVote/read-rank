@@ -26,7 +26,11 @@ const SourceExplainerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) =
   return (
     <dialog
       ref={ref}
-      onClose={onClose}
+      onClose={() => {
+        // Ignore stale close events from StrictMode's effect replay: if the
+        // dialog is open again, the close belongs to the discarded first mount.
+        if (!ref.current?.open) onClose();
+      }}
       onCancel={onClose}
       aria-labelledby="source-explainer-title"
       style={{

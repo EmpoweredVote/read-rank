@@ -30,6 +30,7 @@ if (!HTMLDialogElement.prototype.close) {
   HTMLDialogElement.prototype.close = function (this: HTMLDialogElement, returnValue?: string) {
     if (returnValue !== undefined) this.returnValue = returnValue;
     this.open = false;
-    this.dispatchEvent(new Event('close'));
+    // Spec queues the close event; sync dispatch hides StrictMode double-effect bugs.
+    queueMicrotask(() => this.dispatchEvent(new Event('close')));
   };
 }

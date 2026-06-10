@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { StrictMode } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SourceInfoButton } from '../SourceExplainer';
@@ -32,5 +33,16 @@ describe('SourceInfoButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
     fireEvent(screen.getByRole('dialog'), new Event('cancel'));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('stays open under StrictMode double-mounted effects', async () => {
+    render(
+      <StrictMode>
+        <SourceInfoButton />
+      </StrictMode>
+    );
+    await userEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });
