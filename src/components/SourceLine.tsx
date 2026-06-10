@@ -31,6 +31,7 @@ export const SourceLine: React.FC<SourceLineProps> = ({ sourceName, sourceUrl, v
       rel="noopener noreferrer"
       aria-label={`Verify source: ${sourceName} (opens in new tab)`}
       onClick={(e) => e.stopPropagation()}
+      className="ev-source-link"
       style={{
         fontFamily: "'Manrope', sans-serif",
         fontSize,

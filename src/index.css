@@ -210,6 +210,11 @@ dialog::backdrop {
   background: rgba(28, 28, 28, 0.45);
 }
 
+.ev-source-link:hover,
+.ev-source-link:focus-visible {
+  text-decoration: underline;
+}
+
 .ev-button-primary {
   background-color: var(--color-ev-coral);
   color: white;

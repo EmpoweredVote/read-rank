@@ -41,6 +41,8 @@ const SourceExplainerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) =
         fontFamily: "'Manrope', sans-serif",
         color: 'var(--text-ink)',
         background: 'var(--surface-card)',
+        margin: 'auto',
+        userSelect: 'text',
       }}
     >
       <h2
@@ -53,7 +55,7 @@ const SourceExplainerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) =
         Every quote is a real, on-the-record statement.&nbsp; We pull from four kinds of sources, in
         order of preference:
       </p>
-      <ol style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+      <ol style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 0.75rem', paddingLeft: '1.25rem', listStyleType: 'decimal' }}>
         {SOURCE_TIERS.map((tier) => (
           <li key={tier}>{tier}</li>
         ))}
