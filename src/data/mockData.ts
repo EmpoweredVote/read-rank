@@ -14,7 +14,6 @@ export const MOCK_RACE_ID = 'mock-in-gov-2024';
 interface MockIdentity {
   candidateId: string;
   name: string;
-  party: string;
   office: string;
   photo: string;
 }
@@ -23,28 +22,24 @@ const MOCK_IDENTITIES: Record<string, MockIdentity> = {
   'tok-rainwater': {
     candidateId: 'donald-rainwater',
     name: 'Donald Rainwater',
-    party: 'Libertarian Party',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/DonaldRainwater2024.jpg',
   },
   'tok-mccormick': {
     candidateId: 'jennifer-mccormick',
     name: 'Jennifer McCormick',
-    party: 'Democratic Party',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Jennifer_McCormick.jpg',
   },
   'tok-braun': {
     candidateId: 'mike-braun',
     name: 'Mike Braun',
-    party: 'Republican Party',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Mike_Braun.png',
   },
   'tok-bauer': {
     candidateId: 'maureen-bauer',
     name: 'Maureen Bauer',
-    party: 'Democratic Party',
     office: 'Candidate for Indiana Governor',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/200/300/Mar3020201125PM_80182230_1BA7F9ECD19D4A52829D0F47A0BE6754.jpeg',
   },
@@ -228,7 +223,6 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
       rank: i + 1,
       candidateId: id.candidateId,
       name: id.name,
-      party: id.party,
       office: id.office,
       photo: id.photo,
       essentialsUrl: `https://essentials.empowered.vote/politician/${id.candidateId}`,

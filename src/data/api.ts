@@ -41,7 +41,6 @@ export interface BallotEntry {
   rank: number;
   candidateId: string;
   name: string;
-  party: string;
   office: string;
   photo: string;
   essentialsUrl: string;
