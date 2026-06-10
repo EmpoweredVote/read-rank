@@ -57,6 +57,8 @@ export interface BallotEntry {
 export interface RevealResult {
   raceId: string;
   positionName: string;
+  /** True where this race is actually decided by ranked choice voting. */
+  usesRcv?: boolean;
   ballot: BallotEntry[];
 }
 

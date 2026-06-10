@@ -238,5 +238,5 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
     };
   });
 
-  return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.positionName, ballot };
+  return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.positionName, usesRcv: false, ballot };
 }
