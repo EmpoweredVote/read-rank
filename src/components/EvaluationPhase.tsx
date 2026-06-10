@@ -284,7 +284,9 @@ export const EvaluationPhase: React.FC = () => {
         allDone={allTopicsDone}
         onClose={() => {
           setSheetOpen(false);
-          dockRef.current?.focus();
+          // Defer past the dialog unmount: while the modal is open the page is
+          // inert and focus() outside it is silently ignored.
+          requestAnimationFrame(() => dockRef.current?.focus());
         }}
         onSeeResults={() => {
           setSheetOpen(false);
