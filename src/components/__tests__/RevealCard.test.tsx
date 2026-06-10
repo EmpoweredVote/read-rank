@@ -54,6 +54,13 @@ describe('RevealCard', () => {
     expect(link).toHaveAttribute('href', 'https://example.com/jane');
   });
 
+  it('does not steal focus when mounted already revealed', () => {
+    render(
+      <RevealCard quoteText="A quote." index={0} identity={identity} revealed onReveal={vi.fn()} />
+    );
+    expect(screen.getByText('Jane Doe').closest('.tier-row')).not.toHaveFocus();
+  });
+
   it('moves focus to the revealed card so keyboard users keep their place', () => {
     const { rerender } = render(
       <RevealCard quoteText="A quote." index={0} identity={identity} revealed={false} onReveal={vi.fn()} />

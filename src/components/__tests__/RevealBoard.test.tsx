@@ -29,7 +29,7 @@ describe('RevealBoard', () => {
   it('renders the agreed ranking anonymously with a Reveal all control', () => {
     render(<RevealBoard agreed={agreed} identities={identities} onAllRevealed={vi.fn()} />);
     expect(screen.getByText('First quote.')).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/jane|sam/i);
+    expect(document.body.innerHTML).not.toMatch(/jane|sam/i);
     expect(screen.getByRole('button', { name: /reveal all/i })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^reveal$/i })).toHaveLength(2);
   });
@@ -44,6 +44,12 @@ describe('RevealBoard', () => {
     expect(status).toHaveTextContent(/1st choice revealed: Jane Doe, Candidate for Governor/i);
     expect(onAllRevealed).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: /^reveal$/i }));
+    expect(onAllRevealed).toHaveBeenCalledOnce();
+  });
+
+  it('completes vacuously when no agreed quote has an identity', () => {
+    const onAllRevealed = vi.fn();
+    render(<RevealBoard agreed={agreed} identities={new Map()} onAllRevealed={onAllRevealed} />);
     expect(onAllRevealed).toHaveBeenCalledOnce();
   });
 

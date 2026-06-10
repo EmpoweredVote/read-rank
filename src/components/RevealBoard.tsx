@@ -19,10 +19,14 @@ export const RevealBoard: React.FC<RevealBoardProps> = ({ agreed, identities, on
   const [announcement, setAnnouncement] = useState('');
   const completedRef = useRef(false);
 
+  // Tier framing and announcements are positional within this filtered list —
+  // RevealCard's index prop and revealOne's announcement must stay in sync.
+  // An identity miss is unreachable via the mock pipeline (ballot entries
+  // imply mapped agreed quotes) but a hostile payload must not soft-lock us.
   const visible = agreed.filter((q) => identities.has(q.id));
 
   useEffect(() => {
-    if (!completedRef.current && visible.length > 0 && revealed.size >= visible.length) {
+    if (!completedRef.current && revealed.size >= visible.length) {
       completedRef.current = true;
       onAllRevealed();
     }
