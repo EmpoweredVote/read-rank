@@ -287,6 +287,7 @@ export const useReadRankStore = create<ReadRankState>()(
           if (race.agreed.some((q) => q.id === quote.id)) return race;
           const topic = race.topics[quote.topicKey];
           if (!topic) return race;
+          if (!topic.disagreed.some((q) => q.id === quote.id)) return race;
           return {
             ...race,
             agreed: [...race.agreed, { ...quote, addedAt: Date.now() }],

@@ -61,4 +61,12 @@ describe('reAgree', () => {
     const after = useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.currentIndex;
     expect(after).toBe(before);
   });
+
+  it('ignores quotes that were never disagreed', () => {
+    const [q1] = payload.topics[0].quotes;
+    // q1 is unevaluated: not agreed, not disagreed.
+    useReadRankStore.getState().reAgree(q1);
+    const race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.agreed).toEqual([]);
+  });
 });
