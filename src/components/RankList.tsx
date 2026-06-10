@@ -17,8 +17,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
-
-const PODIUM_LABELS = ['1st', '2nd', '3rd'];
+import { TIER_META, tierAnnouncement, tierForIndex } from '../utils/tiers';
+import { TierIcon } from './TierIcon';
 
 function GripIcon() {
   return (
@@ -42,9 +42,8 @@ interface RowProps {
 const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
   const rank = index + 1;
-  const isPodium = index < 3;
-  const badgeClass = `podium-rank-badge ${rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rN'}`;
-  const podiumClass = rank === 1 ? 'podium-1' : rank === 2 ? 'podium-2' : rank === 3 ? 'podium-3' : '';
+  const tier = tierForIndex(index);
+  const meta = TIER_META[tier];
 
   return (
     <div
@@ -52,21 +51,18 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        backgroundColor: 'var(--surface-sunken)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '0.5rem',
         padding: compact ? '0.5rem 0.625rem' : '0.625rem 0.75rem',
         display: 'flex',
         alignItems: 'center',
         gap: '0.625rem',
         opacity: isDragging ? 0.85 : 1,
       }}
-      className={`${podiumClass} ${isDragging ? 'rank-row-dragging' : ''}`}
+      className={`tier-row tier-row-${tier} ${isDragging ? 'rank-row-dragging' : ''}`}
     >
       <button
         type="button"
         className="rank-drag-handle"
-        aria-label={`Reorder — currently ranked ${rank}`}
+        aria-label={`Reorder, currently ranked ${rank}, ${meta.name}`}
         {...attributes}
         {...listeners}
         style={{ background: 'none', border: 'none', padding: 0, display: 'flex' }}
@@ -74,22 +70,13 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
         <GripIcon />
       </button>
 
-      <span className={badgeClass}>{rank}</span>
+      <span className="tier-rank-num" aria-hidden="true">{rank}</span>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        {isPodium && (
-          <div
-            style={{
-              fontFamily: "'Manrope', sans-serif",
-              fontWeight: 700,
-              fontSize: '0.625rem',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--text-tertiary)',
-              marginBottom: '0.125rem',
-            }}
-          >
-            {PODIUM_LABELS[index]} choice
+        {tier !== 'bronze' && (
+          <div className={`tier-label tier-label-${tier}`}>
+            <TierIcon tier={tier} size={12} />
+            {meta.label}
           </div>
         )}
         <div
@@ -144,9 +131,11 @@ interface RankListProps {
   longPressDrag?: boolean;
   /** Pointer-free reorder: 44px up/down buttons per row. */
   showMoveButtons?: boolean;
+  /** Render dashed tier slots for unfilled podium positions. */
+  showGhostSlots?: boolean;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons, showGhostSlots }) => {
   const [announcement, setAnnouncement] = useState('');
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -163,7 +152,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
     const ids = items.map((q) => q.id);
     [ids[from], ids[to]] = [ids[to], ids[from]];
     onReorder(ids);
-    setAnnouncement(`Moved "${stub}" to position ${to + 1} of ${ids.length}`);
+    setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(to, ids.length)}`);
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -178,7 +167,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
     onReorder(next);
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && !showGhostSlots) {
     return (
       <div
         className="sidebar-empty-state"
@@ -215,6 +204,17 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
               isLast={i === items.length - 1}
             />
           ))}
+          {showGhostSlots && items.length < 3 &&
+            Array.from({ length: 3 - items.length }, (_, k) => {
+              const idx = items.length + k;
+              const meta = TIER_META[tierForIndex(idx)];
+              return (
+                <div key={`ghost-${meta.tier}`} className={`tier-ghost tier-ghost-${meta.tier}`} aria-hidden="true">
+                  <TierIcon tier={meta.tier} size={14} />
+                  <span>{meta.label}</span>
+                </div>
+              );
+            })}
         </motion.div>
       </SortableContext>
       <div className="sr-only" role="status">{announcement}</div>

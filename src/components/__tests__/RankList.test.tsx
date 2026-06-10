@@ -41,12 +41,42 @@ describe('RankList move buttons', () => {
     expect(onReorder).not.toHaveBeenCalled();
   });
 
-  it('announces moves through a status region', async () => {
+  it('announces moves with the tier', async () => {
     render(<RankList items={items} onReorder={vi.fn()} showMoveButtons />);
-    await userEvent.click(screen.getByRole('button', { name: /move down.*ranked 1/i }));
-    const statusRegions = screen.getAllByRole('status');
-    const announcement = statusRegions.find((el) => /moved .*to position 2 of 3/i.test(el.textContent ?? ''));
-    expect(announcement).toBeTruthy();
-    expect(announcement).toHaveTextContent(/moved .*to position 2 of 3/i);
+    await userEvent.click(screen.getByRole('button', { name: /move down, currently ranked 1/i }));
+    const region = screen.getAllByRole('status').find((el) => /moved/i.test(el.textContent ?? ''));
+    expect(region).toHaveTextContent(/moved .*to 2nd choice, gold/i);
+  });
+
+  it('frames the top three rows by tier with icon labels', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    expect(screen.getByText('1st choice')).toBeInTheDocument();
+    expect(screen.getByText('2nd choice')).toBeInTheDocument();
+    expect(screen.getByText('3rd choice')).toBeInTheDocument();
+    expect(screen.getByText('Alpha quote.').closest('.tier-row')).toHaveClass('tier-row-diamond');
+    expect(screen.getByText('Bravo quote.').closest('.tier-row')).toHaveClass('tier-row-gold');
+    expect(screen.getByText('Charlie quote.').closest('.tier-row')).toHaveClass('tier-row-silver');
+  });
+
+  it('frames rows past third as Bronze without a per-row label', () => {
+    const four = [...items, { id: 'd', text: 'Delta quote.', candidateToken: 't4', topicKey: 'k', addedAt: 4 }];
+    render(<RankList items={four} onReorder={vi.fn()} />);
+    expect(screen.getByText('Delta quote.').closest('.tier-row')).toHaveClass('tier-row-bronze');
+    expect(screen.queryByText('Agreed')).not.toBeInTheDocument();
+  });
+
+  it('renders ghost slots for unfilled podium positions', () => {
+    render(<RankList items={items.slice(0, 1)} onReorder={vi.fn()} showGhostSlots />);
+    expect(screen.getByText('Alpha quote.').closest('.tier-row')).toHaveClass('tier-row-diamond');
+    const ghosts = document.querySelectorAll('.tier-ghost');
+    expect(ghosts).toHaveLength(2);
+    expect(ghosts[0]).toHaveClass('tier-ghost-gold');
+    expect(ghosts[1]).toHaveClass('tier-ghost-silver');
+  });
+
+  it('renders three ghost slots instead of the empty state when showGhostSlots', () => {
+    render(<RankList items={[]} onReorder={vi.fn()} showGhostSlots />);
+    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
+    expect(screen.queryByText(/agree with quotes/i)).not.toBeInTheDocument();
   });
 });
