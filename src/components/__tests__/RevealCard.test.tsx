@@ -70,4 +70,11 @@ describe('RevealCard', () => {
     );
     expect(screen.getByText('Jane Doe').closest('.tier-row')).toHaveFocus();
   });
+
+  it('omits the candidate profile link when no Essentials profile exists', () => {
+    render(
+      <RevealCard quoteText="A quote." index={0} identity={{ ...identity, essentialsUrl: '' }} revealed onReveal={vi.fn()} />
+    );
+    expect(screen.queryByRole('link', { name: /view candidate/i })).not.toBeInTheDocument();
+  });
 });

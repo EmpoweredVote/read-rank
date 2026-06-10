@@ -19,6 +19,8 @@ export interface RaceSummary {
   candidateCount: number;
   topicCount: number;
   isLocal: boolean;
+  /** True where this race is actually decided by ranked choice voting. */
+  usesRcv?: boolean;
 }
 
 export interface RevealQuote {
@@ -92,19 +94,22 @@ function sanitizeRacePayload(raw: RacePayload): RacePayload {
   return {
     raceId: raw.raceId,
     positionName: raw.positionName,
-    topics: (raw.topics ?? []).map((topic) => ({
-      topicKey: topic.topicKey,
-      title: topic.title,
-      question: topic.question,
-      quotes: (topic.quotes ?? []).map(
-        (quote): BlindQuote => ({
-          id: quote.id,
-          text: quote.text,
-          candidateToken: quote.candidateToken,
-          topicKey: quote.topicKey,
-        })
-      ),
-    })),
+    topics: (raw.topics ?? [])
+      .map((topic) => ({
+        topicKey: topic.topicKey,
+        title: topic.title,
+        question: topic.question,
+        quotes: (topic.quotes ?? []).map(
+          (quote): BlindQuote => ({
+            id: quote.id,
+            text: quote.text,
+            candidateToken: quote.candidateToken,
+            topicKey: quote.topicKey,
+          })
+        ),
+      }))
+      // A topic with one voice is not a comparison (REDESIGN_SPEC §8).
+      .filter((topic) => topic.quotes.length >= 2),
   };
 }
 

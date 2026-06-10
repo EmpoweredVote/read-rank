@@ -134,6 +134,7 @@ export const mockRaceSummary: RaceSummary = {
   candidateCount: Object.keys(MOCK_IDENTITIES).length,
   topicCount: MOCK_TOPICS.length,
   isLocal: false,
+  usesRcv: false,
 };
 
 export function buildMockRacePayload(): RacePayload {
