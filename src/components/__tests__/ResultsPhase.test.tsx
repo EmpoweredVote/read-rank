@@ -43,8 +43,8 @@ describe('BallotCard source attribution', () => {
 describe('ResultsPhase header', () => {
   it('offers the source explainer from the reveal screen', async () => {
     render(<ResultsPhase />);
-    expect(
-      await screen.findByRole('button', { name: /how we source quotes/i })
-    ).toBeInTheDocument();
+    const trigger = await screen.findByRole('button', { name: /how we source quotes/i });
+    await userEvent.click(trigger);
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);
   });
 });

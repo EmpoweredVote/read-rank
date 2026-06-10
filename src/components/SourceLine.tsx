@@ -40,7 +40,8 @@ export const SourceLine: React.FC<SourceLineProps> = ({ sourceName, sourceUrl, v
         display: 'inline-flex',
         alignItems: 'center',
         gap: '0.25rem',
-        minHeight: '2.75rem',
+        // 44px target for standalone use; inline-in-text (compact) is exempt per WCAG 2.5.8.
+        minHeight: variant === 'compact' ? undefined : '2.75rem',
         padding: variant === 'compact' ? '0.125rem 0' : '0.375rem 0',
       }}
     >

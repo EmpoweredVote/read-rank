@@ -140,7 +140,8 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
       </div>
 
       {/* Blind-trust footer — generic trust, zero provenance (REDESIGN_SPEC §3.1).
-          Capture-phase stop keeps pointer events from starting a card drag. */}
+          Capture-phase stop keeps pointer events from starting a card drag;
+          data-no-drag is a marker for future drag code, nothing consumes it yet. */}
       {showTrustFooter && (
         <div
           data-no-drag
