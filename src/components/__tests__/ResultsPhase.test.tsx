@@ -91,14 +91,16 @@ describe('ResultsPhase staged flow', () => {
     const continueBtn = await screen.findByRole('button', { name: /see who you agreed with/i }, { timeout: 3000 });
     expect(screen.getByText(/you ranked 1 quote across 1 topic/i)).toBeInTheDocument();
 
-    // Board — anonymous until revealed
+    // Board — anonymous until revealed (orchestration-level blindness guard)
     await userEvent.click(continueBtn);
     expect(await screen.findByRole('button', { name: /reveal all/i })).toBeInTheDocument();
     expect(screen.getByText(/marijuana use is cascading/i)).toBeInTheDocument();
+    expect(document.body.innerHTML).not.toMatch(/mike braun/i);
 
     // Reveal → summary appears
     await userEvent.click(screen.getByRole('button', { name: /reveal all/i }));
     expect(await screen.findByText(/mirrors ranked choice voting/i)).toBeInTheDocument();
     expect(screen.getByText(/your top pick came from/i)).toBeInTheDocument();
+    expect(screen.getByText(/how the candidates stack up/i)).toBeInTheDocument();
   });
 });
