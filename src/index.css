@@ -1003,3 +1003,148 @@ dialog::backdrop {
   border-color: var(--border-medium);
   transform: translateY(-1px);
 }
+
+/* ============================================
+   Rank Sheet (mobile bottom sheet)
+   ============================================ */
+
+dialog.rank-sheet {
+  position: fixed;
+  inset: 0;
+  margin: auto 0 0;
+  width: 100%;
+  max-width: 100%;
+  height: min(88dvh, 100%);
+  max-height: 88dvh;
+  border: none;
+  border-radius: 1rem 1rem 0 0;
+  padding: 0;
+  background: var(--surface-card);
+  color: var(--text-ink);
+}
+
+dialog.rank-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-sheet-handle-region {
+  padding: 0.5rem 0 0.25rem;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.rank-sheet-handle {
+  width: 2.5rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+}
+
+.rank-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 1rem 0.625rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.rank-sheet-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.rank-sheet-done {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-link);
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+}
+
+.rank-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.875rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rank-sheet-iron-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+.rank-sheet-iron-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.rank-sheet-iron-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+}
+
+.rank-sheet-iron-stub {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rank-sheet-iron-recover {
+  background: none;
+  border: 1px solid var(--border-medium);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  min-height: 2.75rem;
+  padding: 0 0.625rem;
+  flex-shrink: 0;
+}
+
+.rank-sheet-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.rank-sheet-results {
+  width: 100%;
+  min-height: 3.5rem;
+  font-size: 1rem;
+}
