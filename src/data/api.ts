@@ -122,7 +122,9 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
   } catch (err) {
     console.error('Failed to fetch race quotes, falling back to mock', err);
     const { buildMockRacePayload } = await import('./mockData');
-    return buildMockRacePayload();
+    // Same choke point as the live path: blindness + thin-topic invariants
+    // hold structurally for the fallback too, not by curation discipline.
+    return sanitizeRacePayload(buildMockRacePayload());
   }
 }
 

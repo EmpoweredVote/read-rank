@@ -76,5 +76,8 @@ describe('RevealCard', () => {
       <RevealCard quoteText="A quote." index={0} identity={{ ...identity, essentialsUrl: '' }} revealed onReveal={vi.fn()} />
     );
     expect(screen.queryByRole('link', { name: /view candidate/i })).not.toBeInTheDocument();
+    // An unguarded <a href=""> has no link role but still renders dead-link
+    // text — the text-level assertion is the one that pins the guard.
+    expect(screen.queryByText(/view candidate/i)).not.toBeInTheDocument();
   });
 });
