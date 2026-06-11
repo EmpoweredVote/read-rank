@@ -37,6 +37,8 @@ export interface RaceProgress {
   agreed: AgreedQuote[];
   phase: 'evaluation' | 'results';
   completed: boolean;
+  /** Keys of topics the user chose to evaluate. Undefined for races started before this field existed. */
+  selectedTopicKeys?: string[];
 }
 
 /** Shape returned by fetchRaceQuotes / mock data, consumed by selectRace. */
@@ -63,7 +65,7 @@ export interface LocationFilter {
   politicianIds: string[];
 }
 
-export type Phase = 'hub' | 'practice' | 'evaluation' | 'results';
+export type Phase = 'hub' | 'practice' | 'evaluation' | 'results' | 'issue-selection';
 
 /** A single user verdict for backend sync (rank-bearing format). */
 export interface VerdictRecord {
@@ -108,6 +110,8 @@ interface ReadRankState {
   /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
   reAgree: (quote: BlindQuote) => void;
   finishRace: () => void;
+  setSelectedTopics: (keys: string[]) => void;
+  confirmIssueSelection: () => void;
   goToHub: () => void;
   reset: () => void;
   resetRace: (raceId: string) => void;
@@ -155,6 +159,7 @@ function buildRaceProgress(payload: RacePayload): RaceProgress {
     agreed: [],
     phase: 'evaluation',
     completed: false,
+    selectedTopicKeys: topicOrder,
   };
 }
 
@@ -195,10 +200,10 @@ export const useReadRankStore = create<ReadRankState>()(
 
       setPhase: (phase) => {
         const state = get();
-        if (phase !== 'hub') {
+        if (phase === 'evaluation' || phase === 'results') {
           const patch = withCurrentRace(state, (race) => ({
             ...race,
-            phase: phase as 'evaluation' | 'results',
+            phase,
             completed: phase === 'results' ? true : race.completed,
           }));
           if (patch) {
@@ -213,12 +218,14 @@ export const useReadRankStore = create<ReadRankState>()(
         const state = get();
         const existing = state.raceProgress[payload.raceId];
         const race = existing ?? buildRaceProgress(payload);
+        const nextPhase: Phase = existing ? race.phase : 'issue-selection';
+        const selectedTopicKeys = race.selectedTopicKeys ?? race.topicOrder;
         set({
           currentRaceId: payload.raceId,
-          phase: race.phase,
+          phase: nextPhase,
           raceProgress: {
             ...state.raceProgress,
-            [payload.raceId]: race,
+            [payload.raceId]: { ...race, selectedTopicKeys },
           },
         });
       },
@@ -305,6 +312,21 @@ export const useReadRankStore = create<ReadRankState>()(
           };
         });
         if (patch) set(patch);
+      },
+
+      setSelectedTopics: (keys) => {
+        const patch = withCurrentRace(get(), (race) => ({ ...race, selectedTopicKeys: keys }));
+        if (patch) set(patch);
+      },
+
+      confirmIssueSelection: () => {
+        const state = get();
+        const patch = withCurrentRace(state, (race) => ({
+          ...race,
+          phase: 'evaluation' as const,
+        }));
+        if (patch) set({ phase: 'evaluation', ...patch });
+        else set({ phase: 'evaluation' });
       },
 
       finishRace: () => {
