@@ -41,7 +41,7 @@ describe('RankRail', () => {
     expect(screen.getByText(/you disagreed with everything below this line/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
     const ironRow = screen.getByText('Rail disagreed quote.').closest('.tier-row');
-    expect(ironRow).toHaveClass('tier-row-iron');
+    expect(ironRow).toHaveClass('tier-row-disagreed');
   });
 
   it('omits the severance line when nothing is agreed yet', () => {

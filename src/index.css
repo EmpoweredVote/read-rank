@@ -84,8 +84,8 @@
   --tier-bronze-bg: #f5efe9;
   --tier-bronze-border: #8a6648;
   --tier-bronze-ink: #3a2a1a;
-  --tier-iron-border: #8a939c;
-  --tier-iron-ink: var(--text-tertiary);
+  --tier-disagreed-border: #8a939c;
+  --tier-disagreed-ink: var(--text-tertiary);
 
   --grain-opacity: 0.025;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
@@ -139,7 +139,7 @@
   --tier-bronze-bg: rgba(191, 154, 118, 0.1);
   --tier-bronze-border: #bf9a76;
   --tier-bronze-ink: #e8d8c8;
-  --tier-iron-border: #6b7480;
+  --tier-disagreed-border: #6b7480;
 
   --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
@@ -980,7 +980,7 @@ dialog::backdrop {
   flex-shrink: 0;
 }
 
-.rank-dock-counter-iron { color: var(--text-tertiary); }
+.rank-dock-counter-disagreed { color: var(--text-tertiary); }
 
 .rank-dock-chevron { color: var(--text-tertiary); flex-shrink: 0; }
 
@@ -1126,7 +1126,7 @@ dialog.rank-sheet[open] {
   gap: 1rem;
 }
 
-.rank-sheet-iron-toggle {
+.rank-sheet-disagreed-toggle {
   background: none;
   border: none;
   cursor: pointer;
@@ -1142,7 +1142,7 @@ dialog.rank-sheet[open] {
 }
 
 
-.rank-sheet-iron-recover {
+.rank-sheet-disagreed-recover {
   background: none;
   border: 1px solid var(--border-medium);
   border-radius: 0.375rem;
@@ -1199,15 +1199,15 @@ dialog.rank-sheet[open] {
   background-color: var(--tier-bronze-bg);
 }
 
-.tier-row-iron {
+.tier-row-disagreed {
   position: relative;
-  border: 1px dashed var(--tier-iron-border);
+  border: 1px dashed var(--tier-disagreed-border);
   background: none;
   overflow: hidden;
 }
 
 /* Hatch strip — the "raw ore" texture cue, color-independent */
-.tier-row-iron::before {
+.tier-row-disagreed::before {
   content: '';
   position: absolute;
   left: 0;
@@ -1216,13 +1216,13 @@ dialog.rank-sheet[open] {
   width: 6px;
   background-image: repeating-linear-gradient(
     45deg,
-    var(--tier-iron-border) 0 2px,
+    var(--tier-disagreed-border) 0 2px,
     transparent 2px 5px
   );
   opacity: 0.55;
 }
 
-.tier-row-iron .tier-iron-muted { opacity: 0.75; }
+.tier-row-disagreed .tier-disagreed-muted { opacity: 0.75; }
 
 .tier-label {
   font-family: 'Manrope', sans-serif;
@@ -1240,13 +1240,13 @@ dialog.rank-sheet[open] {
 .tier-label-gold { color: var(--tier-gold-ink); }
 .tier-label-silver { color: var(--tier-silver-ink); }
 .tier-label-bronze { color: var(--tier-bronze-ink); }
-.tier-label-iron { color: var(--tier-iron-ink); }
+.tier-label-disagreed { color: var(--tier-disagreed-ink); }
 
 .tier-icon-diamond { color: var(--tier-diamond-border); }
 .tier-icon-gold { color: var(--tier-gold-border); }
 .tier-icon-silver { color: var(--tier-silver-border); }
 .tier-icon-bronze { color: var(--tier-bronze-border); }
-.tier-icon-iron { color: var(--tier-iron-border); }
+.tier-icon-disagreed { color: var(--tier-disagreed-border); }
 
 .tier-rank-num {
   font-family: 'Manrope', sans-serif;
@@ -1278,7 +1278,7 @@ dialog.rank-sheet[open] {
 .tier-ghost-silver { border: 2px dashed var(--tier-silver-border); color: var(--tier-silver-ink); }
 
 /* Iron severance — spatial cue #1: a different shelf, not the next rung */
-.iron-divider {
+.disagreed-divider {
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -1291,11 +1291,11 @@ dialog.rank-sheet[open] {
   color: var(--text-tertiary);
 }
 
-.iron-divider::before,
-.iron-divider::after {
+.disagreed-divider::before,
+.disagreed-divider::after {
   content: '';
   flex: 1;
-  border-top: 1px dashed var(--tier-iron-border);
+  border-top: 1px dashed var(--tier-disagreed-border);
 }
 
 /* ============================================
@@ -1308,26 +1308,26 @@ dialog.rank-sheet[open] {
   gap: 0.75rem;
 }
 
-.rank-rail-iron-list {
+.rank-rail-disagreed-list {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
   margin-top: 0.375rem;
 }
 
-.rank-rail-iron-row {
+.rank-rail-disagreed-row {
   align-items: center;
   display: flex;
   gap: 0.625rem;
   padding: 0.5rem 0.625rem 0.5rem 0.875rem;
 }
 
-.rank-rail-iron-stub {
+.rank-rail-disagreed-stub {
   flex: 1;
   min-width: 0;
   font-family: 'Manrope', sans-serif;
   font-size: 0.75rem;
-  color: var(--tier-iron-ink);
+  color: var(--tier-disagreed-ink);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

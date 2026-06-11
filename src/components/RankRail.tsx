@@ -4,15 +4,9 @@ import { RankList } from './RankList';
 import { TierIcon } from './TierIcon';
 
 export interface RankRailProps {
-  /** 'sidebar' = desktop rail; 'sheet' = mobile bottom sheet (compact + long-press). */
   variant: 'sidebar' | 'sheet';
 }
 
-/**
- * The unified rank surface (REDESIGN_SPEC §3.2): tier-framed list with ghost
- * podium slots, and the Iron section severed below a labeled divider with
- * per-quote recovery. Used by the desktop sidebar and the mobile sheet.
- */
 export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
   const { getCurrentRaceProgress, reorderAgreed, reAgree } = useReadRankStore();
   const race = getCurrentRaceProgress();
@@ -39,20 +33,20 @@ export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
       )}
 
       {disagreed.length > 0 && (
-        <section className="rank-rail-iron">
+        <section className="rank-rail-disagreed">
           {agreed.length > 0 && (
-            <div className="iron-divider" role="separator">
+            <div className="disagreed-divider" role="separator">
               <span>You disagreed with everything below this line</span>
             </div>
           )}
           <button
             type="button"
-            className="rank-sheet-iron-toggle"
+            className="rank-sheet-disagreed-toggle"
             aria-expanded={showDisagreed}
             aria-label={`Disagreed (${disagreed.length})`}
             onClick={() => setShowDisagreed((p) => !p)}
           >
-            <TierIcon tier="iron" size={13} />
+            <TierIcon tier="disagreed" size={13} />
             Disagreed ({disagreed.length})
             <svg
               width="12"
@@ -70,12 +64,12 @@ export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
             </svg>
           </button>
           {showDisagreed && (
-            <div className="rank-rail-iron-list">
+            <div className="rank-rail-disagreed-list">
               {disagreed.map((q) => (
-                <div key={q.id} className="tier-row tier-row-iron rank-rail-iron-row">
-                  <TierIcon tier="iron" size={13} />
-                  <span className="rank-rail-iron-stub tier-iron-muted">{q.text}</span>
-                  <button type="button" className="rank-sheet-iron-recover" onClick={() => reAgree(q)}>
+                <div key={q.id} className="tier-row tier-row-disagreed rank-rail-disagreed-row">
+                  <TierIcon tier="disagreed" size={13} />
+                  <span className="rank-rail-disagreed-stub tier-disagreed-muted">{q.text}</span>
+                  <button type="button" className="rank-sheet-disagreed-recover" onClick={() => reAgree(q)}>
                     Move to agreed
                   </button>
                 </div>

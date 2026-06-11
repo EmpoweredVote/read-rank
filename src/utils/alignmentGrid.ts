@@ -18,7 +18,7 @@ export interface AlignmentRow {
  * A candidate may carry several judged quotes on one topic (the type allows
  * it even though the mock has one) — the cell shows the BEST supported tier
  * (lowest agreed position); only if no supported quote ranked does a
- * disagreed quote mark the cell iron; nothing judged → null.
+ * disagreed quote mark the cell disagreed; nothing judged → null.
  */
 export function buildAlignmentGrid(
   reveal: RevealResult,
@@ -43,7 +43,7 @@ export function buildAlignmentGrid(
         if (bestPosition === -1 || position < bestPosition) bestPosition = position;
       }
       if (bestPosition !== -1) return tierForIndex(bestPosition);
-      if (sawDisagreed) return 'iron' as Tier;
+      if (sawDisagreed) return 'disagreed' as Tier;
       return null;
     });
     return { candidateId: entry.candidateId, name: entry.name, cells };

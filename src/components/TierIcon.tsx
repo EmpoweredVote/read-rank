@@ -56,7 +56,7 @@ export const TierIcon: React.FC<TierIconProps> = ({ tier, size = 14 }) => {
           <path d="M8.5 12.5l2.5 2.5 4.5-5.5" />
         </svg>
       );
-    case 'iron':
+    case 'disagreed':
       return (
         <svg {...common}>
           <circle cx="12" cy="12" r="9" />
