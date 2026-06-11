@@ -1592,17 +1592,18 @@ dialog.rank-sheet[open] {
 
 /* ev-yellow accent — approved placement #6 */
 .insight-strip {
-  border-top: 3px solid var(--color-ev-yellow, #fed12e);
+  border-top: 4px solid var(--color-ev-yellow, #fed12e);
   background-color: var(--surface-card);
-  border-radius: 0 0 0.625rem 0.625rem;
+  border-radius: 0 0 0.75rem 0.75rem;
   border-left: 1px solid var(--border-subtle);
   border-right: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 0.875rem 1.125rem;
+  padding: 1.125rem 1.375rem;
   font-family: 'Manrope', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-ink);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--text-heading);
 }
 
 /* ============================================
@@ -1612,8 +1613,8 @@ dialog.rank-sheet[open] {
 
 .alignment-grid-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.625rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 0.75rem;
   background-color: var(--surface-card);
 }
 
@@ -1621,12 +1622,12 @@ dialog.rank-sheet[open] {
   width: 100%;
   border-collapse: collapse;
   font-family: 'Manrope', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .alignment-grid th,
 .alignment-grid td {
-  padding: 0.5rem 0.625rem;
+  padding: 0.75rem 0.875rem;
   text-align: center;
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -1634,7 +1635,7 @@ dialog.rank-sheet[open] {
 .alignment-grid thead th {
   font-weight: 700;
   color: var(--text-secondary);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1642,6 +1643,7 @@ dialog.rank-sheet[open] {
 .alignment-grid tbody th {
   text-align: left;
   font-weight: 700;
+  font-size: 0.9375rem;
   color: var(--text-heading);
   white-space: nowrap;
 }

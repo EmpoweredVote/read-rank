@@ -4,10 +4,7 @@ import { useReadRankStore, getAllAgreedQuotes } from '../store/useReadRankStore'
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
 import { SourceLine } from './SourceLine';
-import { SourceInfoButton } from './SourceExplainer';
-import { RevealBoard } from './RevealBoard';
 import { ThresholdInterstitial } from './ThresholdInterstitial';
-import { RcvEducationPanel } from './RcvEducationPanel';
 import { buildInsightSentence, buildQuoteIdentityMap } from '../utils/revealInsight';
 import type { QuoteIdentity } from '../utils/revealInsight';
 import { AlignmentGrid } from './AlignmentGrid';
@@ -121,20 +118,13 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
       </div>
 
       {/* Factual evidence — no score, no % */}
-      <div style={{ padding: '0 1rem 0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.375rem 0.75rem' }}>
+      <div style={{ padding: '0 1rem 0.75rem' }}>
         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-strong)' }}>
           You agreed with <strong>{agreementCount}</strong> of their position{agreementCount === 1 ? '' : 's'}
+          {entry.perTopic.length > 0 && (
+            <> · on <strong>{topicsWithAgreement}</strong> of {entry.perTopic.length} topic{entry.perTopic.length === 1 ? '' : 's'}</>
+          )}
         </span>
-        {firstPlaceCount > 0 && (
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-strong)' }}>
-            · ranked <strong>#1</strong> on {firstPlaceCount} topic{firstPlaceCount === 1 ? '' : 's'}
-          </span>
-        )}
-        {topicsWithAgreement > 0 && (
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>
-            · across {topicsWithAgreement} topic{topicsWithAgreement === 1 ? '' : 's'}
-          </span>
-        )}
       </div>
 
       {/* Actions */}
@@ -192,7 +182,7 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
                     paddingLeft: '0.625rem',
                     borderLeft: `2px solid ${q.supported ? 'var(--agree)' : 'var(--border-medium)'}`,
                   }}>
-                    {tier && <span style={{ flexShrink: 0, marginTop: '0.125rem' }}><TierIcon tier={tier} size={18} /></span>}
+                    {tier && <span style={{ flexShrink: 0 }}><TierIcon tier={tier} size={32} /></span>}
                     <p style={{
                       fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', lineHeight: 1.55, margin: 0,
                       color: q.supported ? 'var(--text-ink)' : 'var(--text-tertiary)',
@@ -216,16 +206,13 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
 };
 
 // ============================================================
-// ResultsPhase — staged reveal: threshold → board → summary.
-// State machine: 'threshold' | 'board'. Summary content appears
-// below the board once all quotes are revealed.
+// ResultsPhase — threshold gate → full results (no staged reveal).
 // ============================================================
 export const ResultsPhase: React.FC = () => {
   const { goToHub, currentRaceId, getRaceVerdicts, getCurrentRaceProgress, locationFilter } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stage, setStage] = useState<'threshold' | 'board'>('threshold');
-  const [allRevealed, setAllRevealed] = useState(false);
+  const [stage, setStage] = useState<'threshold' | 'results'>('threshold');
   const prefersReducedMotion = useReducedMotion();
   const race = getCurrentRaceProgress();
 
@@ -265,8 +252,6 @@ export const ResultsPhase: React.FC = () => {
     ? race.topics[agreedList[0].topicKey]?.title ?? null
     : null;
 
-  const agreed = agreedList;
-
   // Map quoteId → rank index within its topic (0-based) for tier icon display.
   const quoteRankMap = useMemo((): Map<string, number> => {
     if (!race) return new Map();
@@ -294,27 +279,28 @@ export const ResultsPhase: React.FC = () => {
 
   const ballot = reveal?.ballot ?? [];
 
-  // Empty ballot — show header + explainer + empty state. Skip threshold entirely.
+  // Threshold gate.
+  if (stage === 'threshold') {
+    return (
+      <div className="pb-12 max-w-2xl mx-auto">
+        <ThresholdInterstitial
+          rankedCount={agreedList.length}
+          topicCount={topicCount}
+          onContinue={() => setStage('results')}
+        />
+      </div>
+    );
+  }
+
+  // Empty ballot — no agreements, nothing to show.
   if (ballot.length === 0) {
     return (
       <div className="pb-12">
         <motion.div className="text-center max-w-2xl mx-auto mb-5"
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-          <p style={{
-            fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: '0.375rem',
-          }}>
-            Your ranked-choice ballot
-          </p>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.5rem', letterSpacing: '-0.02em' }}>
             {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
           </h2>
-          <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-            Based only on what you agreed with and how you ranked it — this is the order your choices produce.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.125rem' }}>
-            <SourceInfoButton showLabel />
-          </div>
         </motion.div>
 
         <div className="max-w-2xl mx-auto text-center py-10">
@@ -337,80 +323,38 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
-  // Threshold stage — the dark beat before unmasking. Header intentionally absent.
-  if (stage === 'threshold') {
-    return (
-      <div className="pb-12 max-w-2xl mx-auto">
-        <ThresholdInterstitial
-          rankedCount={agreed.length}
-          topicCount={topicCount}
-          onContinue={() => setStage('board')}
-        />
-      </div>
-    );
-  }
-
-  // Board stage — header visible; summary appears below once all revealed.
+  // Results — everything revealed at once.
   return (
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-5"
         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-        <p style={{
-          fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.12em',
-          textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: '0.375rem',
-        }}>
-          Your ranked-choice ballot
-        </p>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
           {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
         </h2>
-        <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-          Based only on what you agreed with and how you ranked it — this is the order your choices produce.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.125rem' }}>
-          <SourceInfoButton showLabel />
-        </div>
       </motion.div>
 
-      <div className="max-w-2xl mx-auto space-y-3">
-        {allRevealed && (
-          <>
-            {insight && <div className="insight-strip">{insight}</div>}
-            <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
-            <RcvEducationPanel usesRcv={reveal?.usesRcv} />
-          </>
-        )}
+      <div className="max-w-2xl mx-auto space-y-4">
+        {insight && <div className="insight-strip">{insight}</div>}
+        <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
 
-        <RevealBoard
-          agreed={agreed}
-          identities={identities}
-          onAllRevealed={() => setAllRevealed(true)}
-        />
-
-        {allRevealed && (
-          <>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
-              How the candidates stack up
-            </h3>
-            {ballot.map((entry, i) => (
-              <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
-                address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion}
-                quoteRankMap={quoteRankMap} />
-            ))}
-            <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
-          </>
-        )}
+        <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+          How the candidates stack up
+        </h3>
+        {ballot.map((entry, i) => (
+          <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
+            address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion}
+            quoteRankMap={quoteRankMap} />
+        ))}
+        <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
       </div>
 
-      {allRevealed && (
-        <motion.div className="flex justify-center pt-6"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: ballot.length * 0.08 + 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-          <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            Play another race near you
-          </button>
-        </motion.div>
-      )}
+      <motion.div className="flex justify-center pt-6"
+        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: ballot.length * 0.08 + 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+        <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+          Play another race near you
+        </button>
+      </motion.div>
     </div>
   );
 };

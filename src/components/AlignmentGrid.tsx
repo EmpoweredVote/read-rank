@@ -39,7 +39,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({ topics, rows }) =>
                 <td key={topics[i].key} title={tier ? TIER_META[tier].name : 'Not judged'}>
                   {tier ? (
                     <>
-                      <TierIcon tier={tier} size={16} />
+                      <TierIcon tier={tier} size={28} />
                       <span className="sr-only">{TIER_META[tier].name}</span>
                     </>
                   ) : (
