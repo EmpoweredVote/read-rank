@@ -79,4 +79,10 @@ describe('RankList move buttons', () => {
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
     expect(screen.queryByText(/agree with quotes/i)).not.toBeInTheDocument();
   });
+
+  it('renders full quote text without line-clamp', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    const textEl = screen.getByText('Alpha quote.');
+    expect(textEl.style.overflow).not.toBe('hidden');
+  });
 });

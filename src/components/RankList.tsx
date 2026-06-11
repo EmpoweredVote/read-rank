@@ -88,10 +88,6 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
             fontSize: compact ? '0.75rem' : '0.8125rem',
             lineHeight: 1.45,
             color: 'var(--text-ink)',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
           }}
         >
           {quote.text}
