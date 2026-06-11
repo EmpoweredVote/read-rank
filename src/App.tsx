@@ -38,7 +38,7 @@ function ThemeToggle() {
 
 function MainApp() {
   const { isLoggedIn, userName, loading, logout } = useAuthState();
-  const { reset, setLocationFilter } = useReadRankStore();
+  const { reset, setLocationFilter, phase } = useReadRankStore();
   const { isDark } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,7 +96,7 @@ function MainApp() {
         onNavigate={(href) => { window.location.href = href; }}
       />
       <DevHelper />
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className={phase === 'hub' ? undefined : 'container mx-auto px-4 py-8 max-w-4xl'}>
         <PhaseContainer />
       </main>
     </div>

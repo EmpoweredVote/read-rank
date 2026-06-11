@@ -5,6 +5,7 @@ import { useAuthState } from '../hooks/useAuthState';
 import { postVerdicts, verdictMapToRecords } from '../utils/verdictSync';
 import { apiFetch } from '../lib/auth';
 import { useEvContextPromotion } from '@empoweredvote/ev-ui';
+import { Landing } from './Landing';
 import { RaceHub } from './RaceHub';
 import { EvaluationPhase } from './EvaluationPhase';
 import { ResultsPhase } from './ResultsPhase';
@@ -84,7 +85,7 @@ export const PhaseContainer: React.FC = () => {
 
   const renderPhase = () => {
     switch (phase) {
-      case 'hub': return <RaceHub />;
+      case 'hub': return <Landing />;
       case 'practice': return <PracticeRound />;
       case 'evaluation': return <EvaluationPhase />;
       case 'results': return <ResultsPhase />;

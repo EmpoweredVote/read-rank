@@ -12,7 +12,11 @@ function formatElectionDate(iso: string | null): string | null {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export const RaceHub: React.FC = () => {
+interface RaceHubProps {
+  hideHeader?: boolean;
+}
+
+export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
   const { raceProgress, selectRace, locationFilter, clearLocationFilter } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,25 +66,27 @@ export const RaceHub: React.FC = () => {
 
   return (
     <div className="pb-12">
-      <motion.div
-        className="max-w-2xl mx-auto mb-4"
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <h1 className="text-center" style={{
-          fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem',
-          color: 'var(--text-heading)', letterSpacing: '-0.02em', margin: '0 0 0.25rem',
-        }}>
-          <span className="wordmark-underline">Read &amp; Rank</span>
-        </h1>
-        <p className="text-center" style={{
-          fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem',
-          lineHeight: 1.5, margin: '0 0 0.625rem',
-        }}>
-          Pick a race. Read what the candidates said — without knowing who said it — agree or
-          disagree, rank your favorites, then reveal your ballot.
-        </p>
-      </motion.div>
+      {!hideHeader && (
+        <motion.div
+          className="max-w-2xl mx-auto mb-4"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <h1 className="text-center" style={{
+            fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem',
+            color: 'var(--text-heading)', letterSpacing: '-0.02em', margin: '0 0 0.25rem',
+          }}>
+            <span className="wordmark-underline">Read &amp; Rank</span>
+          </h1>
+          <p className="text-center" style={{
+            fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem',
+            lineHeight: 1.5, margin: '0 0 0.625rem',
+          }}>
+            Pick a race. Read what the candidates said — without knowing who said it — agree or
+            disagree, rank your favorites, then reveal your ballot.
+          </p>
+        </motion.div>
+      )}
 
       <div className="max-w-2xl mx-auto">
         <AddressFilterInput />
