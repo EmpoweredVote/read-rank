@@ -43,7 +43,7 @@ export function Landing() {
             <div>
               <p
                 className="text-xs font-bold uppercase tracking-widest mb-5"
-                style={{ color: 'var(--color-ev-muted-blue)', fontFamily: "'Manrope', sans-serif" }}
+                style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
               >
                 Read &amp; Rank
               </p>
@@ -55,7 +55,7 @@ export function Landing() {
               </h1>
               <p
                 className="text-5xl sm:text-6xl font-bold leading-tight mt-1 mb-8"
-                style={{ color: 'var(--color-ev-muted-blue)', fontFamily: "'Manrope', sans-serif" }}
+                style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
               >
                 rank them on what matters.
               </p>
@@ -83,17 +83,17 @@ export function Landing() {
                       ? (active ? 'var(--surface-card)' : 'var(--surface-sunken)')
                       : (active ? 'var(--surface-card)' : 'var(--surface-page)'),
                     borderColor: isDark
-                      ? (active ? 'var(--color-ev-muted-blue)' : 'var(--border-subtle)')
-                      : (active ? 'var(--color-ev-muted-blue)' : 'var(--border-medium)'),
+                      ? (active ? 'var(--text-link)' : 'var(--border-subtle)')
+                      : (active ? 'var(--text-link)' : 'var(--border-medium)'),
                   }}
                   className="flex items-start gap-4 p-5 rounded-2xl border transition-colors"
                 >
                   <div
                     style={{
                       backgroundColor: active
-                        ? 'rgba(0, 101, 124, 0.12)'
+                        ? (isDark ? 'rgba(108, 198, 219, 0.15)' : 'rgba(0, 101, 124, 0.12)')
                         : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                      color: active ? 'var(--color-ev-muted-blue)' : 'var(--text-tertiary)',
+                      color: active ? 'var(--text-link)' : 'var(--text-tertiary)',
                     }}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                   >
@@ -150,7 +150,7 @@ export function Landing() {
       >
         <h2
           className="text-2xl sm:text-3xl font-semibold mb-2"
-          style={{ color: 'var(--color-ev-muted-blue)', fontFamily: "'Manrope', sans-serif" }}
+          style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
         >
           Choose an election
         </h2>
