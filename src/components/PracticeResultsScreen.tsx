@@ -68,7 +68,7 @@ export const PracticeResultsScreen: React.FC = () => {
       <motion.div className="flex justify-center pt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
         <motion.button onClick={completePractice} className="ev-button-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
           whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}>
-          Start exploring real races
+          You have the hang of it.&nbsp; Pick a real race.
         </motion.button>
       </motion.div>
     </div>

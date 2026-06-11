@@ -1,5 +1,7 @@
 import { useTheme } from '../ThemeProvider';
 import { RaceHub } from './RaceHub';
+import { useReadRankStore } from '../store/useReadRankStore';
+import { PRACTICE_QUOTES } from '../data/practiceData';
 
 const STEPS = [
   {
@@ -24,6 +26,7 @@ const STEPS = [
 
 export function Landing() {
   const { isDark } = useTheme();
+  const { startPractice } = useReadRankStore();
 
   return (
     <div>
@@ -118,6 +121,22 @@ export function Landing() {
                   </div>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() => startPractice(PRACTICE_QUOTES)}
+                className="w-full text-left mt-1 px-2 py-3"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: "'Manrope', sans-serif",
+                  fontSize: '0.8125rem',
+                  color: 'var(--text-link)',
+                  minHeight: '2.75rem',
+                }}
+              >
+                Not sure yet?&nbsp; Try a 30-second warm-up with pizza opinions.
+              </button>
             </div>
 
           </div>

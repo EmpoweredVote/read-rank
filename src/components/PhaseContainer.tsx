@@ -10,7 +10,6 @@ import { RaceHub } from './RaceHub';
 import { EvaluationPhase } from './EvaluationPhase';
 import { ResultsPhase } from './ResultsPhase';
 import { PracticeRound } from './PracticeRound';
-import { PRACTICE_QUOTES } from '../data/practiceData';
 
 const EASE_CURVE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -30,7 +29,7 @@ const getPageTransition = (phase: string, prefersReducedMotion: boolean | null) 
 };
 
 export const PhaseContainer: React.FC = () => {
-  const { phase, currentRaceId, raceProgress, practiceCompleted, startPractice, getRaceVerdicts } = useReadRankStore();
+  const { phase, currentRaceId, raceProgress, getRaceVerdicts } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const hasSynced = useRef(false);
   const prefersReducedMotion = useReducedMotion();
@@ -77,11 +76,6 @@ export const PhaseContainer: React.FC = () => {
     apiData: localVerdictMap,
     apiWriter: verdictsPromoteWriter,
   });
-
-  // First-time users go to practice.
-  useEffect(() => {
-    if (!practiceCompleted && phase === 'hub') startPractice(PRACTICE_QUOTES);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderPhase = () => {
     switch (phase) {
