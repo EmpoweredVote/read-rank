@@ -4,13 +4,9 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
-
-function formatElectionDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
+import { RaceCard } from './RaceCard';
+import { deriveTierScope } from '../utils/raceTier';
+import { estimateMinutes } from '../utils/estimateMinutes';
 
 interface RaceHubProps {
   hideHeader?: boolean;
@@ -112,100 +108,39 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
         </motion.div>
       )}
 
-      <div className="max-w-2xl mx-auto space-y-3">
-        {races.map((race, index) => {
-          const progress = raceProgress[race.raceId];
-          const isCompleted = progress?.completed;
-          const isInProgress = progress && !progress.completed;
-          const accent = isCompleted ? 'var(--text-link)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--border-medium)';
-          const statusText = isCompleted ? 'Completed' : isInProgress ? 'In progress' : `${race.candidateCount} candidates · ${race.topicCount} topics`;
-
+      <div className="race-grid max-w-5xl mx-auto">
+        {races.map((race) => {
+          const progressState = raceProgress[race.raceId];
+          const progress: 'none' | 'in-progress' | 'completed' = progressState?.completed
+            ? 'completed'
+            : progressState
+              ? 'in-progress'
+              : 'none';
+          const { tier, scope } = deriveTierScope(race);
+          const estMinutes = estimateMinutes({
+            quoteCount: race.quoteCount,
+            candidateCount: race.candidateCount,
+            topicCount: race.topicCount,
+          });
           return (
-            <motion.button
+            <RaceCard
               key={race.raceId}
-              onClick={() => handleSelect(race.raceId)}
+              office={race.positionName}
+              tier={tier}
+              scope={scope}
+              state={race.state}
+              place={null}
+              electionDate={race.electionDate}
+              boundaryRef={race.boundaryRef ?? null}
+              candidateCount={race.candidateCount}
+              topicCount={race.rankableTopicCount ?? race.topicCount}
+              estMinutes={estMinutes}
+              isLocal={race.isLocal}
+              usesRcv={race.usesRcv}
+              progress={progress}
               disabled={starting !== null}
-              className="w-full text-left transition-all duration-200 group"
-              style={{
-                backgroundColor: 'var(--surface-card)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '0.625rem',
-                borderLeft: `3px solid ${accent}`,
-                padding: 0,
-                cursor: starting ? 'wait' : 'pointer',
-                opacity: starting && starting !== race.raceId ? 0.6 : 1,
-              }}
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.06 * index, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ x: 4 }} whileTap={{ scale: 0.995 }}
-            >
-              <div style={{ padding: '0.75rem 1rem' }}>
-                <div className="flex items-center justify-between gap-2">
-                  <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-heading)', margin: 0 }}>
-                    {race.positionName}
-                    {race.isLocal && (
-                      <span style={{
-                        marginLeft: '0.5rem', fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em',
-                        textTransform: 'uppercase', color: 'var(--color-ev-coral)', backgroundColor: 'color-mix(in srgb, var(--color-ev-coral) 12%, transparent)',
-                        padding: '0.125rem 0.375rem', borderRadius: '9999px', verticalAlign: 'middle',
-                      }}>
-                        Local
-                      </span>
-                    )}
-                  </h3>
-                  <span className="shrink-0" style={{
-                    fontFamily: "'Manrope', sans-serif", fontSize: '0.625rem', fontWeight: 600,
-                    padding: '0.125rem 0.5rem', borderRadius: '9999px', letterSpacing: '0.03em', textTransform: 'uppercase',
-                    backgroundColor: isCompleted ? 'var(--agree-bg)' : isInProgress ? 'color-mix(in srgb, var(--color-ev-coral) 12%, transparent)' : 'var(--surface-raised)',
-                    color: isCompleted ? 'var(--text-link)' : isInProgress ? 'var(--color-ev-coral)' : 'var(--text-tertiary)',
-                  }}>
-                    {isCompleted || isInProgress ? statusText : 'Play'}
-                  </span>
-                </div>
-
-                {/* Stakes line — the election is real (REDESIGN_SPEC §1.1) */}
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-strong)', lineHeight: 1.4, margin: '0.25rem 0 0' }}>
-                  {race.electionName}
-                  {race.state ? ` · ${race.state}` : ''}
-                  {formatElectionDate(race.electionDate) ? ` · ${formatElectionDate(race.electionDate)}` : ''}
-                </p>
-
-                {/* Meta chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.5rem' }}>
-                  <span className="hub-meta-chip">{race.candidateCount} candidates</span>
-                  <span className="hub-meta-chip">{race.topicCount} topics</span>
-                  {race.usesRcv && (
-                    <span className="hub-meta-chip hub-meta-chip-rcv">Ranked choice election</span>
-                  )}
-                </div>
-
-                {/* Issue progress — only while in progress */}
-                {isInProgress && progress && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.5rem' }}>
-                    <span style={{ display: 'inline-flex', gap: '0.25rem' }} aria-hidden="true">
-                      {progress.topicOrder.map((key) => {
-                        const t = progress.topics[key];
-                        if (!t) return null;
-                        const done = t.currentIndex >= t.quotesToEvaluate.length;
-                        const isActive = key === progress.currentTopicKey;
-                        return (
-                          <span
-                            key={key}
-                            className={`hub-progress-dot ${done ? 'hub-progress-dot-done' : ''} ${isActive ? 'hub-progress-dot-active' : ''}`}
-                          />
-                        );
-                      })}
-                    </span>
-                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                      {progress.topicOrder.filter((key) => {
-                        const t = progress.topics[key];
-                        return !!t && t.currentIndex >= t.quotesToEvaluate.length;
-                      }).length} of {progress.topicOrder.length} topics
-                    </span>
-                  </div>
-                )}
-              </div>
-            </motion.button>
+              onSelect={() => handleSelect(race.raceId)}
+            />
           );
         })}
       </div>
