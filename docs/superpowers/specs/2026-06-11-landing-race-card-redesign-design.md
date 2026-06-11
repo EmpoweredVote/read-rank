@@ -107,15 +107,15 @@ type MotifPlan =
 
 ### Data source (grounded in the live database)
 
-Geometry lives in the **prod project `E.V Backend` (`kxsdzaojfaibhuzmclfq`)**, PostGIS, primarily:
+Geometry lives in the **prod project `E.V Backend` (`kxsdzaojfaibhuzmclfq`)**, PostGIS, SRID 4326.  There are three geometry tables; **`essentials.geofence_boundaries` is the comprehensive, primary source**:
 
-- `inform.district_boundaries(district_type, geoid, name, geom)` — same `inform` pillar as Read & Rank.  Present `district_type` values: `congressional` (61), `state_house` (180), `state_senate` (90), `county` (150), `school_district` (637).
-- `essentials.geo_districts(layer, geoid, district_num, name, geom)` — `us_house`, `ca_assembly`, `ca_senate`, `school_*`, `dc_ward`, etc.
-- `essentials.districts` metadata carries `tiger_geoid`, `geo_id`, `district_type`, `state`, `city`, `government_id`, and a `has_unknown_boundaries` flag (the fallback trigger).
+- **`essentials.geofence_boundaries(geo_id, ocd_id, name, state, mtfcc, geometry, quality_flag)`** — TIGER + custom-district geometry keyed by **MTFCC** + `geo_id`.  Confirmed coverage for served areas includes: `G4020` county, `G4040` county subdivision / township, `G4110` **incorporated place / city** (e.g. Bloomington, `geo_id 1805860`), `G5200` congressional (nationwide), `G5210` state senate, `G5220` state house / assembly / ward, `G54xx` school districts, and **custom layers** `X0001` / `X-MCC-DIST` etc. for **city-council, county-council, and supervisorial districts** (e.g. Bloomington City Common Council Districts 1-6, LA City Council, Monroe County Council).  This means city and within-city / within-county district races **do** get real maps where the office's area is served.
+- `inform.district_boundaries(district_type, geoid, name, geom)` and `essentials.geo_districts(layer, geoid, district_num, name, geom)` — narrower, overlapping sets (e.g. `congressional`, `state_house`, `county`).  **Planning picks the authoritative table per layer; default to `geofence_boundaries` and use the others only to fill gaps.**
+- `essentials.districts` metadata carries `tiger_geoid`, `geo_id`, `district_type`, `state`, `city`, `government_id`, and a `has_unknown_boundaries` flag (a fallback trigger).
 
-**Not present in the DB today:** whole-state outlines (Governor, U.S. Senate), a US/nation outline (federal-statewide), and incorporated-place/city outlines (Mayor).  **v1 ingests state + nation outlines** into `inform.district_boundaries` (e.g. `district_type` `state` keyed by state FIPS, and `nation` keyed by `US`), sourced from Census TIGER `cb_*_us_state` plus a national outline, so they flow through the same endpoint and light up the statewide and federal-statewide tiers.  Only city/place outlines remain deferred to the dot-field until sourced.
+**The only real gap is the easy end:** `G4000` (whole-state outline) exists for **California only**, and there is **no US/nation outline**.  So **v1 ingests the ~49 missing state outlines + 1 US/nation outline** into `geofence_boundaries` (`mtfcc G4000` keyed by state FIPS, plus a nation row), sourced from Census TIGER `cb_*_us_state` + a national outline.  Everything else (county, city, township, congressional, state-leg, council/supervisorial) already has real geometry for served areas; only genuinely-missing boundaries fall back to the dot-field.
 
-The frontend cannot reach prod PostGIS directly, so geometry is served through the existing API layer.
+The frontend cannot reach prod PostGIS directly, so geometry is served through the existing API layer, resolved by `(mtfcc/layer, geo_id)`.
 
 ### New backend endpoint (dependency)
 
@@ -141,16 +141,18 @@ The motif is decorative relative to the text; it carries `aria-hidden`.  All mea
 
 Computed server-side and added to `RaceSummary` (preferred) or mapped client-side as a fallback.  Indicative mapping from `district_type` / `jurisdictionLevel`:
 
-| Source kind | tier | scope | motif when boundary present |
+| Source (MTFCC / kind) | tier | scope | motif when boundary present |
 |---|---|---|---|
-| `congressional`, `us_house` | federal | district | state map, district lit |
-| (U.S. Senate / President) | federal | statewide | US map, state lit *(outline pending → dot-field full)* |
-| (Governor, statewide exec) | state | statewide | state map *(outline pending → dot-field full)* |
-| `state_house`, `state_senate`, `ca_assembly`, `ca_senate` | state | district | state map, district lit |
-| `county` | local | county | county polygon |
-| `school_district`, `dc_ward`, place offices | local | district / citywide | that polygon, or dot-field |
+| `G5200` congressional | federal | district | state map, district lit |
+| U.S. Senate / President | federal | statewide | US map, state lit *(needs v1 nation + state ingest)* |
+| Governor, statewide exec | state | statewide | state map *(needs v1 state ingest; CA already present)* |
+| `G5210`/`G5220` state senate / house / assembly | state | district | state map, district lit |
+| `G4020` county | local | county | county polygon |
+| `G4110` place / city | local | citywide | city polygon (e.g. Bloomington) |
+| `X0001`/`X-MCC-DIST` city-council, county-council, supervisorial | local | district | that custom polygon (e.g. Bloomington Council District) |
+| `G4040` township, `G54xx` school district | local | district | that polygon |
 
-Exact vocabulary mapping is finalized in planning against the live `district_type` set.
+Genuinely-missing boundaries (no matching `geo_id`, or `has_unknown_boundaries`) fall back to the dot-field.  Exact office-to-`(mtfcc, geo_id)` mapping is finalized in planning against the live set.
 
 ---
 
@@ -190,8 +192,8 @@ Use existing tokens; introduce none unless a gap appears.
 
 ## 10. Phasing
 
-- **v1 (this work):** `Landing.tsx` restructure; `RaceCard` + `Motif` + `resolveMotif`; client GeoJSON→SVG projection + dot-field fallback; the `/api/inform/boundary` endpoint; races API extended with `tier`, `scope`, `boundaryRef`, rankable-topics, and quote count; **ingest of ~50 state outlines + one US/nation outline** into `inform.district_boundaries`.  Real polygons render for congressional, state-leg, county, school, ward, **plus statewide and federal-statewide**.  Only city/place (Mayor, council) degrade to the dot-field.
-- **Later (deferred supplements):** add place/city outlines for Mayor and council races; richer per-tier motif polish.
+- **v1 (this work):** `Landing.tsx` restructure; `RaceCard` + `Motif` + `resolveMotif`; client GeoJSON→SVG projection + dot-field fallback; the `/api/inform/boundary` endpoint; races API extended with `tier`, `scope`, `boundaryRef`, rankable-topics, and quote count; **ingest of ~49 missing state outlines + one US/nation outline** into `geofence_boundaries`.  Real polygons render for congressional, state-leg, county, township, school, city, and city/county-council districts (where the area is served), **plus statewide and federal-statewide** after the ingest.  The dot-field shows only when a race's specific boundary is genuinely absent.
+- **Later (deferred):** richer per-tier motif polish; backfilling geometry for newly-served areas as Read & Rank expands.
 
 ---
 
@@ -217,5 +219,5 @@ Use existing tokens; introduce none unless a gap appears.
 - `src/components/RaceCard.tsx` — new.
 - `src/components/motif/Motif.tsx`, `resolveMotif.ts`, `projectGeoJson.ts` — new motif system.
 - `src/data/api.ts` — extend `RaceSummary` (`tier`, `scope`, `boundaryRef`, rankable topics, quote count); add `fetchBoundary`.
-- Backend (`/Users/chrisandrews/Documents/GitHub/ev-accounts`, branch `master`) — `GET /api/inform/boundary` endpoint; races API field additions (`tier`, `scope`, `boundaryRef`, rankable-topics, quote count); state + US/nation outline ingest into `inform.district_boundaries`.
+- Backend (`/Users/chrisandrews/Documents/GitHub/ev-accounts`, branch `master`) — `GET /api/inform/boundary` endpoint; races API field additions (`tier`, `scope`, `boundaryRef`, rankable-topics, quote count); state + US/nation outline ingest into `essentials.geofence_boundaries` (`mtfcc G4000` + nation row).
 - Tests: `RaceCard`, `resolveMotif`, `projectGeoJson`, updated `Landing`/`RaceHub` tests.
