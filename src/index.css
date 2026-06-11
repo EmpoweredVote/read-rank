@@ -1569,6 +1569,43 @@ dialog.rank-sheet[open] {
   padding-bottom: 2px;
 }
 
+/* ============================================
+   Hub arena card styles (REDESIGN_SPEC §1.1)
+   ============================================ */
+
+.hub-meta-chip {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+}
+
+.hub-meta-chip-rcv {
+  color: var(--text-link);
+  border-color: var(--text-link);
+}
+
+.hub-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+  display: inline-block;
+}
+
+.hub-progress-dot-done {
+  background-color: var(--color-ev-light-blue);
+}
+
+/* §5 placement #3: yellow halo around the dark active dot — text carries the info */
+.hub-progress-dot-active {
+  background-color: var(--text-heading);
+  box-shadow: 0 0 0 2px var(--color-ev-yellow);
+}
+
 /* ev-yellow accent — approved placement #6 */
 .insight-strip {
   border-top: 3px solid var(--color-ev-yellow, #fed12e);

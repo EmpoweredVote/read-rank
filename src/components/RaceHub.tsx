@@ -5,6 +5,13 @@ import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
 
+function formatElectionDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export const RaceHub: React.FC = () => {
   const { raceProgress, selectRace, locationFilter, clearLocationFilter } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
@@ -64,7 +71,7 @@ export const RaceHub: React.FC = () => {
           fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem',
           color: 'var(--text-heading)', letterSpacing: '-0.02em', margin: '0 0 0.25rem',
         }}>
-          Read &amp; Rank
+          <span className="wordmark-underline">Read &amp; Rank</span>
         </h1>
         <p className="text-center" style={{
           fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem',
@@ -149,9 +156,47 @@ export const RaceHub: React.FC = () => {
                     {isCompleted || isInProgress ? statusText : 'Play'}
                   </span>
                 </div>
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: '0.25rem 0 0' }}>
-                  {race.electionName}{race.state ? ` · ${race.state}` : ''} — {race.candidateCount} candidates · {race.topicCount} topics
+
+                {/* Stakes line — the election is real (REDESIGN_SPEC §1.1) */}
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-strong)', lineHeight: 1.4, margin: '0.25rem 0 0' }}>
+                  {race.electionName}
+                  {race.state ? ` · ${race.state}` : ''}
+                  {formatElectionDate(race.electionDate) ? ` · ${formatElectionDate(race.electionDate)}` : ''}
                 </p>
+
+                {/* Meta chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.5rem' }}>
+                  <span className="hub-meta-chip">{race.candidateCount} candidates</span>
+                  <span className="hub-meta-chip">{race.topicCount} topics</span>
+                  {race.usesRcv && (
+                    <span className="hub-meta-chip hub-meta-chip-rcv">Ranked choice election</span>
+                  )}
+                </div>
+
+                {/* Issue progress — only while in progress */}
+                {isInProgress && progress && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.5rem' }}>
+                    <span style={{ display: 'inline-flex', gap: '0.25rem' }} aria-hidden="true">
+                      {progress.topicOrder.map((key) => {
+                        const t = progress.topics[key];
+                        const done = t.currentIndex >= t.quotesToEvaluate.length;
+                        const isActive = key === progress.currentTopicKey;
+                        return (
+                          <span
+                            key={key}
+                            className={`hub-progress-dot ${done ? 'hub-progress-dot-done' : ''} ${isActive ? 'hub-progress-dot-active' : ''}`}
+                          />
+                        );
+                      })}
+                    </span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                      {progress.topicOrder.filter((key) => {
+                        const t = progress.topics[key];
+                        return t.currentIndex >= t.quotesToEvaluate.length;
+                      }).length} of {progress.topicOrder.length} topics
+                    </span>
+                  </div>
+                )}
               </div>
             </motion.button>
           );
