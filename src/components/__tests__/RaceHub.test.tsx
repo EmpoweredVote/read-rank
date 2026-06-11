@@ -15,14 +15,14 @@ describe('RaceHub arena cards', () => {
     expect(wordmark.closest('h1')?.querySelector('.wordmark-underline')).not.toBeNull();
   });
 
-  it('renders the race as a stakes card with election date and meta chips', async () => {
+  it('renders the race as a RaceCard with tier, geography and metadata', async () => {
     render(<RaceHub />);
-    // jsdom fetch fails → mock fallback supplies the Indiana demo race.
+    // jsdom fetch fails -> mock fallback supplies the Indiana demo race.
     expect(await screen.findByText('Governor', undefined, { timeout: 3000 })).toBeInTheDocument();
-    expect(screen.getByText(/2024 indiana governor/i)).toBeInTheDocument();
-    expect(screen.getByText(/nov 5, 2024/i)).toBeInTheDocument();
-    expect(screen.getByText(/4 candidates/i)).toBeInTheDocument();
-    expect(screen.getByText(/3 topics/i)).toBeInTheDocument();
-    expect(screen.queryByText(/ranked choice election/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/state\s*·\s*statewide/i)).toBeInTheDocument();
+    expect(screen.getByText(/nov 2024/i)).toBeInTheDocument();
+    expect(screen.getByText('Candidates').parentElement).toHaveTextContent('4');
+    expect(screen.getByText('Topics').parentElement).toHaveTextContent('3');
+    expect(screen.queryByText(/ranked choice/i)).not.toBeInTheDocument();
   });
 });

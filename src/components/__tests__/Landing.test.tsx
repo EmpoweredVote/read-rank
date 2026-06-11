@@ -10,11 +10,13 @@ beforeEach(() => {
 });
 
 describe('Landing', () => {
-  it('renders the hero and the election picker', async () => {
+  it('renders the hero and the election picker on one surface', async () => {
     render(<Landing />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/read what candidates say/i);
+    expect(screen.getByText(/choose an election/i)).toBeInTheDocument();
+    expect(screen.getByText(/start here/i)).toBeInTheDocument();
     // RaceHub inside the picker resolves the mock race async (fetch fallback).
-    expect(await screen.findByText(/2024 indiana governor/i, undefined, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('Governor', undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 
   it('offers practice as an opt-in warm-up', async () => {
