@@ -60,7 +60,7 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
           })}
           {overflow > 0 && <span className="rank-dock-counter">+{overflow}</span>}
           {disagreedCount > 0 && (
-            <span className="rank-dock-counter rank-dock-counter-iron">⊘ {disagreedCount}</span>
+            <span className="rank-dock-counter rank-dock-counter-disagreed">⊘ {disagreedCount}</span>
           )}
           <svg className="rank-dock-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 15l-6-6-6 6" />

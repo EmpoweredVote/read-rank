@@ -12,24 +12,24 @@ const quote: BlindQuote = {
 
 describe('QuoteCard blind-trust footer', () => {
   it('shows the footer with explainer trigger by default', () => {
-    render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    render(<QuoteCard quote={quote} />);
     expect(screen.getByText(/verified quote/i)).toBeInTheDocument();
     expect(screen.getByText(/source shown at the reveal/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /how we source quotes/i })).toBeInTheDocument();
   });
 
   it('never renders per-quote source attribution', () => {
-    render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    render(<QuoteCard quote={quote} />);
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('hides the footer when showTrustFooter is false', () => {
-    render(<QuoteCard quote={quote} showTrustFooter={false} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    render(<QuoteCard quote={quote} showTrustFooter={false} />);
     expect(screen.queryByText(/verified quote/i)).not.toBeInTheDocument();
   });
 
   it('stops footer pointer events from reaching the drag surface', () => {
-    const { container } = render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    const { container } = render(<QuoteCard quote={quote} />);
     const card = container.firstElementChild as HTMLElement;
     const dragSpy = vi.fn();
     card.addEventListener('pointerdown', dragSpy);
@@ -38,20 +38,35 @@ describe('QuoteCard blind-trust footer', () => {
   });
 
   it('still opens the explainer when the footer info button is clicked', () => {
-    render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    render(<QuoteCard quote={quote} />);
     fireEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
     expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);
   });
 
   it('carries the Inform accent rule when it is the active card', () => {
-    const { container } = render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    const { container } = render(<QuoteCard quote={quote} />);
     expect(container.firstElementChild).toHaveClass('ev-quote-card-active');
   });
 
   it('drops the accent rule when stacked behind the active card', () => {
     const { container } = render(
-      <QuoteCard quote={quote} isStacked stackIndex={1} onAgree={vi.fn()} onDisagree={vi.fn()} />
+      <QuoteCard quote={quote} isStacked stackIndex={1} />
     );
     expect(container.firstElementChild).not.toHaveClass('ev-quote-card-active');
+  });
+
+  it('shows the agree stamp when pendingVerdict is agree', () => {
+    render(<QuoteCard quote={quote} pendingVerdict="agree" />);
+    expect(document.querySelector('.quote-stamp-agree')).toBeInTheDocument();
+  });
+
+  it('shows the disagree stamp when pendingVerdict is disagree', () => {
+    render(<QuoteCard quote={quote} pendingVerdict="disagree" />);
+    expect(document.querySelector('.quote-stamp-disagree')).toBeInTheDocument();
+  });
+
+  it('shows no stamp when pendingVerdict is not set', () => {
+    render(<QuoteCard quote={quote} />);
+    expect(document.querySelector('.quote-stamp')).not.toBeInTheDocument();
   });
 });

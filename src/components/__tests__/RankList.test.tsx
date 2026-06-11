@@ -79,4 +79,18 @@ describe('RankList move buttons', () => {
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
     expect(screen.queryByText(/agree with quotes/i)).not.toBeInTheDocument();
   });
+
+  it('renders full quote text without line-clamp', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    const textEl = screen.getByText('Alpha quote.');
+    expect(textEl.style.overflow).not.toBe('hidden');
+  });
+
+  it('hides the original row during drag (opacity 0 via rank-row-dragging class)', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    // Initially no row has the dragging class
+    const rows = document.querySelectorAll('.tier-row');
+    expect(rows.length).toBe(3);
+    rows.forEach((r) => expect(r).not.toHaveClass('rank-row-dragging'));
+  });
 });

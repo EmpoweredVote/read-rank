@@ -10,6 +10,7 @@ import { RaceHub } from './RaceHub';
 import { EvaluationPhase } from './EvaluationPhase';
 import { ResultsPhase } from './ResultsPhase';
 import { PracticeRound } from './PracticeRound';
+import { IssueSelection } from './IssueSelection';
 
 const EASE_CURVE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -18,6 +19,8 @@ const getPageTransition = (phase: string, prefersReducedMotion: boolean | null) 
     return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.1 } };
   }
   switch (phase) {
+    case 'issue-selection':
+      return { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0 }, transition: { duration: 0.3, ease: EASE_CURVE } };
     case 'evaluation':
       return { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0 }, transition: { duration: 0.3, ease: EASE_CURVE } };
     case 'results':
@@ -48,7 +51,7 @@ export const PhaseContainer: React.FC = () => {
   const localVerdictMap = useMemo(() => {
     const m: Record<string, 'agreed' | 'disagreed'> = {};
     for (const race of Object.values(raceProgress)) {
-      for (const q of race.agreed) m[q.id] = 'agreed';
+      for (const t of Object.values(race.topics)) for (const q of t.agreed) m[q.id] = 'agreed';
       for (const t of Object.values(race.topics)) for (const q of t.disagreed) m[q.id] = 'disagreed';
     }
     return m;
@@ -81,6 +84,7 @@ export const PhaseContainer: React.FC = () => {
     switch (phase) {
       case 'hub': return <Landing />;
       case 'practice': return <PracticeRound />;
+      case 'issue-selection': return <IssueSelection />;
       case 'evaluation': return <EvaluationPhase />;
       case 'results': return <ResultsPhase />;
       default: return <RaceHub />;

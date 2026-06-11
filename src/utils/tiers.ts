@@ -1,9 +1,9 @@
 /**
  * The tier frame model (REDESIGN_SPEC §3.4). Position in the agreed pile IS
  * the tier: exactly one Diamond/Gold/Silver, everything else Bronze.
- * Iron is not positional — it marks disagreed quotes.
+ * Disagreed is not positional — it marks disagreed quotes.
  */
-export type Tier = 'diamond' | 'gold' | 'silver' | 'bronze' | 'iron';
+export type Tier = 'diamond' | 'gold' | 'silver' | 'bronze' | 'disagreed';
 
 export interface TierMeta {
   tier: Tier;
@@ -18,7 +18,7 @@ export const TIER_META: Record<Tier, TierMeta> = {
   gold: { tier: 'gold', label: '2nd choice', name: 'Gold' },
   silver: { tier: 'silver', label: '3rd choice', name: 'Silver' },
   bronze: { tier: 'bronze', label: 'Agreed', name: 'Bronze' },
-  iron: { tier: 'iron', label: 'Disagreed', name: 'Iron' },
+  disagreed: { tier: 'disagreed', label: 'Disagreed', name: 'Disagreed' },
 };
 
 /** Tier for a 0-based position in the agreed pile. */

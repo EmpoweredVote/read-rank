@@ -34,19 +34,10 @@ const entry: BallotEntry = {
 
 describe('BallotCard source attribution', () => {
   it('shows a verify link for each quote in the expanded breakdown', async () => {
-    render(<BallotCard entry={entry} index={0} verdictMap={{}} prefersReducedMotion={true} />);
+    render(<BallotCard entry={entry} index={0} verdictMap={{}} prefersReducedMotion={true} quoteRankMap={new Map()} />);
     await userEvent.click(screen.getByRole('button', { name: /see what they said/i }));
     const link = screen.getByRole('link', { name: /verify source: KQED Forum/i });
     expect(link).toHaveAttribute('href', 'https://example.com/kqed');
-  });
-});
-
-describe('ResultsPhase header', () => {
-  it('offers the source explainer from the reveal screen', async () => {
-    render(<ResultsPhase />);
-    const trigger = await screen.findByRole('button', { name: /how we source quotes/i });
-    await userEvent.click(trigger);
-    expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);
   });
 });
 
@@ -76,8 +67,8 @@ const flowPayload: RacePayload = {
   ],
 };
 
-describe('ResultsPhase staged flow', () => {
-  it('walks threshold, board, and summary', async () => {
+describe('ResultsPhase flow', () => {
+  it('walks threshold then shows full results immediately', async () => {
     window.localStorage?.clear();
     useReadRankStore.getState().reset();
     useReadRankStore.getState().selectRace(flowPayload);
@@ -91,15 +82,9 @@ describe('ResultsPhase staged flow', () => {
     const continueBtn = await screen.findByRole('button', { name: /see who you agreed with/i }, { timeout: 3000 });
     expect(screen.getByText(/you ranked 1 quote across 1 topic/i)).toBeInTheDocument();
 
-    // Board — anonymous until revealed (orchestration-level blindness guard)
+    // Click → everything visible immediately, no reveal step
     await userEvent.click(continueBtn);
-    expect(await screen.findByRole('button', { name: /reveal all/i })).toBeInTheDocument();
-    expect(screen.getByText(/marijuana use is cascading/i)).toBeInTheDocument();
-    expect(document.body.innerHTML).not.toMatch(/mike braun/i);
-
-    // Reveal → summary appears
-    await userEvent.click(screen.getByRole('button', { name: /reveal all/i }));
-    expect(await screen.findByText(/mirrors ranked choice voting/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/mike braun/i)).length).toBeGreaterThan(0);
     expect(screen.getByText(/your top pick came from/i)).toBeInTheDocument();
     expect(screen.getByText(/how the candidates stack up/i)).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();

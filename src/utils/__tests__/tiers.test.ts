@@ -15,7 +15,7 @@ describe('tier model', () => {
     expect(TIER_META.gold).toEqual({ tier: 'gold', label: '2nd choice', name: 'Gold' });
     expect(TIER_META.silver).toEqual({ tier: 'silver', label: '3rd choice', name: 'Silver' });
     expect(TIER_META.bronze).toEqual({ tier: 'bronze', label: 'Agreed', name: 'Bronze' });
-    expect(TIER_META.iron).toEqual({ tier: 'iron', label: 'Disagreed', name: 'Iron' });
+    expect(TIER_META.disagreed).toEqual({ tier: 'disagreed', label: 'Disagreed', name: 'Disagreed' });
   });
 
   it('builds tier announcements per spec', () => {

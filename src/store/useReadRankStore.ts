@@ -13,7 +13,7 @@ export interface BlindQuote {
   topicKey: string;
 }
 
-/** An agreed quote in the race-wide pile. Position in the `agreed` array IS the rank. */
+/** An agreed quote. Position in a topic's `agreed` array IS the rank within that topic. */
 export interface AgreedQuote extends BlindQuote {
   addedAt: number;
 }
@@ -25,6 +25,8 @@ export interface TopicProgress {
   quotesToEvaluate: BlindQuote[];
   currentIndex: number;
   disagreed: BlindQuote[];
+  /** Per-topic ordered pile. Index 0 = ranked #1 within this topic. */
+  agreed: AgreedQuote[];
 }
 
 export interface RaceProgress {
@@ -33,10 +35,15 @@ export interface RaceProgress {
   topics: Record<string, TopicProgress>;
   topicOrder: string[];
   currentTopicKey: string | null;
-  /** ONE race-wide ordered pile. Index 0 = #1; first 3 = podium. */
-  agreed: AgreedQuote[];
   phase: 'evaluation' | 'results';
   completed: boolean;
+  /** Keys of topics the user chose to evaluate. Undefined for races started before this field existed. */
+  selectedTopicKeys?: string[];
+}
+
+/** All agreed quotes across all topics in topic order (for results/verdicts). */
+export function getAllAgreedQuotes(race: RaceProgress): AgreedQuote[] {
+  return race.topicOrder.flatMap((k) => race.topics[k]?.agreed ?? []);
 }
 
 /** Shape returned by fetchRaceQuotes / mock data, consumed by selectRace. */
@@ -63,7 +70,7 @@ export interface LocationFilter {
   politicianIds: string[];
 }
 
-export type Phase = 'hub' | 'practice' | 'evaluation' | 'results';
+export type Phase = 'hub' | 'practice' | 'evaluation' | 'results' | 'issue-selection';
 
 /** A single user verdict for backend sync (rank-bearing format). */
 export interface VerdictRecord {
@@ -108,6 +115,8 @@ interface ReadRankState {
   /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
   reAgree: (quote: BlindQuote) => void;
   finishRace: () => void;
+  setSelectedTopics: (keys: string[]) => void;
+  confirmIssueSelection: () => void;
   goToHub: () => void;
   reset: () => void;
   resetRace: (raceId: string) => void;
@@ -143,6 +152,7 @@ function buildRaceProgress(payload: RacePayload): RaceProgress {
       quotesToEvaluate: t.quotes,
       currentIndex: 0,
       disagreed: [],
+      agreed: [],
     };
     topicOrder.push(t.topicKey);
   }
@@ -152,9 +162,9 @@ function buildRaceProgress(payload: RacePayload): RaceProgress {
     topics,
     topicOrder,
     currentTopicKey: topicOrder[0] ?? null,
-    agreed: [],
     phase: 'evaluation',
     completed: false,
+    selectedTopicKeys: topicOrder,
   };
 }
 
@@ -195,10 +205,10 @@ export const useReadRankStore = create<ReadRankState>()(
 
       setPhase: (phase) => {
         const state = get();
-        if (phase !== 'hub') {
+        if (phase === 'evaluation' || phase === 'results') {
           const patch = withCurrentRace(state, (race) => ({
             ...race,
-            phase: phase as 'evaluation' | 'results',
+            phase,
             completed: phase === 'results' ? true : race.completed,
           }));
           if (patch) {
@@ -213,12 +223,14 @@ export const useReadRankStore = create<ReadRankState>()(
         const state = get();
         const existing = state.raceProgress[payload.raceId];
         const race = existing ?? buildRaceProgress(payload);
+        const nextPhase: Phase = existing ? race.phase : 'issue-selection';
+        const selectedTopicKeys = race.selectedTopicKeys ?? race.topicOrder;
         set({
           currentRaceId: payload.raceId,
-          phase: race.phase,
+          phase: nextPhase,
           raceProgress: {
             ...state.raceProgress,
-            [payload.raceId]: race,
+            [payload.raceId]: { ...race, selectedTopicKeys },
           },
         });
       },
@@ -242,15 +254,19 @@ export const useReadRankStore = create<ReadRankState>()(
 
       agree: (quote) => {
         const patch = withCurrentRace(get(), (race) => {
-          if (race.agreed.some((q) => q.id === quote.id)) return race;
           const topic = race.topics[quote.topicKey];
-          const updatedTopic = topic
-            ? { ...topic, currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length) }
-            : topic;
+          if (!topic) return race;
+          if (topic.agreed.some((q) => q.id === quote.id)) return race;
           return {
             ...race,
-            agreed: [...race.agreed, { ...quote, addedAt: Date.now() }],
-            topics: topic ? { ...race.topics, [quote.topicKey]: updatedTopic } : race.topics,
+            topics: {
+              ...race.topics,
+              [quote.topicKey]: {
+                ...topic,
+                agreed: [...topic.agreed, { ...quote, addedAt: Date.now() }],
+                currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length),
+              },
+            },
           };
         });
         if (patch) set(patch);
@@ -277,34 +293,52 @@ export const useReadRankStore = create<ReadRankState>()(
 
       reorderAgreed: (orderedIds) => {
         const patch = withCurrentRace(get(), (race) => {
-          const byId = new Map(race.agreed.map((q) => [q.id, q]));
+          const topicKey = race.currentTopicKey;
+          if (!topicKey || !race.topics[topicKey]) return race;
+          const topic = race.topics[topicKey];
+          const byId = new Map(topic.agreed.map((q) => [q.id, q]));
           const next = orderedIds.map((id) => byId.get(id)).filter(Boolean) as AgreedQuote[];
           // Append any not present in orderedIds (defensive).
-          for (const q of race.agreed) if (!orderedIds.includes(q.id)) next.push(q);
-          return { ...race, agreed: next };
+          for (const q of topic.agreed) if (!orderedIds.includes(q.id)) next.push(q);
+          return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, agreed: next } } };
         });
         if (patch) set(patch);
       },
 
       reAgree: (quote) => {
         const patch = withCurrentRace(get(), (race) => {
-          if (race.agreed.some((q) => q.id === quote.id)) return race;
           const topic = race.topics[quote.topicKey];
           if (!topic) return race;
+          if (topic.agreed.some((q) => q.id === quote.id)) return race;
           if (!topic.disagreed.some((q) => q.id === quote.id)) return race;
           return {
             ...race,
-            agreed: [...race.agreed, { ...quote, addedAt: Date.now() }],
             topics: {
               ...race.topics,
               [quote.topicKey]: {
                 ...topic,
+                agreed: [...topic.agreed, { ...quote, addedAt: Date.now() }],
                 disagreed: topic.disagreed.filter((q) => q.id !== quote.id),
               },
             },
           };
         });
         if (patch) set(patch);
+      },
+
+      setSelectedTopics: (keys) => {
+        const patch = withCurrentRace(get(), (race) => ({ ...race, selectedTopicKeys: keys }));
+        if (patch) set(patch);
+      },
+
+      confirmIssueSelection: () => {
+        const state = get();
+        const patch = withCurrentRace(state, (race) => ({
+          ...race,
+          phase: 'evaluation' as const,
+        }));
+        if (patch) set({ phase: 'evaluation', ...patch });
+        else set({ phase: 'evaluation' });
       },
 
       finishRace: () => {
@@ -405,10 +439,11 @@ export const useReadRankStore = create<ReadRankState>()(
       getRaceVerdicts: (raceId) => {
         const race = get().raceProgress[raceId];
         if (!race) return [];
+        const allAgreed = getAllAgreedQuotes(race);
         const disagreed = Object.values(race.topics).flatMap((t) => t.disagreed);
-        const sessionSize = race.agreed.length + disagreed.length;
+        const sessionSize = allAgreed.length + disagreed.length;
         const verdicts: VerdictRecord[] = [];
-        race.agreed.forEach((q, i) => {
+        allAgreed.forEach((q, i) => {
           verdicts.push({ quote_id: q.id, supported: true, rank: i + 1, session_size: sessionSize });
         });
         for (const q of disagreed) {
@@ -421,11 +456,11 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 8,
+      version: 9,
       migrate: (persistedState, version) => {
-        // v8: race-scoped model. The old issue-scoped shape cannot be mapped
-        // (no race_id, matchup-derived ranks). Reset progress; preserve
-        // onboarding flags + location so returning users don't re-onboard.
+        // v9: per-topic agreed arrays. Cannot map old race.agreed (no topicKey
+        // partition guaranteed). Reset race progress; preserve onboarding flags.
+        // v8: race-scoped model. Same reset rationale.
         const isUpgrade = version > 0;
         const prev = (persistedState ?? {}) as Partial<typeof initialState>;
         return {

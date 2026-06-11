@@ -19,9 +19,9 @@ export const RankSheet: React.FC<RankSheetProps> = (props) => {
 
 const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults }) => {
   const ref = useRef<HTMLDialogElement>(null);
-  const { getCurrentRaceProgress } = useReadRankStore();
-  const race = getCurrentRaceProgress();
-  const agreed = race?.agreed ?? [];
+  const { getCurrentTopicProgress } = useReadRankStore();
+  const topic = getCurrentTopicProgress();
+  const agreed = topic?.agreed ?? [];
 
   useEffect(() => {
     const dialog = ref.current;

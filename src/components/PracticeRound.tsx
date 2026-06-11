@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useMotionValue, type MotionValue, animate, motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { PRACTICE_QUOTES } from '../data/practiceData';
 import { QuoteCard } from './QuoteCard';
-import { SwipeBackground } from './SwipeBackground';
-import { SwipeInstructions } from './SwipeInstructions';
 import { ActionButtons } from './ActionButtons';
 import { RankList } from './RankList';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { PracticeResultsScreen } from './PracticeResultsScreen';
+
+function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
 export const PracticeRound: React.FC = () => {
   const {
@@ -28,13 +28,10 @@ export const PracticeRound: React.FC = () => {
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
   const [showSplash, setShowSplash] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pendingVerdict, setPendingVerdict] = useState<'agree' | 'disagree' | null>(null);
   const [showFullRankList, setShowFullRankList] = useState(false);
   const [showResults, setShowResults] = useState(false);
-
-  const dragX = useMotionValue(0);
-  const cardXRef = useRef<MotionValue<number>>(dragX);
 
   const currentIndex = practiceProgress?.currentIndex ?? 0;
   const agreed = practiceProgress?.agreed ?? [];
@@ -43,23 +40,17 @@ export const PracticeRound: React.FC = () => {
   const isComplete = currentIndex >= PRACTICE_QUOTES.length;
   const progressPercent = Math.round((Math.min(currentIndex, PRACTICE_QUOTES.length) / PRACTICE_QUOTES.length) * 100);
 
-  const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
-    setIsDragging(dragging);
-    cardXRef.current = x;
-    return x.on('change', (latest) => dragX.set(latest));
-  }, [dragX]);
-
   const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
-    const offScreenX = direction === 'agree' ? 500 : -500;
-    await animate(cardXRef.current, offScreenX, { duration: 0.4, ease: [0.4, 0, 0.2, 1] }).finished;
+    setPendingVerdict(direction);
+    await delay(300);
+    setPendingVerdict(null);
     if (direction === 'agree') agreePractice(currentQuote);
     else disagreePractice(currentQuote);
-    cardXRef.current.set(0);
-    dragX.set(0);
+    await delay(250);
     setIsAnimating(false);
-  }, [isAnimating, currentQuote, agreePractice, disagreePractice, dragX]);
+  }, [isAnimating, currentQuote, agreePractice, disagreePractice]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -113,7 +104,7 @@ export const PracticeRound: React.FC = () => {
             But first, a quick practice round
           </p>
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: '#a16207', lineHeight: 1.5, margin: 0 }}>
-            We&rsquo;ll use pizza opinions so you can get the hang of swiping and dragging to rank.
+            We&rsquo;ll use pizza opinions so you can get the hang of tapping and dragging to rank.
           </p>
         </div>
 
@@ -143,12 +134,16 @@ export const PracticeRound: React.FC = () => {
 
       {currentQuote ? (
         <div className="swipe-card-container">
-          <SwipeBackground dragX={dragX} isDragging={isDragging} />
           <div className="flex justify-center relative z-10">
-            <QuoteCard key={currentQuote.id} quote={currentQuote} displayNumber={currentIndex + 1}
-              showTrustFooter={false}
-              onDragStateChange={handleDragStateChange} externalAnimating={isAnimating}
-              onAgree={agreePractice} onDisagree={disagreePractice} />
+            <AnimatePresence mode="wait">
+              <QuoteCard
+                key={currentQuote.id}
+                quote={currentQuote}
+                displayNumber={currentIndex + 1}
+                showTrustFooter={false}
+                pendingVerdict={pendingVerdict ?? undefined}
+              />
+            </AnimatePresence>
           </div>
         </div>
       ) : (
@@ -162,10 +157,14 @@ export const PracticeRound: React.FC = () => {
         </div>
       )}
 
-      {isMouseDevice && currentQuote && (
-        <ActionButtons onAgree={() => handleButtonSwipe('agree')} onDisagree={() => handleButtonSwipe('disagree')} disabled={isAnimating} />
+      {currentQuote && (
+        <ActionButtons
+          onAgree={() => handleButtonSwipe('agree')}
+          onDisagree={() => handleButtonSwipe('disagree')}
+          disabled={isAnimating}
+          fixed={!isMouseDevice}
+        />
       )}
-      {!isMouseDevice && currentQuote && <SwipeInstructions />}
     </>
   );
 
@@ -230,5 +229,5 @@ export const PracticeRound: React.FC = () => {
     );
   }
 
-  return <div>{evaluationContent}</div>;
+  return <div className={currentQuote ? 'has-fixed-paddles' : ''}>{evaluationContent}</div>;
 };

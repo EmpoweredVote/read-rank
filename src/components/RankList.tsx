@@ -1,3 +1,4 @@
+// src/components/RankList.tsx
 import React, { useState } from 'react';
 import {
   DndContext,
@@ -7,6 +8,8 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -30,54 +33,47 @@ function GripIcon() {
   );
 }
 
-interface RowProps {
+interface RowContentProps {
   quote: AgreedQuote;
   index: number;
   compact?: boolean;
   onMove?: (from: number, dir: -1 | 1) => void;
   isFirst?: boolean;
   isLast?: boolean;
+  dragHandleProps?: Record<string, unknown>;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
+/** The visual content of a ranked row — shared between SortableRow and DragOverlay. */
+function RowContent({ quote, index, compact, onMove, isFirst, isLast, dragHandleProps }: RowContentProps) {
   const rank = index + 1;
   const tier = tierForIndex(index);
   const meta = TIER_META[tier];
 
   return (
     <div
-      ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(transform),
-        transition: [transition, 'border-color 0.25s ease, background-color 0.25s ease']
-          .filter(Boolean)
-          .join(', '),
         padding: compact ? '0.5rem 0.625rem' : '0.625rem 0.75rem',
         display: 'flex',
         alignItems: 'center',
         gap: '0.625rem',
-        opacity: isDragging ? 0.85 : 1,
       }}
-      className={`tier-row tier-row-${tier} ${isDragging ? 'rank-row-dragging' : ''}`}
+      className={`tier-row tier-row-${tier}`}
     >
       <button
         type="button"
         className="rank-drag-handle"
         aria-label={`Reorder, currently ranked ${rank}, ${meta.name}`}
-        {...attributes}
-        {...listeners}
-        style={{ background: 'none', border: 'none', padding: 0, display: 'flex' }}
+        style={{ background: 'none', border: 'none', padding: 0, display: 'flex', cursor: 'grab' }}
+        {...dragHandleProps}
       >
         <GripIcon />
       </button>
 
-      <span className="tier-rank-num" aria-hidden="true">{rank}</span>
+      <TierIcon tier={tier} size={32} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         {tier !== 'bronze' && (
           <div className={`tier-label tier-label-${tier}`}>
-            <TierIcon tier={tier} size={12} />
             {meta.label}
           </div>
         )}
@@ -88,10 +84,6 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
             fontSize: compact ? '0.75rem' : '0.8125rem',
             lineHeight: 1.45,
             color: 'var(--text-ink)',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
           }}
         >
           {quote.text}
@@ -122,6 +114,46 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
       )}
     </div>
   );
+}
+
+interface RowProps {
+  quote: AgreedQuote;
+  index: number;
+  compact?: boolean;
+  onMove?: (from: number, dir: -1 | 1) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}
+
+const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      <motion.div
+        layout
+        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+        style={{ opacity: isDragging ? 0 : 1 }}
+        className={isDragging ? 'rank-row-dragging' : ''}
+      >
+        <RowContent
+          quote={quote}
+          index={index}
+          compact={compact}
+          onMove={onMove}
+          isFirst={isFirst}
+          isLast={isLast}
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </motion.div>
+    </div>
+  );
 };
 
 interface RankListProps {
@@ -129,22 +161,24 @@ interface RankListProps {
   onReorder: (orderedIds: string[]) => void;
   compact?: boolean;
   emptyHint?: string;
-  /** 250ms long-press drag activation — use inside scrollable sheets. */
   longPressDrag?: boolean;
-  /** Pointer-free reorder: 44px up/down buttons per row. */
   showMoveButtons?: boolean;
-  /** Render dashed tier slots for unfilled podium positions. */
   showGhostSlots?: boolean;
 }
 
 export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons, showGhostSlots }) => {
   const [announcement, setAnnouncement] = useState('');
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: longPressDrag ? { delay: 250, tolerance: 8 } : { distance: 6 },
     }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const activeItem = activeId ? items.find((q) => q.id === activeId) : null;
+  const activeIndex = activeItem ? items.indexOf(activeItem) : -1;
 
   const handleMove = (from: number, dir: -1 | 1) => {
     const to = from + dir;
@@ -157,7 +191,12 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
     setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(to, ids.length)}`);
   };
 
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveId(String(e.active.id));
+  };
+
   const handleDragEnd = (e: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     const ids = items.map((q) => q.id);
@@ -192,9 +231,14 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
-        <motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           {items.map((q, i) => (
             <SortableRow
               key={q.id}
@@ -217,8 +261,30 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
                 </div>
               );
             })}
-        </motion.div>
+        </div>
       </SortableContext>
+
+      <DragOverlay>
+        {activeItem && activeIndex !== -1 ? (
+          <div style={{
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            transform: 'scale(1.02)',
+            borderRadius: '0.5rem',
+            overflow: 'hidden',
+            opacity: 0.95,
+          }}>
+            <RowContent
+              quote={activeItem}
+              index={activeIndex}
+              compact={compact}
+              onMove={showMoveButtons ? handleMove : undefined}
+              isFirst={activeIndex === 0}
+              isLast={activeIndex === items.length - 1}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+
       <div className="sr-only" role="status">{announcement}</div>
     </DndContext>
   );

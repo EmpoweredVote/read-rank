@@ -40,7 +40,7 @@ describe('reAgree', () => {
 
     race = useReadRankStore.getState().getCurrentRaceProgress()!;
     expect(race.topics.housing.disagreed).toEqual([]);
-    expect(race.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
+    expect(race.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
   });
 
   it('is a no-op when the quote is already agreed', () => {
@@ -49,7 +49,7 @@ describe('reAgree', () => {
     s.agree(q1);
     useReadRankStore.getState().reAgree(q1);
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
-    expect(race.agreed.map((q) => q.id)).toEqual(['q1']);
+    expect(race.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
   });
 
   it('does not advance the topic evaluation index', () => {
@@ -67,6 +67,6 @@ describe('reAgree', () => {
     // q1 is unevaluated: not agreed, not disagreed.
     useReadRankStore.getState().reAgree(q1);
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
-    expect(race.agreed).toEqual([]);
+    expect(race.topics.housing.agreed).toEqual([]);
   });
 });
