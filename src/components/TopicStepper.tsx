@@ -12,7 +12,7 @@ export const TopicStepper: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '0.875rem' }}>
         {race.topicOrder.map((key) => {
           const t = race.topics[key];
           const done = t.currentIndex >= t.quotesToEvaluate.length;
@@ -22,6 +22,7 @@ export const TopicStepper: React.FC = () => {
               key={key}
               onClick={() => setCurrentTopic(key)}
               title={t.title}
+              className={isCurrent ? 'topic-chip topic-chip-current' : 'topic-chip'}
               style={{
                 fontFamily: "'Manrope', sans-serif",
                 fontSize: '0.6875rem',
@@ -36,6 +37,7 @@ export const TopicStepper: React.FC = () => {
                 alignItems: 'center',
                 gap: '0.25rem',
                 whiteSpace: 'nowrap',
+                position: 'relative',
               }}
             >
               {done && (

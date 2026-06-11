@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, animate, MotionValue } from 'framer-motion';
 import type { BlindQuote } from '../store/useReadRankStore';
+import { SourceInfoButton } from './SourceExplainer';
 
 interface QuoteCardProps {
   quote: BlindQuote;
@@ -9,12 +10,14 @@ interface QuoteCardProps {
   displayNumber?: number;
   onDragStateChange?: (isDragging: boolean, x: MotionValue<number>) => void;
   externalAnimating?: boolean;
+  /** Hide for practice rounds, where quotes are not real candidate statements. */
+  showTrustFooter?: boolean;
   onAgree: (quote: BlindQuote) => void;
   onDisagree: (quote: BlindQuote) => void;
 }
 
 export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
-  ({ quote, isStacked = false, stackIndex = 0, displayNumber, onDragStateChange, externalAnimating = false, onAgree, onDisagree }, ref) => {
+  ({ quote, isStacked = false, stackIndex = 0, displayNumber, onDragStateChange, externalAnimating = false, showTrustFooter = true, onAgree, onDisagree }, ref) => {
   const handleAgree = onAgree;
   const handleDisagree = onDisagree;
   const [isAnimating, setIsAnimating] = useState(false);
@@ -74,7 +77,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
   return (
     <motion.div
       ref={ref}
-      drag={isDraggable && !isCurrentlyAnimating}
+      drag={isDraggable && !isCurrentlyAnimating ? 'x' : false}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.7}
       onDragStart={isDraggable ? handleDragStart : undefined}
@@ -85,14 +88,15 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
         opacity,
         scale: scaleValue,
         zIndex: zIndexValue,
+        touchAction: 'pan-y',
         boxShadow: isStacked
           ? `${stackIndex * 3}px ${stackIndex * 3}px 0 rgba(0,0,0,0.04)`
           : undefined
       }}
       className={`
-        ev-quote-card w-full max-w-lg md:max-w-xl relative
+        ev-quote-card ${isDraggable ? 'ev-quote-card-active' : ''} w-full max-w-lg md:max-w-xl relative
         ${isDraggable && !isCurrentlyAnimating ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
-        select-none touch-none
+        select-none
         ${isCurrentlyAnimating ? 'pointer-events-none' : ''}
         ${isDragging ? 'ev-quote-card-dragging' : ''}
       `}
@@ -135,6 +139,52 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
       >
         {quote.text}
       </div>
+
+      {/* Blind-trust footer — generic trust, zero provenance (REDESIGN_SPEC §3.1).
+          Capture-phase stop keeps pointer events from starting a card drag;
+          data-no-drag is a marker for future drag code, nothing consumes it yet. */}
+      {showTrustFooter && (
+        <div
+          data-no-drag
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          style={{
+            marginTop: '1.25rem',
+            paddingTop: '0.75rem',
+            borderTop: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: '0.8125rem',
+              color: 'var(--text-tertiary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+            }}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+            <span>Verified quote.&nbsp; Source shown at the reveal.</span>
+          </span>
+          <SourceInfoButton />
+        </div>
+      )}
     </motion.div>
   );
 });

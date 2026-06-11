@@ -1,15 +1,15 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useMotionValue, MotionValue, animate } from 'framer-motion';
 import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
-import { SwipeInstructions } from './SwipeInstructions';
 import { SwipeBackground } from './SwipeBackground';
 import { ActionButtons } from './ActionButtons';
 import { RankedListSidebar } from './AgreedQuotesSidebar';
-import { InlineRankPanel } from './InlineRankPanel';
 import { TopicStepper } from './TopicStepper';
 import { useDeviceType } from '../hooks/useDeviceType';
 import CoachMark from './CoachMark';
+import { RankDock } from './RankDock';
+import { RankSheet } from './RankSheet';
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -45,13 +45,18 @@ export const EvaluationPhase: React.FC = () => {
 
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showFullRankList, setShowFullRankList] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const autoOpenedRef = useRef(false);
+  const dockRef = useRef<HTMLButtonElement>(null);
+
+  const disagreedCount = race
+    ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
+    : 0;
 
   const [tourStep, setTourStep] = useState<1 | 2 | null>(null);
   const swipeAreaRef = useRef<HTMLDivElement>(null);
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const inlinePanelRef = useRef<HTMLDivElement>(null);
 
   const dragX = useMotionValue(0);
   const cardXRef = useRef<MotionValue<number>>(dragX);
@@ -63,21 +68,25 @@ export const EvaluationPhase: React.FC = () => {
     return () => clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-expand sheet on completion (mobile only, once)
   useEffect(() => {
-    if (tourStep === 2 && !isMouseDevice && agreed.length >= 1) setShowFullRankList(true);
-  }, [tourStep, isMouseDevice, agreed.length]);
+    if (!isMouseDevice && allTopicsDone && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      setSheetOpen(true);
+    }
+  }, [isMouseDevice, allTopicsDone]);
 
-  const handleDragStateChange = useCallback((dragging: boolean, x: MotionValue<number>) => {
+  const handleDragStateChange = (dragging: boolean, x: MotionValue<number>) => {
     setIsDragging(dragging);
     cardXRef.current = x;
     return x.on('change', (latest) => dragX.set(latest));
-  }, [dragX]);
+  };
 
   const progressPercent = quotesToEvaluate.length > 0
     ? Math.round((Math.min(currentIndex, quotesToEvaluate.length) / quotesToEvaluate.length) * 100)
     : 0;
 
-  const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
+  const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
     const offScreenX = direction === 'agree' ? 500 : -500;
@@ -88,22 +97,30 @@ export const EvaluationPhase: React.FC = () => {
     cardXRef.current.set(0);
     dragX.set(0);
     setIsAnimating(false);
-  }, [isAnimating, currentQuote, agree, disagree, dragX, tourStep]);
+  };
+
+  // Keep a ref to handleButtonSwipe so the keydown effect can call the latest
+  // version without re-registering the listener on every render.
+  const handleButtonSwipeRef = useRef(handleButtonSwipe);
+  useLayoutEffect(() => {
+    handleButtonSwipeRef.current = handleButtonSwipe;
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
-      if (isAnimating || !currentQuote) return;
+      if (isAnimating || !currentQuote || sheetOpen) return;
+      if (document.querySelector('dialog[open]')) return;
       switch (event.key) {
         case 'ArrowLeft': case 'a': case 'A':
-          event.preventDefault(); handleButtonSwipe('disagree'); break;
+          event.preventDefault(); handleButtonSwipeRef.current('disagree'); break;
         case 'ArrowRight': case 'd': case 'D':
-          event.preventDefault(); handleButtonSwipe('agree'); break;
+          event.preventDefault(); handleButtonSwipeRef.current('agree'); break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleButtonSwipe, isAnimating, currentQuote]);
+  }, [isAnimating, currentQuote, sheetOpen]);
 
   const handleCardAgree = useCallback((q: BlindQuote) => {
     agree(q);
@@ -161,7 +178,7 @@ export const EvaluationPhase: React.FC = () => {
                 {isLastTopic ? 'All topics done' : 'Topic complete'}
               </div>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-                {isLastTopic ? 'Reveal your ballot when you’re ready.' : 'Move on, or keep ranking your pile.'}
+                {isLastTopic ? "Reveal your ballot when you’re ready." : 'Move on, or keep ranking your pile.'}
               </p>
               {!isLastTopic && (
                 <button onClick={nextTopic} className="ev-button-primary" style={{ marginTop: '1rem', fontSize: '0.9375rem' }}>
@@ -172,10 +189,9 @@ export const EvaluationPhase: React.FC = () => {
           </div>
         )}
 
-        {isMouseDevice && currentQuote && (
+        {currentQuote && (
           <ActionButtons onAgree={() => handleButtonSwipe('agree')} onDisagree={() => handleButtonSwipe('disagree')} disabled={isAnimating} />
         )}
-        {!isMouseDevice && currentQuote && <SwipeInstructions />}
       </div>
     </>
   );
@@ -197,23 +213,7 @@ export const EvaluationPhase: React.FC = () => {
       <TopicStepper />
       {triageContent}
 
-      {/* Mobile: rank pile toggle + panel */}
-      {!isMouseDevice && agreed.length > 0 && (
-        <div className="flex justify-center mt-1">
-          <button onClick={() => setShowFullRankList((p) => !p)} className="rank-counter-pill">
-            {agreed.length} agreed · rank them
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transform: showFullRankList ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        </div>
-      )}
-      {showFullRankList && !isMouseDevice && (
-        <InlineRankPanel ref={inlinePanelRef} onDismiss={() => setShowFullRankList(false)} />
-      )}
-
-      {(allTopicsDone || canReveal) && revealCta}
+      {isMouseDevice && (allTopicsDone || canReveal) && revealCta}
     </div>
   );
 
@@ -242,13 +242,13 @@ export const EvaluationPhase: React.FC = () => {
       )}
       {!isMouseDevice && (
         <CoachMark
-          targetRef={inlinePanelRef}
-          show={tourStep === 2 && agreed.length >= 1 && showFullRankList}
+          targetRef={dockRef}
+          show={tourStep === 2 && agreed.length >= 1 && !sheetOpen}
           allowSpotlightInteraction={false}
           stepLabel="2 of 2"
           onDismiss={finishTour}
         >
-          Drag your agreed quotes to rank them — your top 3 are your podium.
+          Your agreed quotes file in here.&nbsp; Tap to rank them — your top 3 are your podium.
         </CoachMark>
       )}
     </>
@@ -269,10 +269,30 @@ export const EvaluationPhase: React.FC = () => {
     );
   }
 
-  // Mobile: single column
+  // Mobile: single column with dock + sheet
   return (
-    <div>
+    <div className="evaluation-mobile">
       {mainColumn}
+      <RankDock
+        ref={dockRef}
+        agreed={agreed}
+        disagreedCount={disagreedCount}
+        onOpen={() => setSheetOpen(true)}
+      />
+      <RankSheet
+        open={sheetOpen}
+        allDone={allTopicsDone}
+        onClose={() => {
+          setSheetOpen(false);
+          // Defer past the dialog unmount: while the modal is open the page is
+          // inert and focus() outside it is silently ignored.
+          requestAnimationFrame(() => dockRef.current?.focus());
+        }}
+        onSeeResults={() => {
+          setSheetOpen(false);
+          finishRace();
+        }}
+      />
       {coachMarkOverlay}
     </div>
   );

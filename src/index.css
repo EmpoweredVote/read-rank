@@ -71,6 +71,22 @@
   --podium-silver: #59b0c4;
   --podium-bronze: #ff5740;
 
+  /* Tier frames (REDESIGN_SPEC §3.4) — hue is the LAST identity channel */
+  --tier-diamond-bg: #eaf6fa;
+  --tier-diamond-border: #2b7f96;
+  --tier-diamond-ink: #06303a;
+  --tier-gold-bg: #faf3dd;
+  --tier-gold-border: #a07d1f;
+  --tier-gold-ink: #3a2e00;
+  --tier-silver-bg: #f1f4f6;
+  --tier-silver-border: #5f7682;
+  --tier-silver-ink: #243036;
+  --tier-bronze-bg: #f5efe9;
+  --tier-bronze-border: #8a6648;
+  --tier-bronze-ink: #3a2a1a;
+  --tier-iron-border: #8a939c;
+  --tier-iron-ink: var(--text-tertiary);
+
   --grain-opacity: 0.025;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -110,6 +126,20 @@
   --podium-gold: #fed12e;
   --podium-silver: #59b0c4;
   --podium-bronze: #ff7a68;
+
+  --tier-diamond-bg: rgba(108, 198, 219, 0.1);
+  --tier-diamond-border: #6cc6db;
+  --tier-diamond-ink: #cfeaf2;
+  --tier-gold-bg: rgba(254, 209, 46, 0.08);
+  --tier-gold-border: #cfa84a;
+  --tier-gold-ink: #ecdfae;
+  --tier-silver-bg: rgba(159, 179, 189, 0.1);
+  --tier-silver-border: #9fb3bd;
+  --tier-silver-ink: #dbe4e9;
+  --tier-bronze-bg: rgba(191, 154, 118, 0.1);
+  --tier-bronze-border: #bf9a76;
+  --tier-bronze-ink: #e8d8c8;
+  --tier-iron-border: #6b7480;
 
   --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
@@ -207,6 +237,15 @@ body::before {
 /* ============================================
    Button Styles
    ============================================ */
+
+dialog::backdrop {
+  background: rgba(28, 28, 28, 0.45);
+}
+
+.ev-source-link:hover,
+.ev-source-link:focus-visible {
+  text-decoration: underline;
+}
 
 .ev-button-primary {
   background-color: var(--color-ev-coral);
@@ -600,9 +639,15 @@ body::before {
   box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.2);
 }
 
-/* Mobile: Hide action buttons on touch devices */
-@media (pointer: coarse) and (hover: none) {
-  .action-buttons-container { display: none; }
+@media (pointer: coarse) {
+  .action-button {
+    min-height: 3.5rem;
+    flex: 1 1 0;
+  }
+  .action-buttons-container {
+    width: 100%;
+    gap: 0.625rem;
+  }
 }
 
 /* ============================================
@@ -627,6 +672,10 @@ body::before {
 /* ============================================
    Split Layout — Desktop Evaluation + Sidebar
    ============================================ */
+
+.evaluation-mobile {
+  padding-bottom: 5.5rem;
+}
 
 .evaluation-split-layout {
   display: flex;
@@ -822,21 +871,118 @@ body::before {
 }
 
 /* ============================================
-   Inline Rank Panel (mobile)
+   Rank Dock (mobile collapsed strip)
    ============================================ */
 
-.inline-rank-panel {
+.rank-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
   background-color: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.625rem;
-  padding: 1rem;
-  margin-top: 1rem;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -4px 16px rgba(28, 28, 28, 0.08);
+  padding: 0.25rem 0.875rem calc(0.5rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  cursor: pointer;
+  min-height: 3.5rem;
 }
 
-.inline-rank-panel .pending-card {
-  border-left: 3px solid var(--color-ev-muted-blue);
-  background-color: var(--agree-bg);
+.dark .rank-dock {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
 }
+
+.rank-dock-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+  margin: 0.25rem auto 0;
+}
+
+.rank-dock-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.rank-dock-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.375rem;
+  background-color: var(--surface-sunken);
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+.rank-dock-slot-empty {
+  border-style: dashed;
+  background: none;
+  opacity: 0.7;
+}
+
+.rank-dock-slot-diamond {
+  border: 3px double var(--tier-diamond-border);
+  background-color: var(--tier-diamond-bg);
+}
+
+.rank-dock-slot-gold {
+  border: 2px solid var(--tier-gold-border);
+  background-color: var(--tier-gold-bg);
+}
+
+.rank-dock-slot-silver {
+  border: 1.5px solid var(--tier-silver-border);
+  background-color: var(--tier-silver-bg);
+}
+
+.rank-dock-slot-diamond .rank-dock-slot-rank { color: var(--tier-diamond-ink); }
+.rank-dock-slot-gold .rank-dock-slot-rank { color: var(--tier-gold-ink); }
+.rank-dock-slot-silver .rank-dock-slot-rank { color: var(--tier-silver-ink); }
+.rank-dock-slot-diamond .rank-dock-slot-stub { color: var(--tier-diamond-ink); }
+.rank-dock-slot-gold .rank-dock-slot-stub { color: var(--tier-gold-ink); }
+.rank-dock-slot-silver .rank-dock-slot-stub { color: var(--tier-silver-ink); }
+
+.rank-dock-slot-rank {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-dock-slot-stub,
+.rank-dock-slot-ghost {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  color: var(--text-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-dock-slot-ghost { color: var(--text-tertiary); }
+
+.rank-dock-counter {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-dock-counter-iron { color: var(--text-tertiary); }
+
+.rank-dock-chevron { color: var(--text-tertiary); flex-shrink: 0; }
 
 /* ============================================
    Counter Pill
@@ -861,6 +1007,25 @@ body::before {
   background-color: var(--agree-bg-strong);
 }
 
+.rank-move-button {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.375rem;
+  color: var(--text-secondary);
+  min-width: 2.75rem;
+  min-height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.rank-move-button[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.rank-move-button:hover:not([aria-disabled='true']) { color: var(--text-ink); border-color: var(--border-medium); }
+.rank-move-button:focus-visible { outline: 2px solid var(--text-link); outline-offset: 1px; }
+@media (pointer: coarse) {
+  .rank-move-button { min-height: 2.75rem; }
+}
+
 /* ============================================
    Theme toggle (header secondaryAction)
    ============================================ */
@@ -882,4 +1047,695 @@ body::before {
   color: var(--color-ev-muted-blue);
   border-color: var(--border-medium);
   transform: translateY(-1px);
+}
+
+/* ============================================
+   Rank Sheet (mobile bottom sheet)
+   ============================================ */
+
+dialog.rank-sheet {
+  position: fixed;
+  inset: 0;
+  margin: auto 0 0;
+  width: 100%;
+  max-width: 100%;
+  height: min(88dvh, 100%);
+  max-height: 88dvh;
+  border: none;
+  border-radius: 1rem 1rem 0 0;
+  padding: 0;
+  background: var(--surface-card);
+  color: var(--text-ink);
+}
+
+dialog.rank-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-sheet-handle-region {
+  padding: 0.5rem 0 0.25rem;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.rank-sheet-handle {
+  width: 2.5rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+}
+
+.rank-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 1rem 0.625rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.rank-sheet-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.rank-sheet-done {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-link);
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+}
+
+.rank-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.875rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rank-sheet-iron-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+
+.rank-sheet-iron-recover {
+  background: none;
+  border: 1px solid var(--border-medium);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  min-height: 2.75rem;
+  padding: 0 0.625rem;
+  flex-shrink: 0;
+}
+
+.rank-sheet-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.rank-sheet-results {
+  width: 100%;
+  min-height: 3.5rem;
+  font-size: 1rem;
+}
+
+/* ============================================
+   Tier Frames (REDESIGN_SPEC §3.4)
+   Identity channels in order: icon, label, frame treatment, hue.
+   Grayscale test: double / 2px solid / 1.5px solid / 1px solid filled /
+   1px dashed + hatch must stay distinguishable with color removed.
+   ============================================ */
+
+.tier-row {
+  border-radius: 0.5rem;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.tier-row-diamond {
+  border: 4px double var(--tier-diamond-border);
+  background-color: var(--tier-diamond-bg);
+}
+
+.tier-row-gold {
+  border: 2px solid var(--tier-gold-border);
+  background-color: var(--tier-gold-bg);
+}
+
+.tier-row-silver {
+  border: 1.5px solid var(--tier-silver-border);
+  background-color: var(--tier-silver-bg);
+}
+
+.tier-row-bronze {
+  border: 1px solid var(--tier-bronze-border);
+  background-color: var(--tier-bronze-bg);
+}
+
+.tier-row-iron {
+  position: relative;
+  border: 1px dashed var(--tier-iron-border);
+  background: none;
+  overflow: hidden;
+}
+
+/* Hatch strip — the "raw ore" texture cue, color-independent */
+.tier-row-iron::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--tier-iron-border) 0 2px,
+    transparent 2px 5px
+  );
+  opacity: 0.55;
+}
+
+.tier-row-iron .tier-iron-muted { opacity: 0.75; }
+
+.tier-label {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.125rem;
+}
+
+.tier-label-diamond { color: var(--tier-diamond-ink); }
+.tier-label-gold { color: var(--tier-gold-ink); }
+.tier-label-silver { color: var(--tier-silver-ink); }
+.tier-label-bronze { color: var(--tier-bronze-ink); }
+.tier-label-iron { color: var(--tier-iron-ink); }
+
+.tier-icon-diamond { color: var(--tier-diamond-border); }
+.tier-icon-gold { color: var(--tier-gold-border); }
+.tier-icon-silver { color: var(--tier-silver-border); }
+.tier-icon-bronze { color: var(--tier-bronze-border); }
+.tier-icon-iron { color: var(--tier-iron-border); }
+
+.tier-rank-num {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  min-width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Ghost slots — unfilled podium positions teach the structure */
+.tier-ghost {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  opacity: 0.65;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tier-ghost-diamond { border: 2px dashed var(--tier-diamond-border); color: var(--tier-diamond-ink); }
+.tier-ghost-gold { border: 2px dashed var(--tier-gold-border); color: var(--tier-gold-ink); }
+.tier-ghost-silver { border: 2px dashed var(--tier-silver-border); color: var(--tier-silver-ink); }
+
+/* Iron severance — spatial cue #1: a different shelf, not the next rung */
+.iron-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 1rem 0 0.5rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.iron-divider::before,
+.iron-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--tier-iron-border);
+}
+
+/* ============================================
+   RankRail — unified rank surface
+   ============================================ */
+
+.rank-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rank-rail-iron-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.rank-rail-iron-row {
+  align-items: center;
+  display: flex;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem 0.5rem 0.875rem;
+}
+
+.rank-rail-iron-stub {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  color: var(--tier-iron-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   Staged Reveal (REDESIGN_SPEC §1.4)
+   ============================================ */
+
+.reveal-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+}
+
+.reveal-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.reveal-card-quote {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-ink);
+  margin: 0.25rem 0 0;
+}
+
+.reveal-card-trigger {
+  flex-shrink: 0;
+  background: none;
+  border: 1.5px solid var(--text-link);
+  border-radius: 9999px;
+  color: var(--text-link);
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
+
+.reveal-card-trigger:hover {
+  background-color: var(--text-link);
+  color: var(--surface-card);
+}
+
+.reveal-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0.375rem 0;
+}
+
+.reveal-card-photo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-medium);
+}
+
+.reveal-card-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-raised);
+  color: var(--text-tertiary);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.reveal-card-name {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+}
+
+.reveal-card-office {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.reveal-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.reveal-card-profile-link {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-link);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.75rem;
+}
+
+.reveal-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.reveal-board-hint {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.reveal-board-all {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--text-link);
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+.reveal-board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  perspective: 1200px;
+}
+
+.reveal-threshold {
+  background-color: var(--color-ev-black, #1c1c1c);
+  border-radius: 0.75rem;
+  padding: 3rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.reveal-threshold-count {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 0 0.625rem;
+}
+
+.reveal-threshold-headline {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+/* ev-yellow accent — approved placement #5 (decorative; the text carries) */
+.reveal-threshold-who {
+  box-shadow: inset 0 -3px 0 var(--color-ev-yellow, #fed12e);
+  padding-bottom: 2px;
+}
+
+.reveal-threshold-button {
+  font-size: 0.9375rem;
+  min-height: 3rem;
+}
+
+.rcv-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.625rem;
+  background-color: var(--surface-card);
+  padding: 1rem 1.125rem;
+}
+
+.rcv-panel-heading {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+  margin: 0 0 0.375rem;
+}
+
+.rcv-panel-body {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ============================================
+   ev-yellow Inform accents (REDESIGN_SPEC §5)
+   Yellow never carries meaning alone — adjacent text/structure does.
+   ============================================ */
+
+/* #2: active quote card left rule (inset shadow: no layout shift)
+   NOTE: .ev-quote-card already declares box-shadow: var(--shadow-card).
+   This rule COMBINES the yellow inset with the existing card shadow so
+   neither is clobbered. The dragging class (ev-quote-card-dragging) uses
+   var(--shadow-hover) which replaces the card shadow via Framer Motion's
+   inline style — acceptable because the yellow rule still sits on top. */
+.ev-quote-card-active {
+  box-shadow: inset 3px 0 0 var(--color-ev-yellow), var(--shadow-card);
+}
+
+/* #4: current step underline */
+.topic-chip-current::after {
+  content: '';
+  position: absolute;
+  left: 0.625rem;
+  right: 0.625rem;
+  bottom: -0.3125rem;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--color-ev-yellow);
+}
+
+/* #1: wordmark underline (used in the hub header) */
+.wordmark-underline {
+  display: inline-block;
+  box-shadow: inset 0 -3px 0 var(--color-ev-yellow);
+  padding-bottom: 2px;
+}
+
+/* ============================================
+   Hub arena card styles (REDESIGN_SPEC §1.1)
+   ============================================ */
+
+.hub-meta-chip {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+}
+
+.hub-meta-chip-rcv {
+  color: var(--text-link);
+  border-color: var(--text-link);
+}
+
+.hub-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+  display: inline-block;
+}
+
+.hub-progress-dot-done {
+  background-color: var(--color-ev-light-blue);
+}
+
+/* §5 placement #3: yellow halo around the dark active dot — text carries the info */
+.hub-progress-dot-active {
+  background-color: var(--text-heading);
+  box-shadow: 0 0 0 2px var(--color-ev-yellow);
+}
+
+/* ev-yellow accent — approved placement #6 */
+.insight-strip {
+  border-top: 3px solid var(--color-ev-yellow, #fed12e);
+  background-color: var(--surface-card);
+  border-radius: 0 0 0.625rem 0.625rem;
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.875rem 1.125rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-ink);
+}
+
+/* ============================================
+   Alignment Grid (REDESIGN_SPEC §1.6)
+   Candidates × topics tier table — colorblind-safe (icon + sr-only text).
+   ============================================ */
+
+.alignment-grid-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.625rem;
+  background-color: var(--surface-card);
+}
+
+.alignment-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+}
+
+.alignment-grid th,
+.alignment-grid td {
+  padding: 0.5rem 0.625rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.alignment-grid thead th {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.alignment-grid tbody th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.alignment-grid tbody tr:last-child th,
+.alignment-grid tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.alignment-grid-empty {
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+   Compass cross-link card (REDESIGN_SPEC §10)
+   ============================================ */
+
+.compass-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.625rem;
+  background-color: var(--surface-card);
+  padding: 1rem 1.125rem;
+}
+
+/* §5 placement #7: the one approved yellow surface — always ev-black text */
+.inform-chip {
+  display: inline-block;
+  background-color: var(--color-ev-yellow);
+  color: #1c1c1c;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  padding: 0.1875rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.compass-card-heading {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+  margin: 0 0 0.375rem;
+}
+
+.compass-card-body {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 0.875rem;
+}
+
+.compass-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.compass-card-cta {
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.compass-card-later {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
 }

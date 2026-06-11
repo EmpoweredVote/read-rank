@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
+import { SourceLine } from './SourceLine';
+import { SourceInfoButton } from './SourceExplainer';
+import { RevealBoard } from './RevealBoard';
+import { ThresholdInterstitial } from './ThresholdInterstitial';
+import { RcvEducationPanel } from './RcvEducationPanel';
+import { buildInsightSentence, buildQuoteIdentityMap } from '../utils/revealInsight';
+import type { QuoteIdentity } from '../utils/revealInsight';
+import { AlignmentGrid } from './AlignmentGrid';
+import { CompassCrossLink } from './CompassCrossLink';
+import { buildAlignmentGrid, type AlignmentTopic } from '../utils/alignmentGrid';
 
 // ============================================================
 // MegaParticles — celebratory burst on the #1 card.
@@ -54,7 +64,7 @@ interface BallotCardProps {
   prefersReducedMotion: boolean | null;
 }
 
-const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion }) => {
+export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion }) => {
   const [expanded, setExpanded] = useState(false);
   const [particles, setParticles] = useState(false);
   const [imgOk, setImgOk] = useState(true);
@@ -175,11 +185,10 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
                   paddingLeft: '0.625rem', borderLeft: `2px solid ${q.supported ? 'var(--agree)' : 'var(--border-medium)'}`,
                 }}>
                   &ldquo;{q.text}&rdquo;
-                  {q.sourceUrl && (
-                    <a href={q.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                      style={{ marginLeft: '0.375rem', fontSize: '0.6875rem', color: 'var(--text-link)', textDecoration: 'none' }}>
-                      {q.sourceName || 'Source'}
-                    </a>
+                  {q.sourceName && (
+                    <span style={{ marginLeft: '0.375rem' }}>
+                      <SourceLine sourceName={q.sourceName} sourceUrl={q.sourceUrl} variant="compact" />
+                    </span>
                   )}
                 </p>
               ))}
@@ -192,12 +201,16 @@ const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, addre
 };
 
 // ============================================================
-// ResultsPhase — the climactic reveal: a mock RCV ballot.
+// ResultsPhase — staged reveal: threshold → board → summary.
+// State machine: 'threshold' | 'board'. Summary content appears
+// below the board once all quotes are revealed.
 // ============================================================
 export const ResultsPhase: React.FC = () => {
   const { goToHub, currentRaceId, getRaceVerdicts, getCurrentRaceProgress, locationFilter } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stage, setStage] = useState<'threshold' | 'board'>('threshold');
+  const [allRevealed, setAllRevealed] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const race = getCurrentRaceProgress();
 
@@ -211,6 +224,33 @@ export const ResultsPhase: React.FC = () => {
       .then(setReveal)
       .finally(() => setTimeout(() => setLoading(false), 600));
   }, [currentRaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const agreedList = race?.agreed;
+  const topicCount = race ? race.topicOrder.length : 0;
+
+  const identities = useMemo(
+    (): Map<string, QuoteIdentity> => (reveal ? buildQuoteIdentityMap(reveal) : new Map<string, QuoteIdentity>()),
+    [reveal]
+  );
+
+  const insight = useMemo(
+    () => buildInsightSentence(agreedList ?? [], identities),
+    [agreedList, identities]
+  );
+
+  const alignmentTopics = useMemo<AlignmentTopic[]>(
+    () => (race ? race.topicOrder.map((key) => ({ key, title: race.topics[key].title })) : []),
+    [race]
+  );
+  const alignmentRows = useMemo(
+    () => (reveal ? buildAlignmentGrid(reveal, (agreedList ?? []).map((q) => q.id), alignmentTopics) : []),
+    [reveal, agreedList, alignmentTopics]
+  );
+  const topTopicTitle = race && agreedList && agreedList.length > 0
+    ? race.topics[agreedList[0].topicKey]?.title ?? null
+    : null;
+
+  const agreed = agreedList ?? [];
 
   if (loading) {
     return (
@@ -227,6 +267,63 @@ export const ResultsPhase: React.FC = () => {
 
   const ballot = reveal?.ballot ?? [];
 
+  // Empty ballot — show header + explainer + empty state. Skip threshold entirely.
+  if (ballot.length === 0) {
+    return (
+      <div className="pb-12">
+        <motion.div className="text-center max-w-2xl mx-auto mb-5"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          <p style={{
+            fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: '0.375rem',
+          }}>
+            Your ranked-choice ballot
+          </p>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
+            {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
+          </h2>
+          <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+            Based only on what you agreed with and how you ranked it — this is the order your choices produce.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.125rem' }}>
+            <SourceInfoButton showLabel />
+          </div>
+        </motion.div>
+
+        <div className="max-w-2xl mx-auto text-center py-10">
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+            No agreements yet
+          </p>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            You didn&apos;t agree with any quotes, so there&apos;s no ballot to build. Try another race.
+          </p>
+        </div>
+
+        <motion.div className="flex justify-center pt-6"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+          <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            Play another race near you
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Threshold stage — the dark beat before unmasking. Header intentionally absent.
+  if (stage === 'threshold') {
+    return (
+      <div className="pb-12 max-w-2xl mx-auto">
+        <ThresholdInterstitial
+          rankedCount={agreed.length}
+          topicCount={topicCount}
+          onContinue={() => setStage('board')}
+        />
+      </div>
+    );
+  }
+
+  // Board stage — header visible; summary appears below once all revealed.
   return (
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-5"
@@ -243,37 +340,44 @@ export const ResultsPhase: React.FC = () => {
         <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
           Based only on what you agreed with and how you ranked it — this is the order your choices produce.
         </p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.125rem' }}>
+          <SourceInfoButton showLabel />
+        </div>
       </motion.div>
 
-      {ballot.length === 0 ? (
-        <div className="max-w-2xl mx-auto text-center py-10">
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-            No agreements yet
-          </p>
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            You didn&apos;t agree with any quotes, so there&apos;s no ballot to build. Try another race.
-          </p>
-        </div>
-      ) : (
-        <div className="max-w-2xl mx-auto space-y-3">
-          {ballot.map((entry, i) => (
-            <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
-              address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion} />
-          ))}
-        </div>
+      <div className="max-w-2xl mx-auto space-y-3">
+        <RevealBoard
+          agreed={agreed}
+          identities={identities}
+          onAllRevealed={() => setAllRevealed(true)}
+        />
+
+        {allRevealed && (
+          <>
+            {insight && <div className="insight-strip">{insight}</div>}
+            <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
+            <RcvEducationPanel usesRcv={reveal?.usesRcv} />
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+              How the candidates stack up
+            </h3>
+            {ballot.map((entry, i) => (
+              <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
+                address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion} />
+            ))}
+            <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
+          </>
+        )}
+      </div>
+
+      {allRevealed && (
+        <motion.div className="flex justify-center pt-6"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: ballot.length * 0.08 + 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+          <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            Play another race near you
+          </button>
+        </motion.div>
       )}
-
-      <motion.div className="flex justify-center pt-6"
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: ballot.length * 0.08 + 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-        <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-          Play another race near you
-        </button>
-      </motion.div>
-
-      {/* DEFERRED: compass-feed — offering to save these positions into the user's
-          compass needs its own design (already-calibrated users; quotes don't map
-          1:1 to compass stances). Not built in v1. */}
     </div>
   );
 };
