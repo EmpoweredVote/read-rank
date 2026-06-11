@@ -1535,6 +1535,40 @@ dialog.rank-sheet[open] {
   margin: 0;
 }
 
+/* ============================================
+   ev-yellow Inform accents (REDESIGN_SPEC §5)
+   Yellow never carries meaning alone — adjacent text/structure does.
+   ============================================ */
+
+/* #2: active quote card left rule (inset shadow: no layout shift)
+   NOTE: .ev-quote-card already declares box-shadow: var(--shadow-card).
+   This rule COMBINES the yellow inset with the existing card shadow so
+   neither is clobbered. The dragging class (ev-quote-card-dragging) uses
+   var(--shadow-hover) which replaces the card shadow via Framer Motion's
+   inline style — acceptable because the yellow rule still sits on top. */
+.ev-quote-card-active {
+  box-shadow: inset 3px 0 0 var(--color-ev-yellow), var(--shadow-card);
+}
+
+/* #4: current step underline */
+.topic-chip-current::after {
+  content: '';
+  position: absolute;
+  left: 0.625rem;
+  right: 0.625rem;
+  bottom: -0.3125rem;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--color-ev-yellow);
+}
+
+/* #1: wordmark underline (used in the hub header) */
+.wordmark-underline {
+  display: inline-block;
+  box-shadow: inset 0 -3px 0 var(--color-ev-yellow);
+  padding-bottom: 2px;
+}
+
 /* ev-yellow accent — approved placement #6 */
 .insight-strip {
   border-top: 3px solid var(--color-ev-yellow, #fed12e);

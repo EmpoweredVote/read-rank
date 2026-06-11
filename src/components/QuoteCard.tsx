@@ -94,7 +94,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
           : undefined
       }}
       className={`
-        ev-quote-card w-full max-w-lg md:max-w-xl relative
+        ev-quote-card ${isDraggable ? 'ev-quote-card-active' : ''} w-full max-w-lg md:max-w-xl relative
         ${isDraggable && !isCurrentlyAnimating ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
         select-none
         ${isCurrentlyAnimating ? 'pointer-events-none' : ''}

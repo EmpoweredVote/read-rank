@@ -42,4 +42,16 @@ describe('QuoteCard blind-trust footer', () => {
     fireEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
     expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);
   });
+
+  it('carries the Inform accent rule when it is the active card', () => {
+    const { container } = render(<QuoteCard quote={quote} onAgree={vi.fn()} onDisagree={vi.fn()} />);
+    expect(container.firstElementChild).toHaveClass('ev-quote-card-active');
+  });
+
+  it('drops the accent rule when stacked behind the active card', () => {
+    const { container } = render(
+      <QuoteCard quote={quote} isStacked stackIndex={1} onAgree={vi.fn()} onDisagree={vi.fn()} />
+    );
+    expect(container.firstElementChild).not.toHaveClass('ev-quote-card-active');
+  });
 });
