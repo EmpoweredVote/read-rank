@@ -23,7 +23,8 @@ The landing stops behaving like a marketing hero stacked on top of a picker.  It
 | 5 | Tier cue | **The map shape carries the tier.**  US map = federal, state map = state, county/city map = local.  No tier colors, no glyphs, no frames.  The scope label is the text backup. |
 | 6 | Motif accent | Monochrome, single accent from a theme token (`--text-link`).  Coral and yellow stay reserved for their existing jobs (in-progress, Inform whisper). |
 | 7 | Motif fallback | Dot-field (dots = constituents) when a real boundary is unavailable.  Dots clip to the real boundary when present.  Same component either way. |
-| 8 | Map coverage v1 | Render whatever real boundary the database has for the race; degrade gracefully otherwise.  Adding whole-state and US outlines later is a trivial supplement. |
+| 8 | Map coverage v1 | Render the real boundary the database has for the race; degrade gracefully otherwise.  **v1 also ingests ~50 state outlines + one US (nation) outline** so statewide and federal-statewide tiers show real geography.  Only city/place outlines remain deferred. |
+| 10 | Backend repo | `/Users/chrisandrews/Documents/GitHub/ev-accounts` (branch `master`).  Hosts the boundary endpoint, the races-API field additions, and the state/US outline ingest. |
 | 9 | Metadata footer | **Candidates · Topics · Time.**  Status removed.  Election date moves to the geography line. |
 
 ---
@@ -112,7 +113,7 @@ Geometry lives in the **prod project `E.V Backend` (`kxsdzaojfaibhuzmclfq`)**, P
 - `essentials.geo_districts(layer, geoid, district_num, name, geom)` — `us_house`, `ca_assembly`, `ca_senate`, `school_*`, `dc_ward`, etc.
 - `essentials.districts` metadata carries `tiger_geoid`, `geo_id`, `district_type`, `state`, `city`, `government_id`, and a `has_unknown_boundaries` flag (the fallback trigger).
 
-**Not yet present:** whole-state outlines (Governor, U.S. Senate) and incorporated-place/city outlines (Mayor).  These degrade to the dot-field today; adding ~50 state outlines and a US outline later is a small, well-bounded supplement that lights up the statewide and federal-statewide tiers visually.
+**Not present in the DB today:** whole-state outlines (Governor, U.S. Senate), a US/nation outline (federal-statewide), and incorporated-place/city outlines (Mayor).  **v1 ingests state + nation outlines** into `inform.district_boundaries` (e.g. `district_type` `state` keyed by state FIPS, and `nation` keyed by `US`), sourced from Census TIGER `cb_*_us_state` plus a national outline, so they flow through the same endpoint and light up the statewide and federal-statewide tiers.  Only city/place outlines remain deferred to the dot-field until sourced.
 
 The frontend cannot reach prod PostGIS directly, so geometry is served through the existing API layer.
 
@@ -189,8 +190,8 @@ Use existing tokens; introduce none unless a gap appears.
 
 ## 10. Phasing
 
-- **v1 (this work):** `Landing.tsx` restructure; `RaceCard` + `Motif` + `resolveMotif`; client GeoJSON→SVG projection + dot-field fallback; the `/api/inform/boundary` endpoint; races API extended with `tier`, `scope`, `boundaryRef`, rankable-topics, and quote count.  Real polygons render for the layers the DB already has (congressional, state-leg, county, school, ward); statewide/federal-statewide/city degrade to the dot-field.
-- **Later (trivial supplements):** add ~50 state outlines + one US outline to light up statewide and federal-statewide tiers; add place/city outlines for Mayor and council races; richer per-tier motif polish.
+- **v1 (this work):** `Landing.tsx` restructure; `RaceCard` + `Motif` + `resolveMotif`; client GeoJSON→SVG projection + dot-field fallback; the `/api/inform/boundary` endpoint; races API extended with `tier`, `scope`, `boundaryRef`, rankable-topics, and quote count; **ingest of ~50 state outlines + one US/nation outline** into `inform.district_boundaries`.  Real polygons render for congressional, state-leg, county, school, ward, **plus statewide and federal-statewide**.  Only city/place (Mayor, council) degrade to the dot-field.
+- **Later (deferred supplements):** add place/city outlines for Mayor and council races; richer per-tier motif polish.
 
 ---
 
@@ -206,7 +207,7 @@ Use existing tokens; introduce none unless a gap appears.
 1. Confirm the races API can be extended to emit `tier`, `scope`, `boundaryRef`, rankable-topic count, and quote count, or whether the frontend must derive any of these.
 2. Confirm the exact `district_type` → (tier, scope) vocabulary against the full live set (including any township/place kinds beyond those sampled).
 3. Confirm the simplification tolerance and whether the backend returns GeoJSON (frontend projects) vs a prebaked normalized SVG path (server projects).  Default assumption: GeoJSON + bbox, frontend projects.
-4. Decide whether to pull the ~50 state outlines + US outline into v1 (small) so statewide and federal-statewide tiers show real geography immediately, rather than deferring.
+4. *(Resolved — yes.)* State + US/nation outlines are in v1 scope (decision 8).  Planning confirms the TIGER source resolution and FIPS-keying for the ingest.
 
 ---
 
@@ -216,5 +217,5 @@ Use existing tokens; introduce none unless a gap appears.
 - `src/components/RaceCard.tsx` — new.
 - `src/components/motif/Motif.tsx`, `resolveMotif.ts`, `projectGeoJson.ts` — new motif system.
 - `src/data/api.ts` — extend `RaceSummary` (`tier`, `scope`, `boundaryRef`, rankable topics, quote count); add `fetchBoundary`.
-- Backend (separate repo / project) — `GET /api/inform/boundary`; races API field additions.
+- Backend (`/Users/chrisandrews/Documents/GitHub/ev-accounts`, branch `master`) — `GET /api/inform/boundary` endpoint; races API field additions (`tier`, `scope`, `boundaryRef`, rankable-topics, quote count); state + US/nation outline ingest into `inform.district_boundaries`.
 - Tests: `RaceCard`, `resolveMotif`, `projectGeoJson`, updated `Landing`/`RaceHub` tests.
