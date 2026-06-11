@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
+import { useReadRankStore } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
 import { ActionButtons } from './ActionButtons';
 import { RankedListSidebar } from './AgreedQuotesSidebar';

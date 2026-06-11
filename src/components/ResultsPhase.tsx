@@ -80,7 +80,7 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
   }, [index, prefersReducedMotion, rank]);
 
   const initials = entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
-  const { agreementCount, firstPlaceCount, topicsWithAgreement } = entry.evidence;
+  const { agreementCount, topicsWithAgreement } = entry.evidence;
 
   return (
     <motion.div
