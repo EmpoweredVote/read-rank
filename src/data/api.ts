@@ -21,6 +21,37 @@ export interface RaceSummary {
   isLocal: boolean;
   /** True where this race is actually decided by ranked choice voting. */
   usesRcv?: boolean;
+  /** Backend-computed; frontend derives a fallback when absent. */
+  tier?: RaceTier;
+  scope?: RaceScope;
+  boundaryRef?: BoundaryRef | null;
+  /** Total blind quotes in the race; used for the time estimate. */
+  quoteCount?: number;
+  /** Topics with enough quotes to rank; falls back to topicCount. */
+  rankableTopicCount?: number;
+}
+
+export type RaceTier = 'federal' | 'state' | 'local';
+export type RaceScope = 'statewide' | 'district' | 'county' | 'citywide';
+
+/** How a race's motif finds its boundary polygon. layer is an MTFCC or layer key. */
+export interface BoundaryRef {
+  layer: string;
+  geoid: string;
+}
+
+export interface GeoJsonGeometry {
+  type: 'Polygon' | 'MultiPolygon';
+  coordinates: number[][][] | number[][][][];
+}
+
+export interface BoundaryResult {
+  geoid: string;
+  layer: string;
+  name: string;
+  bbox: [number, number, number, number];
+  geojson: GeoJsonGeometry;
+  hasBoundary: boolean;
 }
 
 export interface RevealQuote {
@@ -82,6 +113,23 @@ export async function fetchRaces(politicianIds?: string[]): Promise<RaceSummary[
     console.error('Failed to fetch races, falling back to mock', err);
     const { mockRaceSummary } = await import('./mockData');
     return [mockRaceSummary];
+  }
+}
+
+/**
+ * Simplified boundary geometry for a motif. Returns null on any failure or
+ * when the backend has no boundary, so callers fall back to the dot-field.
+ */
+export async function fetchBoundary(ref: BoundaryRef): Promise<BoundaryResult | null> {
+  try {
+    const qs = `layer=${encodeURIComponent(ref.layer)}&geoid=${encodeURIComponent(ref.geoid)}`;
+    const res = await fetch(`${API_BASE}/inform/boundary?${qs}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.hasBoundary === false || !data.geojson) return null;
+    return data as BoundaryResult;
+  } catch {
+    return null;
   }
 }
 
