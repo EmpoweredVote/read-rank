@@ -102,5 +102,7 @@ describe('ResultsPhase staged flow', () => {
     expect(await screen.findByText(/mirrors ranked choice voting/i)).toBeInTheDocument();
     expect(screen.getByText(/your top pick came from/i)).toBeInTheDocument();
     expect(screen.getByText(/how the candidates stack up/i)).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /calibrate your compass/i })).toBeInTheDocument();
   });
 });

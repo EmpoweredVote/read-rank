@@ -10,6 +10,9 @@ import { ThresholdInterstitial } from './ThresholdInterstitial';
 import { RcvEducationPanel } from './RcvEducationPanel';
 import { buildInsightSentence, buildQuoteIdentityMap } from '../utils/revealInsight';
 import type { QuoteIdentity } from '../utils/revealInsight';
+import { AlignmentGrid } from './AlignmentGrid';
+import { CompassCrossLink } from './CompassCrossLink';
+import { buildAlignmentGrid, type AlignmentTopic } from '../utils/alignmentGrid';
 
 // ============================================================
 // MegaParticles — celebratory burst on the #1 card.
@@ -235,6 +238,18 @@ export const ResultsPhase: React.FC = () => {
     [agreedList, identities]
   );
 
+  const alignmentTopics = useMemo<AlignmentTopic[]>(
+    () => (race ? race.topicOrder.map((key) => ({ key, title: race.topics[key].title })) : []),
+    [race]
+  );
+  const alignmentRows = useMemo(
+    () => (reveal ? buildAlignmentGrid(reveal, (agreedList ?? []).map((q) => q.id), alignmentTopics) : []),
+    [reveal, agreedList, alignmentTopics]
+  );
+  const topTopicTitle = race && agreedList && agreedList.length > 0
+    ? race.topics[agreedList[0].topicKey]?.title ?? null
+    : null;
+
   const agreed = agreedList ?? [];
 
   if (loading) {
@@ -340,6 +355,7 @@ export const ResultsPhase: React.FC = () => {
         {allRevealed && (
           <>
             {insight && <div className="insight-strip">{insight}</div>}
+            <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
             <RcvEducationPanel usesRcv={reveal?.usesRcv} />
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
               How the candidates stack up
@@ -348,6 +364,7 @@ export const ResultsPhase: React.FC = () => {
               <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
                 address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion} />
             ))}
+            <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
           </>
         )}
       </div>
@@ -361,10 +378,6 @@ export const ResultsPhase: React.FC = () => {
           </button>
         </motion.div>
       )}
-
-      {/* DEFERRED: compass-feed — offering to save these positions into the user's
-          compass needs its own design (already-calibrated users; quotes don't map
-          1:1 to compass stances). Not built in v1. */}
     </div>
   );
 };
