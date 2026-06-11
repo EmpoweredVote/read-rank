@@ -1739,3 +1739,28 @@ dialog.rank-sheet[open] {
   min-height: 2.75rem;
   padding: 0 0.5rem;
 }
+
+.first-agree-coach {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-medium);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  box-shadow: 0 4px 16px rgba(28, 28, 28, 0.12);
+}
+
+.first-agree-coach-mobile {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 41; /* one above the dock */
+  max-width: calc(100vw - 2rem);
+}
+
+.first-agree-coach-desktop {
+  margin-bottom: 0.5rem;
+}

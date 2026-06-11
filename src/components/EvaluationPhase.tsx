@@ -10,6 +10,7 @@ import { useDeviceType } from '../hooks/useDeviceType';
 import CoachMark from './CoachMark';
 import { RankDock } from './RankDock';
 import { RankSheet } from './RankSheet';
+import { FirstAgreeCoach } from './FirstAgreeCoach';
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -261,6 +262,7 @@ export const EvaluationPhase: React.FC = () => {
         <div className="evaluation-split-layout">
           <div className="evaluation-main-panel">{mainColumn}</div>
           <div className="evaluation-sidebar-panel">
+            {agreed.length === 1 && <FirstAgreeCoach variant="desktop" />}
             <RankedListSidebar ref={sidebarRef} />
           </div>
         </div>
@@ -273,6 +275,7 @@ export const EvaluationPhase: React.FC = () => {
   return (
     <div className="evaluation-mobile">
       {mainColumn}
+      {agreed.length === 1 && <FirstAgreeCoach variant="mobile" />}
       <RankDock
         ref={dockRef}
         agreed={agreed}
