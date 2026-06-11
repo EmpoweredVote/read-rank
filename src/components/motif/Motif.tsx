@@ -19,13 +19,14 @@ function BoundaryMotif({ refKey, fallback }: {
   refKey: BoundaryRef; fallback: 'full' | 'cluster' | 'point';
 }) {
   const [path, setPath] = useState<string | null>(null);
+  const { layer, geoid } = refKey;
   useEffect(() => {
     let alive = true;
-    fetchBoundary(refKey)
+    fetchBoundary({ layer, geoid })
       .then((b) => { if (alive) setPath(b ? projectGeoJson(b.geojson).path : null); })
       .catch(() => { if (alive) setPath(null); });
     return () => { alive = false; };
-  }, [refKey.layer, refKey.geoid]);
+  }, [layer, geoid]);
 
   if (!path) return <DotField arrangement={fallback} />;
   return (
