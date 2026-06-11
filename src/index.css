@@ -1620,3 +1620,53 @@ dialog.rank-sheet[open] {
   font-weight: 600;
   color: var(--text-ink);
 }
+
+/* ============================================
+   Alignment Grid (REDESIGN_SPEC §1.6)
+   Candidates × topics tier table — colorblind-safe (icon + sr-only text).
+   ============================================ */
+
+.alignment-grid-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.625rem;
+  background-color: var(--surface-card);
+}
+
+.alignment-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+}
+
+.alignment-grid th,
+.alignment-grid td {
+  padding: 0.5rem 0.625rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.alignment-grid thead th {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.alignment-grid tbody th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.alignment-grid tbody tr:last-child th,
+.alignment-grid tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.alignment-grid-empty {
+  color: var(--text-tertiary);
+}
