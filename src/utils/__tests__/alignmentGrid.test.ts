@@ -39,8 +39,8 @@ describe('buildAlignmentGrid', () => {
   it('maps each candidate-topic cell to the tier the user gave that quote', () => {
     const grid = buildAlignmentGrid(reveal, ['q1', 'q3', 'q4', 'q2'], topics);
     expect(grid).toEqual([
-      { name: 'Jane Doe', cells: ['diamond', 'iron'] },
-      { name: 'Sam Roe', cells: ['bronze', null] },
+      { candidateId: 'jane', name: 'Jane Doe', cells: ['diamond', 'iron'] },
+      { candidateId: 'sam', name: 'Sam Roe', cells: ['bronze', null] },
     ]);
   });
 

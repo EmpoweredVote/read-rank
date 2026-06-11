@@ -179,6 +179,7 @@ export const RaceHub: React.FC = () => {
                     <span style={{ display: 'inline-flex', gap: '0.25rem' }} aria-hidden="true">
                       {progress.topicOrder.map((key) => {
                         const t = progress.topics[key];
+                        if (!t) return null;
                         const done = t.currentIndex >= t.quotesToEvaluate.length;
                         const isActive = key === progress.currentTopicKey;
                         return (
@@ -192,7 +193,7 @@ export const RaceHub: React.FC = () => {
                     <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
                       {progress.topicOrder.filter((key) => {
                         const t = progress.topics[key];
-                        return t.currentIndex >= t.quotesToEvaluate.length;
+                        return !!t && t.currentIndex >= t.quotesToEvaluate.length;
                       }).length} of {progress.topicOrder.length} topics
                     </span>
                   </div>

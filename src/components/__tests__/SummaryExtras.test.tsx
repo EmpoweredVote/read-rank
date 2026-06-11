@@ -13,7 +13,7 @@ describe('AlignmentGrid', () => {
     render(
       <AlignmentGrid
         topics={[{ key: 'a', title: 'Housing' }]}
-        rows={[{ name: 'Jane Doe', cells: ['diamond'] }]}
+        rows={[{ candidateId: 'jane', name: 'Jane Doe', cells: ['diamond'] }]}
       />
     );
     expect(screen.getByRole('table')).toBeInTheDocument();

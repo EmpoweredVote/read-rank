@@ -33,7 +33,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({ topics, rows }) =>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.name}>
+            <tr key={row.candidateId}>
               <th scope="row">{row.name}</th>
               {row.cells.map((tier, i) => (
                 <td key={topics[i].key} title={tier ? TIER_META[tier].name : 'Not judged'}>
