@@ -88,6 +88,9 @@ interface ReadRankState {
   // Onboarding
   coachMarksCompleted: boolean;
   completeCoachMarks: () => void;
+  /** The one-time caption after the user's first real agree has been shown. */
+  firstAgreeCoached: boolean;
+  completeFirstAgreeCoach: () => void;
 
   // Location filter
   locationFilter: LocationFilter | null;
@@ -162,6 +165,7 @@ const initialState = {
   practiceCompleted: false,
   practiceProgress: null as PracticeProgress | null,
   coachMarksCompleted: false,
+  firstAgreeCoached: false,
   locationFilter: null as LocationFilter | null,
 };
 
@@ -377,6 +381,7 @@ export const useReadRankStore = create<ReadRankState>()(
       skipPractice: () => set({ phase: 'hub', practiceCompleted: true, practiceProgress: null }),
 
       completeCoachMarks: () => set({ coachMarksCompleted: true }),
+      completeFirstAgreeCoach: () => set({ firstAgreeCoached: true }),
 
       setLocationFilter: (filter) => set({ locationFilter: filter }),
       clearLocationFilter: () => set({ locationFilter: null }),
@@ -437,6 +442,7 @@ export const useReadRankStore = create<ReadRankState>()(
         practiceCompleted: state.practiceCompleted,
         practiceProgress: state.practiceProgress,
         coachMarksCompleted: state.coachMarksCompleted,
+        firstAgreeCoached: state.firstAgreeCoached,
         locationFilter: state.locationFilter,
       }),
     }
