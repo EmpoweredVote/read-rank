@@ -69,12 +69,11 @@ function RowContent({ quote, index, compact, onMove, isFirst, isLast, dragHandle
         <GripIcon />
       </button>
 
-      <span className="tier-rank-num" aria-hidden="true">{rank}</span>
+      <TierIcon tier={tier} size={32} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         {tier !== 'bronze' && (
           <div className={`tier-label tier-label-${tier}`}>
-            <TierIcon tier={tier} size={12} />
             {meta.label}
           </div>
         )}

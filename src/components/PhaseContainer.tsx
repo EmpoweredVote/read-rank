@@ -51,7 +51,7 @@ export const PhaseContainer: React.FC = () => {
   const localVerdictMap = useMemo(() => {
     const m: Record<string, 'agreed' | 'disagreed'> = {};
     for (const race of Object.values(raceProgress)) {
-      for (const q of race.agreed) m[q.id] = 'agreed';
+      for (const t of Object.values(race.topics)) for (const q of t.agreed) m[q.id] = 'agreed';
       for (const t of Object.values(race.topics)) for (const q of t.disagreed) m[q.id] = 'disagreed';
     }
     return m;

@@ -34,7 +34,7 @@ describe('EvaluationPhase keyboard shortcuts', () => {
     // Wait for the store to register the agree (animation runs in jsdom but
     // framer-motion skips physics; the store update is the reliable signal).
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
-    expect(useReadRankStore.getState().getCurrentRaceProgress()!.agreed.map((q) => q.id)).toEqual(['q1']);
+    expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
   });
 
   it('ignores arrow keys while a modal dialog is open', async () => {
@@ -46,7 +46,7 @@ describe('EvaluationPhase keyboard shortcuts', () => {
     // The swipe animation duration is 400ms; wait longer to catch the bug.
     await new Promise((r) => setTimeout(r, 600));
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
-    expect(race.agreed).toEqual([]);
+    expect(race.topics.housing.agreed).toEqual([]);
     expect(race.topics.housing.currentIndex).toBe(0);
   });
 });

@@ -8,9 +8,10 @@ export interface RankRailProps {
 }
 
 export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
-  const { getCurrentRaceProgress, reorderAgreed, reAgree } = useReadRankStore();
+  const { getCurrentRaceProgress, getCurrentTopicProgress, reorderAgreed, reAgree } = useReadRankStore();
   const race = getCurrentRaceProgress();
-  const agreed = race?.agreed ?? [];
+  const topic = getCurrentTopicProgress();
+  const agreed = topic?.agreed ?? [];
   const disagreed = race ? Object.values(race.topics).flatMap((t) => t.disagreed) : [];
   const [showDisagreed, setShowDisagreed] = useState(false);
   const isSheet = variant === 'sheet';

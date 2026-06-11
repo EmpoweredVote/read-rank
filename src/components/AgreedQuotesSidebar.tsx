@@ -7,9 +7,9 @@ import { RankRail } from './RankRail';
  * Always visible alongside the triage card; ranking is optional and never forced.
  */
 export const RankedListSidebar = React.forwardRef<HTMLDivElement>((_props, ref) => {
-  const { getCurrentRaceProgress } = useReadRankStore();
-  const race = getCurrentRaceProgress();
-  const agreed = race?.agreed ?? [];
+  const { getCurrentTopicProgress } = useReadRankStore();
+  const topic = getCurrentTopicProgress();
+  const agreed = topic?.agreed ?? [];
 
   return (
     <div ref={ref} className="agreed-quotes-sidebar">

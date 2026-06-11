@@ -28,7 +28,7 @@ export const EvaluationPhase: React.FC = () => {
   const race = getCurrentRaceProgress();
   const topic = getCurrentTopicProgress();
 
-  const agreed = race?.agreed ?? [];
+  const agreed = topic?.agreed ?? [];
   const quotesToEvaluate = topic?.quotesToEvaluate ?? [];
   const currentIndex = topic?.currentIndex ?? 0;
   const currentQuote = quotesToEvaluate[currentIndex];
@@ -133,7 +133,7 @@ export const EvaluationPhase: React.FC = () => {
         </p>
         <div className="w-full h-1 rounded-full" style={{ backgroundColor: 'var(--border-subtle)' }}>
           <div className="h-1 rounded-full transition-all duration-300"
-            style={{ width: `${topicExhausted ? 100 : progressPercent}%`, backgroundColor: 'var(--color-ev-muted-blue)' }} />
+            style={{ width: `${topicExhausted ? 100 : progressPercent}%`, backgroundColor: 'var(--progress-fill)' }} />
         </div>
       </div>
 

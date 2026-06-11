@@ -90,6 +90,8 @@
   --grain-opacity: 0.025;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  --progress-fill: var(--color-ev-muted-blue);
 }
 
 .dark {
@@ -144,6 +146,8 @@
   --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  --progress-fill: var(--color-ev-yellow);
 }
 
 /* ============================================
@@ -293,7 +297,6 @@ dialog::backdrop {
   background-color: var(--surface-card);
   border-radius: 0.75rem;
   border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--color-ev-muted-blue);
   box-shadow: var(--shadow-card);
   padding: 2rem 2rem 1.75rem;
   color: var(--text-ink);
@@ -1541,17 +1544,7 @@ dialog.rank-sheet[open] {
   box-shadow: inset 3px 0 0 var(--color-ev-yellow), var(--shadow-card);
 }
 
-/* #4: current step underline */
-.topic-chip-current::after {
-  content: '';
-  position: absolute;
-  left: 0.625rem;
-  right: 0.625rem;
-  bottom: -0.3125rem;
-  height: 3px;
-  border-radius: 2px;
-  background-color: var(--color-ev-yellow);
-}
+/* #4: current step underline — removed per design feedback */
 
 /* #1: wordmark underline (used in the hub header) */
 .wordmark-underline {

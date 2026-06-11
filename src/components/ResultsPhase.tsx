@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { useReadRankStore, getAllAgreedQuotes } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
 import { SourceLine } from './SourceLine';
@@ -13,6 +13,8 @@ import type { QuoteIdentity } from '../utils/revealInsight';
 import { AlignmentGrid } from './AlignmentGrid';
 import { CompassCrossLink } from './CompassCrossLink';
 import { buildAlignmentGrid, type AlignmentTopic } from '../utils/alignmentGrid';
+import { TierIcon } from './TierIcon';
+import { tierForIndex } from '../utils/tiers';
 
 // ============================================================
 // MegaParticles — celebratory burst on the #1 card.
@@ -62,9 +64,11 @@ interface BallotCardProps {
   verdictMap: VerdictMap;
   address?: string;
   prefersReducedMotion: boolean | null;
+  /** quoteId → rank index within its topic (for tier icon display). */
+  quoteRankMap: Map<string, number>;
 }
 
-export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion }) => {
+export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion, quoteRankMap }) => {
   const [expanded, setExpanded] = useState(false);
   const [particles, setParticles] = useState(false);
   const [imgOk, setImgOk] = useState(true);
@@ -178,20 +182,31 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
                   }}>Your #1 here</span>
                 )}
               </div>
-              {t.quotes.map((q) => (
-                <p key={q.quoteId} style={{
-                  fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', lineHeight: 1.55, margin: '0 0 0.25rem',
-                  color: q.supported ? 'var(--text-ink)' : 'var(--text-tertiary)',
-                  paddingLeft: '0.625rem', borderLeft: `2px solid ${q.supported ? 'var(--agree)' : 'var(--border-medium)'}`,
-                }}>
-                  &ldquo;{q.text}&rdquo;
-                  {q.sourceName && (
-                    <span style={{ marginLeft: '0.375rem' }}>
-                      <SourceLine sourceName={q.sourceName} sourceUrl={q.sourceUrl} variant="compact" />
-                    </span>
-                  )}
-                </p>
-              ))}
+              {t.quotes.map((q) => {
+                const rankIdx = quoteRankMap.get(q.quoteId);
+                const tier = rankIdx !== undefined ? tierForIndex(rankIdx) : null;
+                return (
+                  <div key={q.quoteId} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                    margin: '0 0 0.375rem',
+                    paddingLeft: '0.625rem',
+                    borderLeft: `2px solid ${q.supported ? 'var(--agree)' : 'var(--border-medium)'}`,
+                  }}>
+                    {tier && <span style={{ flexShrink: 0, marginTop: '0.125rem' }}><TierIcon tier={tier} size={18} /></span>}
+                    <p style={{
+                      fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', lineHeight: 1.55, margin: 0,
+                      color: q.supported ? 'var(--text-ink)' : 'var(--text-tertiary)',
+                    }}>
+                      &ldquo;{q.text}&rdquo;
+                      {q.sourceName && (
+                        <span style={{ marginLeft: '0.375rem' }}>
+                          <SourceLine sourceName={q.sourceName} sourceUrl={q.sourceUrl} variant="compact" />
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -225,7 +240,7 @@ export const ResultsPhase: React.FC = () => {
       .finally(() => setTimeout(() => setLoading(false), 600));
   }, [currentRaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const agreedList = race?.agreed;
+  const agreedList = race ? getAllAgreedQuotes(race) : [];
   const topicCount = race ? race.topicOrder.length : 0;
 
   const identities = useMemo(
@@ -234,7 +249,7 @@ export const ResultsPhase: React.FC = () => {
   );
 
   const insight = useMemo(
-    () => buildInsightSentence(agreedList ?? [], identities),
+    () => buildInsightSentence(agreedList, identities),
     [agreedList, identities]
   );
 
@@ -243,14 +258,26 @@ export const ResultsPhase: React.FC = () => {
     [race]
   );
   const alignmentRows = useMemo(
-    () => (reveal ? buildAlignmentGrid(reveal, (agreedList ?? []).map((q) => q.id), alignmentTopics) : []),
+    () => (reveal ? buildAlignmentGrid(reveal, agreedList.map((q) => q.id), alignmentTopics) : []),
     [reveal, agreedList, alignmentTopics]
   );
-  const topTopicTitle = race && agreedList && agreedList.length > 0
+  const topTopicTitle = race && agreedList.length > 0
     ? race.topics[agreedList[0].topicKey]?.title ?? null
     : null;
 
-  const agreed = agreedList ?? [];
+  const agreed = agreedList;
+
+  // Map quoteId → rank index within its topic (0-based) for tier icon display.
+  const quoteRankMap = useMemo((): Map<string, number> => {
+    if (!race) return new Map();
+    const map = new Map<string, number>();
+    for (const topicKey of race.topicOrder) {
+      const topic = race.topics[topicKey];
+      if (!topic) continue;
+      topic.agreed.forEach((q, i) => map.set(q.id, i));
+    }
+    return map;
+  }, [race]);
 
   if (loading) {
     return (
@@ -346,6 +373,14 @@ export const ResultsPhase: React.FC = () => {
       </motion.div>
 
       <div className="max-w-2xl mx-auto space-y-3">
+        {allRevealed && (
+          <>
+            {insight && <div className="insight-strip">{insight}</div>}
+            <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
+            <RcvEducationPanel usesRcv={reveal?.usesRcv} />
+          </>
+        )}
+
         <RevealBoard
           agreed={agreed}
           identities={identities}
@@ -354,15 +389,13 @@ export const ResultsPhase: React.FC = () => {
 
         {allRevealed && (
           <>
-            {insight && <div className="insight-strip">{insight}</div>}
-            <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
-            <RcvEducationPanel usesRcv={reveal?.usesRcv} />
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
               How the candidates stack up
             </h3>
             {ballot.map((entry, i) => (
               <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
-                address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion} />
+                address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion}
+                quoteRankMap={quoteRankMap} />
             ))}
             <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
           </>

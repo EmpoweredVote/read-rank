@@ -59,7 +59,7 @@ describe('RankRail', () => {
     render(<RankRail variant="sheet" />);
     await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
-    expect(useReadRankStore.getState().getCurrentRaceProgress()!.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
+    expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
     expect(screen.queryByRole('button', { name: /disagreed \(/i })).not.toBeInTheDocument();
   });
 });

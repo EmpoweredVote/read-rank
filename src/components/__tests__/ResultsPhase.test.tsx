@@ -34,7 +34,7 @@ const entry: BallotEntry = {
 
 describe('BallotCard source attribution', () => {
   it('shows a verify link for each quote in the expanded breakdown', async () => {
-    render(<BallotCard entry={entry} index={0} verdictMap={{}} prefersReducedMotion={true} />);
+    render(<BallotCard entry={entry} index={0} verdictMap={{}} prefersReducedMotion={true} quoteRankMap={new Map()} />);
     await userEvent.click(screen.getByRole('button', { name: /see what they said/i }));
     const link = screen.getByRole('link', { name: /verify source: KQED Forum/i });
     expect(link).toHaveAttribute('href', 'https://example.com/kqed');
