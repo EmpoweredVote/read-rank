@@ -85,4 +85,12 @@ describe('RankList move buttons', () => {
     const textEl = screen.getByText('Alpha quote.');
     expect(textEl.style.overflow).not.toBe('hidden');
   });
+
+  it('hides the original row during drag (opacity 0 via rank-row-dragging class)', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    // Initially no row has the dragging class
+    const rows = document.querySelectorAll('.tier-row');
+    expect(rows.length).toBe(3);
+    rows.forEach((r) => expect(r).not.toHaveClass('rank-row-dragging'));
+  });
 });
