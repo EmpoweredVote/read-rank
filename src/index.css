@@ -1248,6 +1248,9 @@ dialog.rank-sheet[open] {
 .tier-icon-bronze { color: var(--tier-bronze-border); }
 .tier-icon-disagreed { color: var(--tier-disagreed-border); }
 
+/* Tier tile wrappers — solid color tiles housing white icons */
+.tier-tile { flex-shrink: 0; }
+
 .tier-rank-num {
   font-family: 'Manrope', sans-serif;
   font-weight: 800;
