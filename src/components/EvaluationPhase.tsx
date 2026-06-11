@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { useMotionValue, MotionValue, animate } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
-import { SwipeBackground } from './SwipeBackground';
 import { ActionButtons } from './ActionButtons';
 import { RankedListSidebar } from './AgreedQuotesSidebar';
 import { TopicStepper } from './TopicStepper';
@@ -11,6 +10,8 @@ import CoachMark from './CoachMark';
 import { RankDock } from './RankDock';
 import { RankSheet } from './RankSheet';
 import { FirstAgreeCoach } from './FirstAgreeCoach';
+
+function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -44,8 +45,8 @@ export const EvaluationPhase: React.FC = () => {
   const deviceType = useDeviceType();
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
-  const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pendingVerdict, setPendingVerdict] = useState<'agree' | 'disagree' | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
@@ -58,9 +59,6 @@ export const EvaluationPhase: React.FC = () => {
   const swipeAreaRef = useRef<HTMLDivElement>(null);
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const dragX = useMotionValue(0);
-  const cardXRef = useRef<MotionValue<number>>(dragX);
 
   // Coach mark tour
   useEffect(() => {
@@ -77,26 +75,25 @@ export const EvaluationPhase: React.FC = () => {
     }
   }, [isMouseDevice, allTopicsDone]);
 
-  const handleDragStateChange = (dragging: boolean, x: MotionValue<number>) => {
-    setIsDragging(dragging);
-    cardXRef.current = x;
-    return x.on('change', (latest) => dragX.set(latest));
-  };
-
   const progressPercent = quotesToEvaluate.length > 0
     ? Math.round((Math.min(currentIndex, quotesToEvaluate.length) / quotesToEvaluate.length) * 100)
     : 0;
 
+  const finishTour = useCallback(() => {
+    setTourStep(null);
+    completeCoachMarks();
+  }, [completeCoachMarks]);
+
   const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
-    const offScreenX = direction === 'agree' ? 500 : -500;
-    await animate(cardXRef.current, offScreenX, { duration: 0.4, ease: [0.4, 0, 0.2, 1] }).finished;
+    setPendingVerdict(direction);
+    await delay(300); // Strike (120ms) + Hold (180ms)
+    setPendingVerdict(null);
+    if (tourStep === 1) setTourStep(2);
     if (direction === 'agree') agree(currentQuote);
     else disagree(currentQuote);
-    if (tourStep === 1) setTourStep(2);
-    cardXRef.current.set(0);
-    dragX.set(0);
+    await delay(250); // card exit animation buffer
     setIsAnimating(false);
   };
 
@@ -123,21 +120,6 @@ export const EvaluationPhase: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAnimating, currentQuote, sheetOpen]);
 
-  const handleCardAgree = useCallback((q: BlindQuote) => {
-    agree(q);
-    if (tourStep === 1) setTourStep(2);
-  }, [agree, tourStep]);
-
-  const handleCardDisagree = useCallback((q: BlindQuote) => {
-    disagree(q);
-    if (tourStep === 1) setTourStep(2);
-  }, [disagree, tourStep]);
-
-  const finishTour = useCallback(() => {
-    setTourStep(null);
-    completeCoachMarks();
-  }, [completeCoachMarks]);
-
   const canReveal = agreed.length >= 1;
 
   const triageContent = (
@@ -158,18 +140,16 @@ export const EvaluationPhase: React.FC = () => {
       <div ref={swipeAreaRef}>
         {currentQuote ? (
           <div className="swipe-card-container">
-            <SwipeBackground dragX={dragX} isDragging={isDragging} />
             <div className="flex justify-center relative z-10">
-              <QuoteCard
-                ref={quoteCardRef}
-                key={currentQuote.id}
-                quote={currentQuote}
-                displayNumber={currentIndex + 1}
-                onDragStateChange={handleDragStateChange}
-                externalAnimating={isAnimating}
-                onAgree={handleCardAgree}
-                onDisagree={handleCardDisagree}
-              />
+              <AnimatePresence mode="wait">
+                <QuoteCard
+                  ref={quoteCardRef}
+                  key={currentQuote.id}
+                  quote={currentQuote}
+                  displayNumber={currentIndex + 1}
+                  pendingVerdict={pendingVerdict ?? undefined}
+                />
+              </AnimatePresence>
             </div>
           </div>
         ) : (
@@ -179,7 +159,7 @@ export const EvaluationPhase: React.FC = () => {
                 {isLastTopic ? 'All topics done' : 'Topic complete'}
               </div>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-                {isLastTopic ? "Reveal your ballot when you’re ready." : 'Move on, or keep ranking your pile.'}
+                {isLastTopic ? "Reveal your ballot when you're ready." : 'Move on, or keep ranking your pile.'}
               </p>
               {!isLastTopic && (
                 <button onClick={nextTopic} className="ev-button-primary" style={{ marginTop: '1rem', fontSize: '0.9375rem' }}>
@@ -191,7 +171,12 @@ export const EvaluationPhase: React.FC = () => {
         )}
 
         {currentQuote && (
-          <ActionButtons onAgree={() => handleButtonSwipe('agree')} onDisagree={() => handleButtonSwipe('disagree')} disabled={isAnimating} />
+          <ActionButtons
+            onAgree={() => handleButtonSwipe('agree')}
+            onDisagree={() => handleButtonSwipe('disagree')}
+            disabled={isAnimating}
+            fixed={!isMouseDevice}
+          />
         )}
       </div>
     </>
@@ -228,7 +213,7 @@ export const EvaluationPhase: React.FC = () => {
         onNext={finishTour}
         onSkipAll={finishTour}
       >
-        Swipe right to agree, left to disagree.
+        Tap Agree or Disagree to evaluate each quote.
       </CoachMark>
       {isMouseDevice && (
         <CoachMark
@@ -273,7 +258,7 @@ export const EvaluationPhase: React.FC = () => {
 
   // Mobile: single column with dock + sheet
   return (
-    <div className="evaluation-mobile">
+    <div className={`evaluation-mobile ${currentQuote ? 'has-fixed-paddles' : ''}`}>
       {mainColumn}
       {agreed.length === 1 && <FirstAgreeCoach variant="mobile" />}
       <RankDock
