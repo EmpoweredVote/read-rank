@@ -52,7 +52,6 @@ export function RaceCard(props: RaceCardProps) {
       aria-label={`Open ${office} race`}
       disabled={disabled}
       onClick={activate}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } }}
     >
       <div className="race-card-v2__motif" aria-hidden="true">
         <Motif tier={tier} scope={scope} boundaryRef={boundaryRef ?? null} />

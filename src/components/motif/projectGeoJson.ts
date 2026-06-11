@@ -20,6 +20,7 @@ export function projectGeoJson(
   pad = 4,
 ): { path: string; viewBox: string } {
   const rings = collectRings(geom).filter((r) => r.length > 1);
+  if (rings.length === 0) return { path: '', viewBox: `0 0 ${size} ${size}` };
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const r of rings) for (const [x, y] of r) {
     if (x < minX) minX = x; if (x > maxX) maxX = x;
