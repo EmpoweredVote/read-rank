@@ -21,7 +21,7 @@ async function loadProfile(setState: (s: AuthState) => void) {
           userId: data.id ?? null,
           loading: false,
         });
-      } else if (res) {
+      } else {
         setState({ isLoggedIn: false, userName: null, userId: null, loading: false });
       }
     })
