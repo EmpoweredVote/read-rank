@@ -31,6 +31,8 @@ export interface RaceSummary {
   quoteCount?: number;
   /** Topics with enough quotes to rank; falls back to topicCount. */
   rankableTopicCount?: number;
+  /** Backend-formatted district label, e.g. "District 1", "9th District". Null for statewide races. */
+  districtLabel?: string | null;
 }
 
 export type RaceTier = 'federal' | 'state' | 'local';

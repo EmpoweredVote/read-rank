@@ -129,15 +129,13 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
               tier={tier}
               scope={scope}
               state={race.state}
-              place={null}
+              districtLabel={race.districtLabel ?? null}
               electionDate={race.electionDate}
               boundaryRef={race.boundaryRef ?? null}
               frameRef={race.frameRef ?? null}
               candidateCount={race.candidateCount}
               topicCount={race.rankableTopicCount ?? race.topicCount}
               estMinutes={estMinutes}
-              isLocal={race.isLocal}
-              usesRcv={race.usesRcv}
               progress={progress}
               disabled={starting !== null}
               onSelect={() => handleSelect(race.raceId)}

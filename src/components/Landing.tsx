@@ -29,16 +29,16 @@ export function Landing() {
             className="text-4xl sm:text-5xl font-extrabold leading-tight"
             style={{ color: 'var(--text-heading)', fontFamily: "'Manrope', sans-serif" }}
           >
-            Read what candidates say,
+            Read candidates blind,
             <br />
-            <span style={{ color: 'var(--text-link)' }}>rank them on what matters.</span>
+            <span style={{ color: 'var(--text-link)' }}>rank by what they said.</span>
           </h1>
           <p
             className="text-base sm:text-lg leading-relaxed mt-5 max-w-xl"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Manrope', sans-serif" }}
           >
-            Most voters see only names on a ballot.  Read real quotes with no names attached, form
-            your own view, then see who earned your trust.
+            Read real quotes from real candidates — without knowing who said it.
+            Form your own view. Then find out who you actually align with.
           </p>
           <button
             type="button"

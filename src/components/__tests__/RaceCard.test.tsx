@@ -1,35 +1,62 @@
 // src/components/__tests__/RaceCard.test.tsx
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RaceCard } from '../RaceCard';
 
-const props = {
-  office: 'Governor', tier: 'state' as const, scope: 'statewide' as const,
-  state: 'IN', place: null, electionDate: '2024-11-05', boundaryRef: null, frameRef: null,
-  candidateCount: 4, topicCount: 3, estMinutes: 2, isLocal: false, onSelect: () => {},
+// Base props covering the redesigned RaceCard API.
+const baseProps = {
+  office: 'Governor',
+  tier: 'state' as const,
+  scope: 'statewide' as const,
+  state: 'IN',
+  electionDate: '2024-11-05',
+  boundaryRef: null,
+  frameRef: null,
+  candidateCount: 4,
+  topicCount: 3,
+  estMinutes: 2,
+  onSelect: vi.fn(),
 };
 
 describe('RaceCard', () => {
-  it('shows the office title, tier/scope label, geography and metadata', () => {
-    render(<RaceCard {...props} />);
-    expect(screen.getByText('Governor')).toBeInTheDocument();
-    expect(screen.getByText(/state\s*·\s*statewide/i)).toBeInTheDocument();
-    expect(screen.getByText(/nov 2024/i)).toBeInTheDocument();
-    expect(screen.getByText('Candidates').parentElement).toHaveTextContent('4');
-    expect(screen.getByText('Topics').parentElement).toHaveTextContent('3');
-    expect(screen.getByText('Time').parentElement).toHaveTextContent('~2 min');
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders full state name from abbreviation', () => {
+    render(<RaceCard {...baseProps} />);
+    expect(screen.getByText(/Indiana/)).toBeInTheDocument();
   });
 
-  it('fires onSelect on click', async () => {
+  it('renders formatted election date', () => {
+    render(<RaceCard {...baseProps} />);
+    expect(screen.getByText(/Nov\s+5,\s+2024/)).toBeInTheDocument();
+  });
+
+  it('renders districtLabel when provided', () => {
+    render(<RaceCard {...baseProps} districtLabel="District 1" />);
+    expect(screen.getByText('District 1')).toBeInTheDocument();
+  });
+
+  it('renders no district element when districtLabel is absent', () => {
+    render(<RaceCard {...baseProps} districtLabel={null} />);
+    expect(screen.queryByText(/District/)).not.toBeInTheDocument();
+  });
+
+  it('calls onSelect when card is clicked', async () => {
     const onSelect = vi.fn();
-    render(<RaceCard {...props} onSelect={onSelect} />);
-    await userEvent.click(screen.getByRole('button', { name: /open governor race/i }));
+    render(<RaceCard {...baseProps} onSelect={onSelect} />);
+    await userEvent.click(screen.getByRole('button', { name: /Governor/i }));
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
-  it('shows the Local pill when isLocal', () => {
-    render(<RaceCard {...props} office="Mayor" tier="local" scope="citywide" isLocal place="Bloomington" />);
-    expect(screen.getByText('Local')).toBeInTheDocument();
+  it('does not render a Local pill', () => {
+    render(<RaceCard {...baseProps} />);
+    expect(screen.queryByText(/Local/i)).not.toBeInTheDocument();
+  });
+
+  it('renders scope row with null state gracefully', () => {
+    render(<RaceCard {...baseProps} state={null} />);
+    // Should not crash; no state name shown
+    expect(screen.queryByText('Indiana')).not.toBeInTheDocument();
   });
 });

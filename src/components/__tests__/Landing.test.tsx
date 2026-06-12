@@ -12,7 +12,7 @@ beforeEach(() => {
 describe('Landing', () => {
   it('renders the hero and the election picker on one surface', async () => {
     render(<Landing />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/read what candidates say/i);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/read candidates blind/i);
     expect(screen.getByText(/choose an election/i)).toBeInTheDocument();
     expect(screen.getByText(/start here/i)).toBeInTheDocument();
     // RaceHub inside the picker resolves the mock race async (fetch fallback).
