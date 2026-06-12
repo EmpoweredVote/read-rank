@@ -132,6 +132,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
               place={null}
               electionDate={race.electionDate}
               boundaryRef={race.boundaryRef ?? null}
+              frameRef={race.frameRef ?? null}
               candidateCount={race.candidateCount}
               topicCount={race.rankableTopicCount ?? race.topicCount}
               estMinutes={estMinutes}

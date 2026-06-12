@@ -23,6 +23,7 @@ export interface RaceCardProps {
   place?: string | null;
   electionDate?: string | null;
   boundaryRef?: BoundaryRef | null;
+  frameRef?: BoundaryRef | null;
   candidateCount: number;
   topicCount: number;
   estMinutes: number;
@@ -35,7 +36,7 @@ export interface RaceCardProps {
 
 export function RaceCard(props: RaceCardProps) {
   const {
-    office, tier, scope, state, place, electionDate, boundaryRef,
+    office, tier, scope, state, place, electionDate, boundaryRef, frameRef,
     candidateCount, topicCount, estMinutes, isLocal, usesRcv,
     progress = 'none', disabled, onSelect,
   } = props;
@@ -54,7 +55,7 @@ export function RaceCard(props: RaceCardProps) {
       onClick={activate}
     >
       <div className="race-card-v2__motif" aria-hidden="true">
-        <Motif tier={tier} scope={scope} boundaryRef={boundaryRef ?? null} />
+        <Motif tier={tier} scope={scope} boundaryRef={boundaryRef ?? null} frameRef={frameRef ?? null} />
       </div>
       <div className="race-card-v2__body">
         <div className="race-card-v2__scope">{TIER_LABEL[tier]} · {SCOPE_LABEL[scope]}</div>

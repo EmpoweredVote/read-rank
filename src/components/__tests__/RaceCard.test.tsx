@@ -6,7 +6,7 @@ import { RaceCard } from '../RaceCard';
 
 const props = {
   office: 'Governor', tier: 'state' as const, scope: 'statewide' as const,
-  state: 'IN', place: null, electionDate: '2024-11-05', boundaryRef: null,
+  state: 'IN', place: null, electionDate: '2024-11-05', boundaryRef: null, frameRef: null,
   candidateCount: 4, topicCount: 3, estMinutes: 2, isLocal: false, onSelect: () => {},
 };
 
