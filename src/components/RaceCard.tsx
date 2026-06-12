@@ -16,8 +16,6 @@ export interface RaceCardProps {
   tier: Tier;
   scope: Scope;
   state: string | null;
-  /** @deprecated kept for backwards-compat; ignored in new layout */
-  place?: string | null;
   districtLabel?: string | null;
   electionDate?: string | null;
   boundaryRef?: BoundaryRef | null;
@@ -25,10 +23,6 @@ export interface RaceCardProps {
   candidateCount: number;
   topicCount: number;
   estMinutes: number;
-  /** @deprecated kept for backwards-compat; pill is no longer rendered */
-  isLocal?: boolean;
-  /** @deprecated kept for backwards-compat; ignored in new layout */
-  usesRcv?: boolean;
   progress?: 'none' | 'in-progress' | 'completed';
   disabled?: boolean;
   onSelect: () => void;
