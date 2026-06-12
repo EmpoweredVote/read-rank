@@ -2,17 +2,13 @@
 import { Motif } from './motif/Motif';
 import type { Tier, Scope } from '../utils/raceTier';
 import type { BoundaryRef } from '../data/api';
+import { getStateName } from '../utils/stateNames';
 
-const TIER_LABEL: Record<Tier, string> = { federal: 'Federal', state: 'State', local: 'Local' };
-const SCOPE_LABEL: Record<Scope, string> = {
-  statewide: 'Statewide', district: 'District', county: 'County', citywide: 'Citywide',
-};
-
-function formatMonthYear(iso?: string | null): string | null {
+function formatElectionDate(iso?: string | null): string | null {
   if (!iso) return null;
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export interface RaceCardProps {
@@ -20,14 +16,18 @@ export interface RaceCardProps {
   tier: Tier;
   scope: Scope;
   state: string | null;
+  /** @deprecated kept for backwards-compat; ignored in new layout */
   place?: string | null;
+  districtLabel?: string | null;
   electionDate?: string | null;
   boundaryRef?: BoundaryRef | null;
   frameRef?: BoundaryRef | null;
   candidateCount: number;
   topicCount: number;
   estMinutes: number;
+  /** @deprecated kept for backwards-compat; pill is no longer rendered */
   isLocal?: boolean;
+  /** @deprecated kept for backwards-compat; ignored in new layout */
   usesRcv?: boolean;
   progress?: 'none' | 'in-progress' | 'completed';
   disabled?: boolean;
@@ -36,13 +36,14 @@ export interface RaceCardProps {
 
 export function RaceCard(props: RaceCardProps) {
   const {
-    office, tier, scope, state, place, electionDate, boundaryRef, frameRef,
-    candidateCount, topicCount, estMinutes, isLocal, usesRcv,
+    office, tier, scope, state, districtLabel, electionDate, boundaryRef, frameRef,
+    candidateCount, topicCount, estMinutes,
     progress = 'none', disabled, onSelect,
   } = props;
 
-  const date = formatMonthYear(electionDate);
-  const geo = [place || state, date].filter(Boolean).join(' · ');
+  const stateName = getStateName(state);
+  const date = formatElectionDate(electionDate);
+  const scopeText = [stateName, date].filter(Boolean).join(' · ');
 
   function activate() { if (!disabled) onSelect(); }
 
@@ -54,28 +55,24 @@ export function RaceCard(props: RaceCardProps) {
       disabled={disabled}
       onClick={activate}
     >
-      <div className="race-card-v2__motif" aria-hidden="true">
-        <Motif tier={tier} scope={scope} boundaryRef={boundaryRef ?? null} frameRef={frameRef ?? null} />
+      <div className="race-card-v2__top">
+        <div className="race-card-v2__motif" aria-hidden="true">
+          <Motif tier={tier} scope={scope} boundaryRef={boundaryRef ?? null} frameRef={frameRef ?? null} />
+        </div>
+        <div className="race-card-v2__body">
+          {scopeText && (
+            <div className="race-card-v2__scope">{scopeText}</div>
+          )}
+          <div className="race-card-v2__title">{office}</div>
+          {districtLabel && (
+            <div className="race-card-v2__district">{districtLabel}</div>
+          )}
+        </div>
       </div>
-      <div className="race-card-v2__body">
-        <div className="race-card-v2__scope">{TIER_LABEL[tier]} · {SCOPE_LABEL[scope]}</div>
-        <div className="race-card-v2__title-row">
-          <span className="race-card-v2__title">
-            {office}
-            {isLocal && <span className="race-card-v2__pill">Local</span>}
-          </span>
-          <span className="race-card-v2__arrow" aria-hidden="true">&rarr;</span>
-        </div>
-        {geo && (
-          <div className="race-card-v2__geo">
-            {geo}{usesRcv ? ' · Ranked choice' : ''}
-          </div>
-        )}
-        <div className="race-card-v2__meta">
-          <div className="race-card-v2__mi"><span className="k">Candidates</span><span className="v">{candidateCount}</span></div>
-          <div className="race-card-v2__mi"><span className="k">Topics</span><span className="v">{topicCount}</span></div>
-          <div className="race-card-v2__mi"><span className="k">Time</span><span className="v">~{estMinutes} min</span></div>
-        </div>
+      <div className="race-card-v2__meta">
+        <div className="race-card-v2__mi"><span className="k">Candidates</span><span className="v">{candidateCount}</span></div>
+        <div className="race-card-v2__mi"><span className="k">Topics</span><span className="v">{topicCount}</span></div>
+        <div className="race-card-v2__mi"><span className="k">Time</span><span className="v">~{estMinutes} min</span></div>
       </div>
     </button>
   );
