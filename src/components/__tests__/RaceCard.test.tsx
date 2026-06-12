@@ -1,7 +1,7 @@
 // src/components/__tests__/RaceCard.test.tsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RaceCard } from '../RaceCard';
 
 // Base props using current RaceCard prop names.
@@ -24,6 +24,8 @@ const baseProps = {
 };
 
 describe('RaceCard', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('renders full state name from abbreviation', () => {
     render(<RaceCard {...baseProps} />);
     expect(screen.getByText(/Indiana/)).toBeInTheDocument();
