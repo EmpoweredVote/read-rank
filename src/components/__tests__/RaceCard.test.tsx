@@ -4,22 +4,18 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RaceCard } from '../RaceCard';
 
-// Base props using current RaceCard prop names.
-// The tests exercise FUTURE intended behavior and are intentionally RED
-// until Task 4 implements the redesigned RaceCard.
+// Base props covering the redesigned RaceCard API.
 const baseProps = {
   office: 'Governor',
   tier: 'state' as const,
   scope: 'statewide' as const,
   state: 'IN',
-  place: null,
   electionDate: '2024-11-05',
   boundaryRef: null,
   frameRef: null,
   candidateCount: 4,
   topicCount: 3,
   estMinutes: 2,
-  isLocal: false,
   onSelect: vi.fn(),
 };
 
