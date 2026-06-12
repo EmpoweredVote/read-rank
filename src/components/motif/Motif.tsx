@@ -28,18 +28,24 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
     let alive = true;
     (async () => {
       const child = await fetchBoundary({ layer: cl, geoid: cg });
-      if (!child) return alive ? setPaths(null) : undefined;
+      if (!alive) return;
+      if (!child) { setPaths(null); return; }
       if (fl && fg) {
         const frame = await fetchBoundary({ layer: fl, geoid: fg });
+        if (!alive) return;
         if (frame) {
+          // Project frame and child against the SAME (frame) bbox so the child
+          // sits in the right spot; projectGeoJson shifts negative child lons
+          // into 0..360 when the frame bbox is antimeridian-shifted (US/Alaska).
           const bbox = geometryBbox(frame.geojson);
-          return alive ? setPaths({
+          setPaths({
             frame: projectGeoJson(frame.geojson, { bbox }).path,
             child: projectGeoJson(child.geojson, { bbox }).path,
-          }) : undefined;
+          });
+          return;
         }
       }
-      return alive ? setPaths({ child: projectGeoJson(child.geojson).path }) : undefined;
+      setPaths({ child: projectGeoJson(child.geojson).path });
     })().catch(() => { if (alive) setPaths(null); });
     return () => { alive = false; };
   }, [cl, cg, fl, fg]);
