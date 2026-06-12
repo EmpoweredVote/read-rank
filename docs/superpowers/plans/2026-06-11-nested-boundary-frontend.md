@@ -71,12 +71,12 @@ describe('projectGeoJson', () => {
   });
 
   it('projects against an explicit bbox (a small child sits inside a large frame)', () => {
-    // child near the bottom-left of a 0..100 frame bbox lands in the lower-left of the viewBox.
+    // child longitudes 5..15 sit in the left ~15% of a 0..100 frame → small X values.
+    // (Y is flipped, so the low-latitude child lands near the bottom; assert on X only.)
     const child = { type: 'Polygon' as const, coordinates: [[[5, 5], [15, 5], [15, 15], [5, 5]]] };
     const { path } = projectGeoJson(child, { size: 60, pad: 0, bbox: [0, 0, 100, 100] });
-    const pts = path.match(/-?\d+\.\d+/g)!.map(Number);
-    // all coordinates well within the first ~15% of the 60-unit box
-    expect(Math.max(...pts)).toBeLessThan(20);
+    const xs = path.match(/(\d+\.\d+),/g)!.map((s) => parseFloat(s));
+    expect(Math.max(...xs)).toBeLessThan(20);
   });
 
   it('normalizes child longitudes when the frame bbox is antimeridian-shifted (>180)', () => {
