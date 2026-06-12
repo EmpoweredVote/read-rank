@@ -1,4 +1,5 @@
 // src/components/RaceCard.tsx
+import React from 'react';
 import { Motif } from './motif/Motif';
 import type { Tier, Scope } from '../utils/raceTier';
 import type { BoundaryRef } from '../data/api';
@@ -28,7 +29,7 @@ export interface RaceCardProps {
   onSelect: () => void;
 }
 
-export function RaceCard(props: RaceCardProps) {
+export const RaceCard: React.FC<RaceCardProps> = (props) => {
   const {
     office, tier, scope, state, districtLabel, electionDate, boundaryRef, frameRef,
     candidateCount, topicCount, estMinutes,
