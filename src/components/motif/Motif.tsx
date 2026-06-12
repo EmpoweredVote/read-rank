@@ -1,38 +1,58 @@
 // src/components/motif/Motif.tsx
 import { useEffect, useState } from 'react';
 import { resolveMotif, fallbackArrangement } from './resolveMotif';
-import { projectGeoJson } from './projectGeoJson';
+import { projectGeoJson, geometryBbox } from './projectGeoJson';
 import { DotField } from './DotField';
 import { fetchBoundary } from '../../data/api';
 import type { BoundaryRef } from '../../data/api';
 import type { Tier, Scope } from '../../utils/raceTier';
 
-export function Motif({ tier, scope, boundaryRef }: {
-  tier: Tier; scope: Scope; boundaryRef: BoundaryRef | null;
+export function Motif({ tier, scope, boundaryRef, frameRef }: {
+  tier: Tier; scope: Scope; boundaryRef: BoundaryRef | null; frameRef: BoundaryRef | null;
 }) {
   const plan = resolveMotif({ tier, scope, boundaryRef });
   if (plan.kind === 'dotfield') return <DotField arrangement={plan.arrangement} />;
-  return <BoundaryMotif refKey={plan.ref} fallback={fallbackArrangement(scope)} />;
+  return <BoundaryMotif childRef={plan.ref} frameRef={frameRef} fallback={fallbackArrangement(scope)} />;
 }
 
-function BoundaryMotif({ refKey, fallback }: {
-  refKey: BoundaryRef; fallback: 'full' | 'cluster' | 'point';
+interface Paths { frame?: string; child: string }
+
+function BoundaryMotif({ childRef, frameRef, fallback }: {
+  childRef: BoundaryRef; frameRef: BoundaryRef | null; fallback: 'full' | 'cluster' | 'point';
 }) {
-  const [path, setPath] = useState<string | null>(null);
-  const { layer, geoid } = refKey;
+  const [paths, setPaths] = useState<Paths | null>(null);
+  const cl = childRef.layer, cg = childRef.geoid;
+  const fl = frameRef?.layer ?? null, fg = frameRef?.geoid ?? null;
+
   useEffect(() => {
     let alive = true;
-    fetchBoundary({ layer, geoid })
-      .then((b) => { if (alive) setPath(b ? projectGeoJson(b.geojson).path : null); })
-      .catch(() => { if (alive) setPath(null); });
+    (async () => {
+      const child = await fetchBoundary({ layer: cl, geoid: cg });
+      if (!child) return alive ? setPaths(null) : undefined;
+      if (fl && fg) {
+        const frame = await fetchBoundary({ layer: fl, geoid: fg });
+        if (frame) {
+          const bbox = geometryBbox(frame.geojson);
+          return alive ? setPaths({
+            frame: projectGeoJson(frame.geojson, { bbox }).path,
+            child: projectGeoJson(child.geojson, { bbox }).path,
+          }) : undefined;
+        }
+      }
+      return alive ? setPaths({ child: projectGeoJson(child.geojson).path }) : undefined;
+    })().catch(() => { if (alive) setPaths(null); });
     return () => { alive = false; };
-  }, [layer, geoid]);
+  }, [cl, cg, fl, fg]);
 
-  if (!path) return <DotField arrangement={fallback} />;
+  if (!paths) return <DotField arrangement={fallback} />;
   return (
     <svg viewBox="0 0 60 60" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-      <path d={path} fill="currentColor" fillOpacity={0.14} stroke="currentColor"
-        strokeWidth={1} strokeOpacity={0.75} strokeLinejoin="round" />
+      {paths.frame && (
+        <path d={paths.frame} fill="none" stroke="currentColor"
+          strokeWidth={1} strokeOpacity={0.3} strokeLinejoin="round" />
+      )}
+      <path d={paths.child} fill="currentColor" fillOpacity={0.32} stroke="currentColor"
+        strokeWidth={1.2} strokeOpacity={0.8} strokeLinejoin="round" />
     </svg>
   );
 }

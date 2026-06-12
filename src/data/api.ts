@@ -25,6 +25,8 @@ export interface RaceSummary {
   tier?: RaceTier;
   scope?: RaceScope;
   boundaryRef?: BoundaryRef | null;
+  /** Parent boundary to nest the child inside (backend-resolved). Null = render child alone. */
+  frameRef?: BoundaryRef | null;
   /** Total blind quotes in the race; used for the time estimate. */
   quoteCount?: number;
   /** Topics with enough quotes to rank; falls back to topicCount. */
