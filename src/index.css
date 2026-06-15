@@ -636,13 +636,11 @@ dialog::backdrop {
 .evaluation-split-layout {
   display: flex;
   gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .evaluation-main-panel {
-  width: 380px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 320px;
 }
 
 .evaluation-sidebar-panel {
