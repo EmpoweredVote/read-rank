@@ -33,7 +33,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
             ? `${stackIndex * 3}px ${stackIndex * 3}px 0 rgba(0,0,0,0.04)`
             : undefined,
         }}
-        className={`ev-quote-card ${!isStacked ? 'ev-quote-card-active' : ''} w-full max-w-lg md:max-w-xl`}
+        className={`ev-quote-card ${!isStacked ? 'ev-quote-card-active' : ''} w-full`}
       >
         {/* Quote number */}
         {displayNumber && (
