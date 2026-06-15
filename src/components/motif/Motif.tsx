@@ -18,9 +18,16 @@ export function Motif({ tier, scope, boundaryRef, frameRef }: {
 interface Paths { frame?: string; child: string }
 
 /** Compute SVG paths from inline geometry carried on the refs — no network call. */
-function computeInlinePaths(child: GeoJsonGeometry, frame: GeoJsonGeometry | undefined): Paths {
+function computeInlinePaths(
+  child: GeoJsonGeometry,
+  frame: GeoJsonGeometry | undefined,
+  frameBbox?: [number, number, number, number],
+): Paths {
   if (frame) {
-    const bbox = geometryBbox(frame);
+    // Project frame and child against the SAME (frame) bbox so the child
+    // sits in the right spot; projectGeoJson shifts negative child lons
+    // into 0..360 when the frame bbox is antimeridian-shifted (US/Alaska).
+    const bbox = frameBbox ?? geometryBbox(frame);
     return {
       frame: projectGeoJson(frame, { bbox }).path,
       child: projectGeoJson(child, { bbox }).path,
@@ -34,7 +41,7 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
 }) {
   const [paths, setPaths] = useState<Paths | null>(() =>
     childRef.geojson
-      ? computeInlinePaths(childRef.geojson, frameRef?.geojson)
+      ? computeInlinePaths(childRef.geojson, frameRef?.geojson, frameRef?.bbox)
       : null,
   );
 
