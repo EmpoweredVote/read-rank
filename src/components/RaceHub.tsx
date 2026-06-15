@@ -10,9 +10,10 @@ import { estimateMinutes } from '../utils/estimateMinutes';
 
 interface RaceHubProps {
   hideHeader?: boolean;
+  hideFilter?: boolean;
 }
 
-export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
+export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
   const { raceProgress, selectRace, locationFilter, clearLocationFilter } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false }) => {
       )}
 
       <div className="max-w-2xl mx-auto">
-        <AddressFilterInput />
+        {!hideFilter && <AddressFilterInput />}
         {locationFilter && (
           <p className="text-center mb-2" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             {races.some((r) => r.isLocal) ? 'Your local races are listed first.' : 'No local races with data yet — showing all.'}

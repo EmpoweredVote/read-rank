@@ -1,4 +1,5 @@
 import { RaceHub } from './RaceHub';
+import { AddressFilterInput } from './AddressFilterInput';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { PRACTICE_QUOTES } from '../data/practiceData';
 
@@ -14,27 +15,31 @@ export function Landing() {
   return (
     <section
       style={{ backgroundColor: 'var(--surface-page)' }}
-      className="w-full px-6 sm:px-10 lg:px-20 py-12 lg:py-16"
+      className="w-full px-12 sm:px-16 lg:px-24 py-10"
     >
-      {/* Compact hero */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 lg:gap-16 items-center mb-12 lg:mb-16">
+      {/* Hero */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16 lg:gap-24 items-start mb-12 lg:mb-16">
         <div>
           <p
-            className="text-xs font-bold uppercase tracking-widest mb-4"
+            className="text-xs font-bold uppercase tracking-widest mb-5"
             style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
           >
             Read &amp; Rank
           </p>
           <h1
-            className="text-4xl sm:text-5xl font-extrabold leading-tight"
+            className="text-5xl sm:text-6xl font-bold leading-tight"
             style={{ color: 'var(--text-heading)', fontFamily: "'Manrope', sans-serif" }}
           >
             Read candidates blind,
-            <br />
-            <span style={{ color: 'var(--text-link)' }}>rank by what they said.</span>
           </h1>
           <p
-            className="text-base sm:text-lg leading-relaxed mt-5 max-w-xl"
+            className="text-5xl sm:text-6xl font-bold leading-tight mt-1 mb-8"
+            style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
+          >
+            rank by what they said.
+          </p>
+          <p
+            className="text-lg leading-relaxed mb-3"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Manrope', sans-serif" }}
           >
             Read real quotes from real candidates — without knowing who said it.
@@ -43,18 +48,19 @@ export function Landing() {
           <button
             type="button"
             onClick={() => startPractice(PRACTICE_QUOTES)}
-            className="mt-5 px-1 py-2"
+            className="mb-6 px-1 py-2"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem',
+              fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem',
               fontWeight: 600, color: 'var(--text-link)', minHeight: '2.75rem',
             }}
           >
             Not sure yet?&nbsp; Try a 30-second warm-up with pizza opinions.
           </button>
+          <AddressFilterInput />
         </div>
 
-        <div className="flex flex-col gap-2.5">
+        <div className="space-y-3">
           {STEPS.map(({ n, heading, body, start }) => (
             <div key={n} className="rr-step">
               <span className="rr-step__n">{n}</span>
@@ -68,20 +74,20 @@ export function Landing() {
         </div>
       </div>
 
-      {/* Picker, immediately present */}
+      {/* Picker */}
       <h2
-        className="text-xl sm:text-2xl font-bold mb-1"
+        className="text-2xl sm:text-3xl font-semibold mb-2"
         style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
       >
         Choose an election
       </h2>
       <p
-        className="text-sm mb-6"
+        className="text-base mb-8"
         style={{ color: 'var(--text-secondary)', fontFamily: "'Manrope', sans-serif" }}
       >
         Each one is a preview of the full Read &amp; Rank experience.
       </p>
-      <RaceHub hideHeader />
+      <RaceHub hideHeader hideFilter />
     </section>
   );
 }
