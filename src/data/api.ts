@@ -38,10 +38,14 @@ export interface RaceSummary {
 export type RaceTier = 'federal' | 'state' | 'local';
 export type RaceScope = 'statewide' | 'district' | 'county' | 'citywide';
 
-/** How a race's motif finds its boundary polygon. layer is an MTFCC or layer key. */
+/** How a race's motif finds its boundary polygon. layer is an MTFCC or layer key.
+ *  bbox and geojson are embedded by the backend when available — the motif uses
+ *  them directly to avoid a secondary fetch. */
 export interface BoundaryRef {
   layer: string;
   geoid: string;
+  bbox?: [number, number, number, number];
+  geojson?: GeoJsonGeometry;
 }
 
 export interface GeoJsonGeometry {

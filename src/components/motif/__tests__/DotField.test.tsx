@@ -7,7 +7,7 @@ describe('DotField', () => {
   it('renders a non-empty field of dots for each arrangement', () => {
     for (const a of ['full', 'cluster', 'point'] as const) {
       const { container, unmount } = render(<DotField arrangement={a} />);
-      expect(container.querySelectorAll('circle').length).toBeGreaterThan(3);
+      expect(container.querySelectorAll('div > div').length).toBeGreaterThan(3);
       unmount();
     }
   });
