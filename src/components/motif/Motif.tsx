@@ -4,7 +4,7 @@ import { resolveMotif, fallbackArrangement } from './resolveMotif';
 import { projectGeoJson, geometryBbox } from './projectGeoJson';
 import { DotField } from './DotField';
 import { fetchBoundary } from '../../data/api';
-import type { BoundaryRef } from '../../data/api';
+import type { BoundaryRef, GeoJsonGeometry } from '../../data/api';
 import type { Tier, Scope } from '../../utils/raceTier';
 
 export function Motif({ tier, scope, boundaryRef, frameRef }: {
@@ -17,14 +17,33 @@ export function Motif({ tier, scope, boundaryRef, frameRef }: {
 
 interface Paths { frame?: string; child: string }
 
+/** Compute SVG paths from inline geometry carried on the refs — no network call. */
+function computeInlinePaths(child: GeoJsonGeometry, frame: GeoJsonGeometry | undefined): Paths {
+  if (frame) {
+    const bbox = geometryBbox(frame);
+    return {
+      frame: projectGeoJson(frame, { bbox }).path,
+      child: projectGeoJson(child, { bbox }).path,
+    };
+  }
+  return { child: projectGeoJson(child).path };
+}
+
 function BoundaryMotif({ childRef, frameRef, fallback }: {
   childRef: BoundaryRef; frameRef: BoundaryRef | null; fallback: 'full' | 'cluster' | 'point';
 }) {
-  const [paths, setPaths] = useState<Paths | null>(null);
+  const [paths, setPaths] = useState<Paths | null>(() =>
+    childRef.geojson
+      ? computeInlinePaths(childRef.geojson, frameRef?.geojson)
+      : null,
+  );
+
   const cl = childRef.layer, cg = childRef.geoid;
   const fl = frameRef?.layer ?? null, fg = frameRef?.geoid ?? null;
+  const hasInlineGeom = Boolean(childRef.geojson);
 
   useEffect(() => {
+    if (hasInlineGeom) return; // already resolved from props — no fetch needed
     let alive = true;
     (async () => {
       const child = await fetchBoundary({ layer: cl, geoid: cg });
@@ -34,9 +53,6 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
         const frame = await fetchBoundary({ layer: fl, geoid: fg });
         if (!alive) return;
         if (frame) {
-          // Project frame and child against the SAME (frame) bbox so the child
-          // sits in the right spot; projectGeoJson shifts negative child lons
-          // into 0..360 when the frame bbox is antimeridian-shifted (US/Alaska).
           const bbox = geometryBbox(frame.geojson);
           setPaths({
             frame: projectGeoJson(frame.geojson, { bbox }).path,
@@ -48,7 +64,7 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
       setPaths({ child: projectGeoJson(child.geojson).path });
     })().catch(() => { if (alive) setPaths(null); });
     return () => { alive = false; };
-  }, [cl, cg, fl, fg]);
+  }, [cl, cg, fl, fg, hasInlineGeom]);
 
   if (!paths) return <DotField arrangement={fallback} />;
   return (

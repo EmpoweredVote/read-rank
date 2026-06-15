@@ -21,12 +21,22 @@ const FIELDS: Record<Arrangement, [number, number][]> = {
 
 export function DotField({ arrangement }: { arrangement: Arrangement }) {
   return (
-    <svg viewBox="0 0 60 60" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-      <g fill="currentColor">
-        {FIELDS[arrangement].map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r={1.6} />
-        ))}
-      </g>
-    </svg>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {FIELDS[arrangement].map(([cx, cy], i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: `${(cx / 60) * 100}%`,
+            top: `${(cy / 60) * 100}%`,
+            width: '3.2px',
+            height: '3.2px',
+            borderRadius: '50%',
+            background: 'currentColor',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      ))}
+    </div>
   );
 }

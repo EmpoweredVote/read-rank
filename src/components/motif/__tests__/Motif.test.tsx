@@ -15,7 +15,7 @@ const result = (geojson: api.GeoJsonGeometry) => ({
 describe('Motif', () => {
   it('renders the dot-field when there is no boundaryRef', () => {
     const { container } = render(<Motif tier="state" scope="statewide" boundaryRef={null} frameRef={null} />);
-    expect(container.querySelectorAll('circle').length).toBeGreaterThan(3);
+    expect(container.querySelectorAll('div > div').length).toBeGreaterThan(3);
   });
 
   it('renders child alone (one path) when there is no frameRef', async () => {
@@ -57,6 +57,6 @@ describe('Motif', () => {
     const { container } = render(
       <Motif tier="local" scope="county" boundaryRef={{ layer: 'G4020', geoid: 'x' }} frameRef={{ layer: 'G4000', geoid: '18' }} />,
     );
-    await waitFor(() => expect(container.querySelectorAll('circle').length).toBeGreaterThan(3));
+    await waitFor(() => expect(container.querySelectorAll('div > div').length).toBeGreaterThan(3));
   });
 });
