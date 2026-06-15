@@ -96,7 +96,7 @@ function MainApp() {
         onNavigate={(href) => { window.location.href = href; }}
       />
       <DevHelper />
-      <main className={phase === 'hub' ? undefined : 'container mx-auto px-4 py-8 max-w-4xl'}>
+      <main className={phase === 'hub' ? undefined : 'container mx-auto px-4 py-8 max-w-4xl xl:max-w-6xl 2xl:max-w-[1400px]'}>
         <PhaseContainer />
       </main>
     </div>
