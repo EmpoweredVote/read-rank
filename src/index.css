@@ -91,6 +91,11 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+  /* Action / primary (replaces coral on interactive elements) */
+  --action-primary: #00657c;
+  --action-primary-hover: #004d5c;
+  --action-primary-ink: #ffffff;
+
   --progress-fill: var(--color-ev-muted-blue);
 }
 
@@ -146,6 +151,10 @@
   --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  --action-primary: #59b0c4;
+  --action-primary-hover: #7cc5d6;
+  --action-primary-ink: #06303a;
 
   --progress-fill: var(--color-ev-yellow);
 }
