@@ -586,8 +586,8 @@ dialog::backdrop {
 }
 
 .action-button-agree {
-  background-color: #ff5740;
-  color: #ffffff;
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
 }
 
 .action-button-disagree:hover:not(:disabled),
@@ -1260,7 +1260,7 @@ dialog.rank-sheet[open] {
 }
 
 .quote-stamp-agree .quote-stamp-circle {
-  border: 4px solid #ff5740;
+  border: 4px solid var(--action-primary);
 }
 
 .quote-stamp-disagree .quote-stamp-circle {
@@ -1275,7 +1275,7 @@ dialog.rank-sheet[open] {
   text-transform: uppercase;
 }
 
-.quote-stamp-agree .quote-stamp-text { color: #ff5740; }
+.quote-stamp-agree .quote-stamp-text { color: var(--action-primary); }
 .quote-stamp-disagree .quote-stamp-text { color: #8d8d8d; }
 
 /* Iron severance — spatial cue #1: a different shelf, not the next rung */
