@@ -132,7 +132,7 @@ const VerdictsPromotionBanner: React.FC<VerdictsPromotionBannerProps> = ({ paylo
       <div style={{ flex: 1, minWidth: 0 }}>
         Save your earlier <strong>{count}</strong> verdict{count === 1 ? '' : 's'} to your account?
         {status === 'error' && error && (
-          <div style={{ color: 'var(--color-ev-coral)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+          <div style={{ color: 'var(--action-primary)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
             Couldn&apos;t save: {error.message}. Try again?
           </div>
         )}

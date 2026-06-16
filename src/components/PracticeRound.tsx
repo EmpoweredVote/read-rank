@@ -83,8 +83,8 @@ export const PracticeRound: React.FC = () => {
               <text x="100" y="107" textAnchor="middle" fontSize="20">🍕</text>
             </g>
             <g opacity="0.4">
-              <path d="M30 80 L15 80" stroke="var(--color-ev-coral)" strokeWidth="2" strokeLinecap="round" />
-              <path d="M20 75 L15 80 L20 85" stroke="var(--color-ev-coral)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path d="M30 80 L15 80" stroke="var(--action-primary)" strokeWidth="2" strokeLinecap="round" />
+              <path d="M20 75 L15 80 L20 85" stroke="var(--action-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
               <path d="M170 80 L185 80" stroke="var(--color-ev-muted-blue)" strokeWidth="2" strokeLinecap="round" />
               <path d="M180 75 L185 80 L180 85" stroke="var(--color-ev-muted-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </g>

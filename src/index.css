@@ -1809,8 +1809,8 @@ dialog.rank-sheet[open] {
 }
 
 .issue-row-selected {
-  border-color: var(--color-ev-coral);
-  background: color-mix(in srgb, var(--color-ev-coral) 6%, var(--surface-card));
+  border-color: var(--action-primary);
+  background: color-mix(in srgb, var(--action-primary) 6%, var(--surface-card));
 }
 
 .issue-row-unscored {
@@ -1829,8 +1829,8 @@ dialog.rank-sheet[open] {
 }
 
 .issue-check-tile-selected {
-  background-color: var(--color-ev-coral);
-  border-color: var(--color-ev-coral);
+  background-color: var(--action-primary);
+  border-color: var(--action-primary);
 }
 
 .issue-row-unscored .issue-check-tile {
