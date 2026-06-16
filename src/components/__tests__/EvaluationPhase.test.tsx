@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -73,8 +74,15 @@ describe('EvaluationPhase keyboard shortcuts', () => {
     }
   });
 
-  it('renders a flying card during the agree flight (motion enabled)', async () => {
-    render(<EvaluationPhase />);
+  // Rendered under StrictMode so the effect double-invoke (mount→cleanup→mount)
+  // is exercised: if the isMounted guard isn't re-armed on remount, the flight
+  // commit is silently blocked and this test fails.
+  it('renders a flying card during the agree flight and commits under StrictMode', async () => {
+    render(
+      <StrictMode>
+        <EvaluationPhase />
+      </StrictMode>,
+    );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     await screen.findByTestId('flying-card', undefined, { timeout: 1000 });
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });

@@ -54,7 +54,10 @@ export const EvaluationPhase: React.FC = () => {
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
   const isMountedRef = useRef(true);
-  useEffect(() => () => { isMountedRef.current = false; }, []);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const disagreedCount = race
     ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
