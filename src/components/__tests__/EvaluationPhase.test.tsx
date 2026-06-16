@@ -78,5 +78,6 @@ describe('EvaluationPhase keyboard shortcuts', () => {
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     await screen.findByTestId('flying-card', undefined, { timeout: 1000 });
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
+    expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
   });
 });

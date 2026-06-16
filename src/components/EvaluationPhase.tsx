@@ -53,6 +53,8 @@ export const EvaluationPhase: React.FC = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => () => { isMountedRef.current = false; }, []);
 
   const disagreedCount = race
     ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
@@ -106,6 +108,7 @@ export const EvaluationPhase: React.FC = () => {
         to: targetEl.getBoundingClientRect(),
       });
       await delay(600); // flight duration (matches FlyingCard)
+      if (!isMountedRef.current) return;
       if (tourStep === 1) setTourStep(2);
       agree(currentQuote);
       setFlight(null);
@@ -116,6 +119,7 @@ export const EvaluationPhase: React.FC = () => {
 
     // Disagree, reduced-motion, or missing refs: quick stamp + commit.
     await delay(300);
+    if (!isMountedRef.current) return;
     setPendingVerdict(null);
     if (tourStep === 1) setTourStep(2);
     if (direction === 'agree') agree(currentQuote);
