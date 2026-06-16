@@ -174,7 +174,9 @@ export const EvaluationPhase: React.FC = () => {
       <div ref={swipeAreaRef}>
         {currentQuote ? (
           <div className="swipe-card-container">
-            <div className="flex justify-center relative z-10">
+            {/* Hidden while a flight is in progress so the clone reads as the
+                card itself flying (not a ghost detaching from a card left behind). */}
+            <div className="flex justify-center relative z-10" style={{ opacity: flight ? 0 : 1 }}>
               <AnimatePresence mode="wait">
                 <QuoteCard
                   ref={quoteCardRef}
