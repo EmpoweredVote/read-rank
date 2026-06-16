@@ -261,8 +261,8 @@ dialog::backdrop {
 }
 
 .ev-button-primary {
-  background-color: var(--color-ev-coral);
-  color: white;
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
   border-radius: 0.5rem;
@@ -274,9 +274,9 @@ dialog::backdrop {
 }
 
 .ev-button-primary:hover {
-  background-color: var(--color-ev-coral-dark);
+  background-color: var(--action-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 87, 64, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--action-primary) 35%, transparent);
 }
 
 .ev-button-secondary {
