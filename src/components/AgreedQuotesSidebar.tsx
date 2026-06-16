@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useImperativeHandle, useRef } from 'react';
+import { useAnimate, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { RankRail } from './RankRail';
 
@@ -11,8 +12,20 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement>((_props, ref) 
   const topic = getCurrentTopicProgress();
   const agreed = topic?.agreed ?? [];
 
+  const prefersReducedMotion = useReducedMotion();
+  const prevCount = useRef(agreed.length);
+  const [scope, animate] = useAnimate();
+  useImperativeHandle(ref, () => scope.current as HTMLDivElement);
+
+  useEffect(() => {
+    if (agreed.length > prevCount.current && !prefersReducedMotion && scope.current) {
+      animate(scope.current, { scale: [1, 1.015, 1] }, { duration: 0.4 });
+    }
+    prevCount.current = agreed.length;
+  }, [agreed.length, animate, prefersReducedMotion, scope]);
+
   return (
-    <div ref={ref} className="agreed-quotes-sidebar">
+    <div ref={scope} className="agreed-quotes-sidebar">
       <div className="sidebar-header">
         <span style={{
           fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '0.75rem',
