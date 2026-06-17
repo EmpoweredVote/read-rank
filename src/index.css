@@ -91,6 +91,11 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+  /* Action / primary (replaces coral on interactive elements) */
+  --action-primary: #00657c;
+  --action-primary-hover: #004d5c;
+  --action-primary-ink: #ffffff;
+
   --progress-fill: var(--color-ev-muted-blue);
 }
 
@@ -146,6 +151,10 @@
   --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  --action-primary: #59b0c4;
+  --action-primary-hover: #7cc5d6;
+  --action-primary-ink: #06303a;
 
   --progress-fill: var(--color-ev-yellow);
 }
@@ -252,8 +261,8 @@ dialog::backdrop {
 }
 
 .ev-button-primary {
-  background-color: var(--color-ev-coral);
-  color: white;
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
   border-radius: 0.5rem;
@@ -265,9 +274,9 @@ dialog::backdrop {
 }
 
 .ev-button-primary:hover {
-  background-color: var(--color-ev-coral-dark);
+  background-color: var(--action-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 87, 64, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--action-primary) 35%, transparent);
 }
 
 .ev-button-secondary {
@@ -577,8 +586,8 @@ dialog::backdrop {
 }
 
 .action-button-agree {
-  background-color: #ff5740;
-  color: #ffffff;
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
 }
 
 .action-button-disagree:hover:not(:disabled),
@@ -1251,7 +1260,7 @@ dialog.rank-sheet[open] {
 }
 
 .quote-stamp-agree .quote-stamp-circle {
-  border: 4px solid #ff5740;
+  border: 4px solid var(--action-primary);
 }
 
 .quote-stamp-disagree .quote-stamp-circle {
@@ -1266,7 +1275,7 @@ dialog.rank-sheet[open] {
   text-transform: uppercase;
 }
 
-.quote-stamp-agree .quote-stamp-text { color: #ff5740; }
+.quote-stamp-agree .quote-stamp-text { color: var(--action-primary); }
 .quote-stamp-disagree .quote-stamp-text { color: #8d8d8d; }
 
 /* Iron severance — spatial cue #1: a different shelf, not the next rung */
@@ -1800,8 +1809,8 @@ dialog.rank-sheet[open] {
 }
 
 .issue-row-selected {
-  border-color: var(--color-ev-coral);
-  background: color-mix(in srgb, var(--color-ev-coral) 6%, var(--surface-card));
+  border-color: var(--action-primary);
+  background: color-mix(in srgb, var(--action-primary) 6%, var(--surface-card));
 }
 
 .issue-row-unscored {
@@ -1820,8 +1829,8 @@ dialog.rank-sheet[open] {
 }
 
 .issue-check-tile-selected {
-  background-color: var(--color-ev-coral);
-  border-color: var(--color-ev-coral);
+  background-color: var(--action-primary);
+  border-color: var(--action-primary);
 }
 
 .issue-row-unscored .issue-check-tile {

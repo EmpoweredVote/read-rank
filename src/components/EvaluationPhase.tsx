@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, useReducedMotion } from 'framer-motion';
+import { FlyingCard, type FlyRect } from './FlyingCard';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { QuoteCard } from './QuoteCard';
 import { ActionButtons } from './ActionButtons';
@@ -47,9 +48,16 @@ export const EvaluationPhase: React.FC = () => {
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [pendingVerdict, setPendingVerdict] = useState<'agree' | 'disagree' | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const [flight, setFlight] = useState<{ text: string; from: FlyRect; to: FlyRect } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const disagreedCount = race
     ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
@@ -88,12 +96,38 @@ export const EvaluationPhase: React.FC = () => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
     setPendingVerdict(direction);
-    await delay(300); // Strike (120ms) + Hold (180ms)
+
+    // Agree → fly the card into the pile (desktop: sidebar, mobile: dock).
+    // Skip the flight for reduced-motion or if either ref is missing; the pile
+    // still pulses via RankDock / the sidebar effect.
+    const cardEl = quoteCardRef.current;
+    const targetEl = isMouseDevice ? sidebarRef.current : dockRef.current;
+    if (direction === 'agree' && !prefersReducedMotion && cardEl && targetEl) {
+      await delay(140); // brief stamp flash
+      setPendingVerdict(null);
+      setFlight({
+        text: currentQuote.text,
+        from: cardEl.getBoundingClientRect(),
+        to: targetEl.getBoundingClientRect(),
+      });
+      await delay(600); // flight duration (matches FlyingCard)
+      if (!isMountedRef.current) return;
+      if (tourStep === 1) setTourStep(2);
+      agree(currentQuote);
+      setFlight(null);
+      await delay(80);
+      setIsAnimating(false);
+      return;
+    }
+
+    // Disagree, reduced-motion, or missing refs: quick stamp + commit.
+    await delay(300);
+    if (!isMountedRef.current) return;
     setPendingVerdict(null);
     if (tourStep === 1) setTourStep(2);
     if (direction === 'agree') agree(currentQuote);
     else disagree(currentQuote);
-    await delay(250); // card exit animation buffer
+    await delay(250);
     setIsAnimating(false);
   };
 
@@ -140,7 +174,9 @@ export const EvaluationPhase: React.FC = () => {
       <div ref={swipeAreaRef}>
         {currentQuote ? (
           <div className="swipe-card-container">
-            <div className="flex justify-center relative z-10">
+            {/* Hidden while a flight is in progress so the clone reads as the
+                card itself flying (not a ghost detaching from a card left behind). */}
+            <div className="flex justify-center relative z-10" style={{ opacity: flight ? 0 : 1 }}>
               <AnimatePresence mode="wait">
                 <QuoteCard
                   ref={quoteCardRef}
@@ -252,6 +288,7 @@ export const EvaluationPhase: React.FC = () => {
           </div>
         </div>
         {coachMarkOverlay}
+        {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} durationMs={600} />}
       </div>
     );
   }
@@ -282,6 +319,7 @@ export const EvaluationPhase: React.FC = () => {
         }}
       />
       {coachMarkOverlay}
+      {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} durationMs={600} />}
     </div>
   );
 };
