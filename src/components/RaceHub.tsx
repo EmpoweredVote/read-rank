@@ -157,9 +157,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       )}
 
       {races.length > 0 && (
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           {/* Time filter chips */}
-          <div className="flex gap-2 justify-center mt-2 mb-1" role="group" aria-label="Filter by election timing">
+          <div className="flex gap-2 justify-start mt-2 mb-1" role="group" aria-label="Filter by election timing">
             {(['upcoming', 'past'] as const).map((tf) => {
               const active = timeFilter === tf;
               return (
