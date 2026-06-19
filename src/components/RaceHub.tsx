@@ -36,15 +36,15 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       .finally(() => setLoading(false));
   }, [politicianIds]);
 
-  const handleSelect = useCallback(async (raceId: string) => {
-    setStarting(raceId);
+  const handleSelect = useCallback(async (race: RaceSummary) => {
+    setStarting(race.raceId);
     try {
-      const payload = await fetchRaceQuotes(raceId);
+      const payload = await fetchRaceQuotes(race.raceId);
       const shuffled = {
         ...payload,
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
-      selectRace(shuffled);
+      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state });
     } finally {
       setStarting(null);
     }
@@ -139,7 +139,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
               progress={progress}
               progressLabel={statusLabel}
               disabled={starting !== null}
-              onSelect={() => handleSelect(race.raceId)}
+              onSelect={() => handleSelect(race)}
             />
           );
         })}
