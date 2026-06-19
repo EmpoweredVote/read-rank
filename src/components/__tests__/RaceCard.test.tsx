@@ -59,4 +59,14 @@ describe('RaceCard', () => {
     // Should not crash; no state name shown
     expect(screen.queryByText('Indiana')).not.toBeInTheDocument();
   });
+
+  it('renders a progress status label when provided', () => {
+    render(<RaceCard {...baseProps} progress="partial" progressLabel="Ranked 2 of 4" />);
+    expect(screen.getByText('Ranked 2 of 4')).toBeInTheDocument();
+  });
+
+  it('renders no status row when progress is not-started', () => {
+    render(<RaceCard {...baseProps} progress="not-started" />);
+    expect(screen.queryByTestId('race-card-status')).not.toBeInTheDocument();
+  });
 });

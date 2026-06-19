@@ -1949,6 +1949,27 @@ dialog.rank-sheet[open] {
 .race-card-v2__mi .v {
   font-size: 1.0625rem; font-weight: 800; color: var(--text-heading); white-space: nowrap;
 }
+.race-card-v2__status {
+  display: flex; align-items: center; gap: 0.4rem;
+  margin-top: 0.5rem; flex-shrink: 0;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.01em;
+}
+.race-card-v2__status-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 9999px; flex-shrink: 0;
+  background: var(--text-tertiary);
+}
+.race-card-v2--in-progress .race-card-v2__status { color: var(--text-link); }
+.race-card-v2--in-progress .race-card-v2__status-dot { background: var(--text-link); }
+.race-card-v2--partial .race-card-v2__status { color: var(--text-secondary); }
+.race-card-v2--partial .race-card-v2__status-dot {
+  background: transparent;
+  border: 2px solid var(--text-link);
+  box-sizing: border-box;
+}
+.race-card-v2--complete { opacity: 0.78; }
+.race-card-v2--complete .race-card-v2__status { color: var(--text-tertiary); }
+.race-card-v2--complete .race-card-v2__status-dot { background: var(--text-tertiary); }
+.race-card-v2--complete:hover { opacity: 1; }
 
 /* Landing hero steps */
 .rr-step {
