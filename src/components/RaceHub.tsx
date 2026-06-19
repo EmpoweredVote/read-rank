@@ -126,11 +126,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
           return (
             <RaceCard
               key={race.raceId}
-              office={race.positionName}
+              office={race.office}
               tier={tier}
               scope={scope}
               state={race.state}
-              districtLabel={race.districtLabel ?? null}
+              seat={race.seat ?? null}
               electionDate={race.electionDate}
               boundaryRef={race.boundaryRef ?? null}
               frameRef={race.frameRef ?? null}

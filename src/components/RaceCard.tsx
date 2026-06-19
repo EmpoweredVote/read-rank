@@ -17,7 +17,7 @@ export interface RaceCardProps {
   tier: Tier;
   scope: Scope;
   state: string | null;
-  districtLabel?: string | null;
+  seat?: string | null;
   electionDate?: string | null;
   boundaryRef?: BoundaryRef | null;
   frameRef?: BoundaryRef | null;
@@ -31,7 +31,7 @@ export interface RaceCardProps {
 
 export const RaceCard: React.FC<RaceCardProps> = (props) => {
   const {
-    office, tier, scope, state, districtLabel, electionDate, boundaryRef, frameRef,
+    office, tier, scope, state, seat, electionDate, boundaryRef, frameRef,
     candidateCount, topicCount, estMinutes,
     progress = 'none', disabled, onSelect,
   } = props;
@@ -59,8 +59,8 @@ export const RaceCard: React.FC<RaceCardProps> = (props) => {
             <div className="race-card-v2__scope">{scopeText}</div>
           )}
           <div className="race-card-v2__title">{office}</div>
-          {districtLabel && (
-            <div className="race-card-v2__district">{districtLabel}</div>
+          {seat && (
+            <div className="race-card-v2__seat">{seat}</div>
           )}
         </div>
       </div>

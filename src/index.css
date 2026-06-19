@@ -1928,7 +1928,7 @@ dialog.rank-sheet[open] {
   font-weight: 800; font-size: 1.1875rem; letter-spacing: -0.02em; line-height: 1.1;
   color: var(--text-heading); margin-top: 0.25rem;
 }
-.race-card-v2__district {
+.race-card-v2__seat {
   font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
   color: var(--text-secondary); margin-top: 0.1875rem;
 }

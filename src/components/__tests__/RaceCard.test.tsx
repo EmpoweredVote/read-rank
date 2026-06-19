@@ -32,13 +32,13 @@ describe('RaceCard', () => {
     expect(screen.getByText(/Nov\s+5,\s+2024/)).toBeInTheDocument();
   });
 
-  it('renders districtLabel when provided', () => {
-    render(<RaceCard {...baseProps} districtLabel="District 1" />);
+  it('renders seat when provided', () => {
+    render(<RaceCard {...baseProps} seat="District 1" />);
     expect(screen.getByText('District 1')).toBeInTheDocument();
   });
 
-  it('renders no district element when districtLabel is absent', () => {
-    render(<RaceCard {...baseProps} districtLabel={null} />);
+  it('renders no seat element when seat is absent', () => {
+    render(<RaceCard {...baseProps} seat={null} />);
     expect(screen.queryByText(/District/)).not.toBeInTheDocument();
   });
 

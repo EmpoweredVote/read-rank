@@ -4,7 +4,7 @@ export type Tier = RaceTier;
 export type Scope = RaceScope;
 
 interface DeriveInput {
-  positionName: string;
+  office: string;
   jurisdictionLevel: string | null;
   isLocal: boolean;
   tier?: Tier;
@@ -13,7 +13,7 @@ interface DeriveInput {
 
 export function deriveTierScope(race: DeriveInput): { tier: Tier; scope: Scope } {
   const tier = race.tier ?? deriveTier(race);
-  const scope = race.scope ?? deriveScope(race.positionName, tier);
+  const scope = race.scope ?? deriveScope(race.office, tier);
   return { tier, scope };
 }
 
@@ -22,7 +22,7 @@ function deriveTier(race: DeriveInput): Tier {
   if (/fed|congress|national/.test(jl)) return 'federal';
   if (jl === 'state') return 'state';
   if (race.isLocal || /county|city|municipal|local|township|school|ward/.test(jl)) return 'local';
-  const n = race.positionName.toLowerCase();
+  const n = race.office.toLowerCase();
   if (/u\.?s\.?\s|congress|president/.test(n)) return 'federal';
   return 'state';
 }
