@@ -126,7 +126,7 @@ const MOCK_QUOTES: MockQuoteFull[] = [
 
 export const mockRaceSummary: RaceSummary = {
   raceId: MOCK_RACE_ID,
-  positionName: 'Governor',
+  office: 'Governor',
   electionName: '2024 Indiana Governor (demo)',
   electionDate: '2024-11-05',
   state: 'IN',
@@ -135,13 +135,13 @@ export const mockRaceSummary: RaceSummary = {
   topicCount: MOCK_TOPICS.length,
   isLocal: false,
   usesRcv: false,
-  districtLabel: null,
+  seat: null,
 };
 
 export function buildMockRacePayload(): RacePayload {
   return {
     raceId: MOCK_RACE_ID,
-    positionName: mockRaceSummary.positionName,
+    positionName: mockRaceSummary.office,
     topics: MOCK_TOPICS.map((t) => ({
       topicKey: t.topicKey,
       title: t.title,
@@ -240,5 +240,5 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
     };
   });
 
-  return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.positionName, usesRcv: false, ballot };
+  return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.office, usesRcv: false, ballot };
 }

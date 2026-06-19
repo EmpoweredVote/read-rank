@@ -7,6 +7,7 @@ import { AddressFilterInput } from './AddressFilterInput';
 import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
+import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
 
 interface RaceHubProps {
   hideHeader?: boolean;
@@ -35,15 +36,15 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       .finally(() => setLoading(false));
   }, [politicianIds]);
 
-  const handleSelect = useCallback(async (raceId: string) => {
-    setStarting(raceId);
+  const handleSelect = useCallback(async (race: RaceSummary) => {
+    setStarting(race.raceId);
     try {
-      const payload = await fetchRaceQuotes(raceId);
+      const payload = await fetchRaceQuotes(race.raceId);
       const shuffled = {
         ...payload,
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
-      selectRace(shuffled);
+      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state });
     } finally {
       setStarting(null);
     }
@@ -112,11 +113,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       <div className="race-grid max-w-5xl mx-auto">
         {races.map((race) => {
           const progressState = raceProgress[race.raceId];
-          const progress: 'none' | 'in-progress' | 'completed' = progressState?.completed
-            ? 'completed'
-            : progressState
-              ? 'in-progress'
-              : 'none';
+          const info = deriveProgressState(progressState, race.rankableTopicCount);
+          const progress: ProgressState = info.state;
+          const statusLabel = progressLabel(info);
           const { tier, scope } = deriveTierScope(race);
           const estMinutes = estimateMinutes({
             quoteCount: race.quoteCount,
@@ -126,11 +125,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
           return (
             <RaceCard
               key={race.raceId}
-              office={race.positionName}
+              office={race.office}
               tier={tier}
               scope={scope}
               state={race.state}
-              districtLabel={race.districtLabel ?? null}
+              seat={race.seat ?? null}
               electionDate={race.electionDate}
               boundaryRef={race.boundaryRef ?? null}
               frameRef={race.frameRef ?? null}
@@ -138,8 +137,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
               topicCount={race.rankableTopicCount ?? race.topicCount}
               estMinutes={estMinutes}
               progress={progress}
+              progressLabel={statusLabel}
               disabled={starting !== null}
-              onSelect={() => handleSelect(race.raceId)}
+              onSelect={() => handleSelect(race)}
             />
           );
         })}

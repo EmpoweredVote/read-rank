@@ -1928,7 +1928,7 @@ dialog.rank-sheet[open] {
   font-weight: 800; font-size: 1.1875rem; letter-spacing: -0.02em; line-height: 1.1;
   color: var(--text-heading); margin-top: 0.25rem;
 }
-.race-card-v2__district {
+.race-card-v2__seat {
   font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
   color: var(--text-secondary); margin-top: 0.1875rem;
 }
@@ -1948,6 +1948,47 @@ dialog.rank-sheet[open] {
 }
 .race-card-v2__mi .v {
   font-size: 1.0625rem; font-weight: 800; color: var(--text-heading); white-space: nowrap;
+}
+.race-card-v2__status {
+  display: flex; align-items: center; gap: 0.4rem;
+  margin-top: 0.5rem; flex-shrink: 0;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.01em;
+}
+.race-card-v2__status-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 9999px; flex-shrink: 0;
+  background: var(--text-tertiary);
+}
+.race-card-v2--in-progress .race-card-v2__status { color: var(--text-link); }
+.race-card-v2--in-progress .race-card-v2__status-dot { background: var(--text-link); }
+.race-card-v2--partial .race-card-v2__status { color: var(--text-secondary); }
+.race-card-v2--partial .race-card-v2__status-dot {
+  background: transparent;
+  border: 2px solid var(--text-link);
+  box-sizing: border-box;
+}
+.race-card-v2--complete { opacity: 0.78; }
+.race-card-v2--complete .race-card-v2__status { color: var(--text-tertiary); }
+.race-card-v2--complete .race-card-v2__status-dot { background: var(--text-tertiary); }
+.race-card-v2--complete:hover { opacity: 1; }
+
+.rr-breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  max-width: 64rem; margin: 0 auto 1rem; padding: 0 0.25rem;
+  font-family: 'Manrope', sans-serif; font-size: 0.8125rem; min-width: 0;
+}
+.rr-breadcrumb__back {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: 44px; padding: 0.25rem 0.25rem; flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: inherit; font-weight: 700;
+  color: var(--text-link);
+}
+.rr-breadcrumb__back:hover { text-decoration: underline; }
+.rr-breadcrumb__back:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; border-radius: 0.25rem; }
+.rr-breadcrumb__sep { color: var(--text-tertiary); flex-shrink: 0; }
+.rr-breadcrumb__current {
+  color: var(--text-secondary); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 
 /* Landing hero steps */

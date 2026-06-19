@@ -17,23 +17,24 @@ export interface RaceCardProps {
   tier: Tier;
   scope: Scope;
   state: string | null;
-  districtLabel?: string | null;
+  seat?: string | null;
   electionDate?: string | null;
   boundaryRef?: BoundaryRef | null;
   frameRef?: BoundaryRef | null;
   candidateCount: number;
   topicCount: number;
   estMinutes: number;
-  progress?: 'none' | 'in-progress' | 'completed';
+  progress?: 'not-started' | 'in-progress' | 'partial' | 'complete';
+  progressLabel?: string | null;
   disabled?: boolean;
   onSelect: () => void;
 }
 
 export const RaceCard: React.FC<RaceCardProps> = (props) => {
   const {
-    office, tier, scope, state, districtLabel, electionDate, boundaryRef, frameRef,
+    office, tier, scope, state, seat, electionDate, boundaryRef, frameRef,
     candidateCount, topicCount, estMinutes,
-    progress = 'none', disabled, onSelect,
+    progress = 'not-started', progressLabel, disabled, onSelect,
   } = props;
 
   const stateName = getStateName(state);
@@ -59,8 +60,8 @@ export const RaceCard: React.FC<RaceCardProps> = (props) => {
             <div className="race-card-v2__scope">{scopeText}</div>
           )}
           <div className="race-card-v2__title">{office}</div>
-          {districtLabel && (
-            <div className="race-card-v2__district">{districtLabel}</div>
+          {seat && (
+            <div className="race-card-v2__seat">{seat}</div>
           )}
         </div>
       </div>
@@ -69,6 +70,12 @@ export const RaceCard: React.FC<RaceCardProps> = (props) => {
         <div className="race-card-v2__mi"><span className="k">Topics</span><span className="v">{topicCount}</span></div>
         <div className="race-card-v2__mi"><span className="k">Time</span><span className="v">~{estMinutes} min</span></div>
       </div>
+      {progressLabel && (
+        <div className="race-card-v2__status" data-testid="race-card-status">
+          <span className="race-card-v2__status-dot" aria-hidden="true" />
+          <span className="race-card-v2__status-text">{progressLabel}</span>
+        </div>
+      )}
     </button>
   );
 }

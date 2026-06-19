@@ -5,37 +5,37 @@ const base = { jurisdictionLevel: null, isLocal: false };
 
 describe('deriveTierScope', () => {
   it('prefers explicit backend tier/scope', () => {
-    expect(deriveTierScope({ ...base, positionName: 'Anything', tier: 'federal', scope: 'district' }))
+    expect(deriveTierScope({ ...base, office: 'Anything', tier: 'federal', scope: 'district' }))
       .toEqual({ tier: 'federal', scope: 'district' });
   });
 
   it('maps Governor to state / statewide', () => {
-    expect(deriveTierScope({ ...base, jurisdictionLevel: 'state', positionName: 'Governor' }))
+    expect(deriveTierScope({ ...base, jurisdictionLevel: 'state', office: 'Governor' }))
       .toEqual({ tier: 'state', scope: 'statewide' });
   });
 
   it('maps U.S. Senate to federal / statewide', () => {
-    expect(deriveTierScope({ ...base, jurisdictionLevel: 'federal', positionName: 'U.S. Senate' }))
+    expect(deriveTierScope({ ...base, jurisdictionLevel: 'federal', office: 'U.S. Senate' }))
       .toEqual({ tier: 'federal', scope: 'statewide' });
   });
 
   it('maps U.S. House to federal / district', () => {
-    expect(deriveTierScope({ ...base, jurisdictionLevel: 'federal', positionName: 'U.S. House' }))
+    expect(deriveTierScope({ ...base, jurisdictionLevel: 'federal', office: 'U.S. House' }))
       .toEqual({ tier: 'federal', scope: 'district' });
   });
 
   it('maps Mayor to local / citywide', () => {
-    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'city', positionName: 'Mayor' }))
+    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'city', office: 'Mayor' }))
       .toEqual({ tier: 'local', scope: 'citywide' });
   });
 
   it('maps County Commission to local / county', () => {
-    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'county', positionName: 'County Commission' }))
+    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'county', office: 'County Commission' }))
       .toEqual({ tier: 'local', scope: 'county' });
   });
 
   it('maps City Council to local / district', () => {
-    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'city', positionName: 'City Common Council' }))
+    expect(deriveTierScope({ ...base, isLocal: true, jurisdictionLevel: 'city', office: 'City Common Council' }))
       .toEqual({ tier: 'local', scope: 'district' });
   });
 });

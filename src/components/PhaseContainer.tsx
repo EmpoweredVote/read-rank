@@ -11,6 +11,7 @@ import { EvaluationPhase } from './EvaluationPhase';
 import { ResultsPhase } from './ResultsPhase';
 import { PracticeRound } from './PracticeRound';
 import { IssueSelection } from './IssueSelection';
+import { RaceBreadcrumb } from './RaceBreadcrumb';
 
 const EASE_CURVE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -101,6 +102,9 @@ export const PhaseContainer: React.FC = () => {
           status={promoteVerdictsStatus}
           error={promoteVerdictsError}
         />
+      )}
+      {(phase === 'issue-selection' || phase === 'evaluation' || phase === 'results') && currentRaceId && (
+        <RaceBreadcrumb />
       )}
       <AnimatePresence mode="wait">
         <motion.div key={phase} {...getPageTransition(phase, prefersReducedMotion)}>

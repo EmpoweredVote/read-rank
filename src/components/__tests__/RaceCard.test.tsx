@@ -32,13 +32,13 @@ describe('RaceCard', () => {
     expect(screen.getByText(/Nov\s+5,\s+2024/)).toBeInTheDocument();
   });
 
-  it('renders districtLabel when provided', () => {
-    render(<RaceCard {...baseProps} districtLabel="District 1" />);
+  it('renders seat when provided', () => {
+    render(<RaceCard {...baseProps} seat="District 1" />);
     expect(screen.getByText('District 1')).toBeInTheDocument();
   });
 
-  it('renders no district element when districtLabel is absent', () => {
-    render(<RaceCard {...baseProps} districtLabel={null} />);
+  it('renders no seat element when seat is absent', () => {
+    render(<RaceCard {...baseProps} seat={null} />);
     expect(screen.queryByText(/District/)).not.toBeInTheDocument();
   });
 
@@ -58,5 +58,15 @@ describe('RaceCard', () => {
     render(<RaceCard {...baseProps} state={null} />);
     // Should not crash; no state name shown
     expect(screen.queryByText('Indiana')).not.toBeInTheDocument();
+  });
+
+  it('renders a progress status label when provided', () => {
+    render(<RaceCard {...baseProps} progress="partial" progressLabel="Ranked 2 of 4" />);
+    expect(screen.getByText('Ranked 2 of 4')).toBeInTheDocument();
+  });
+
+  it('renders no status row when progress is not-started', () => {
+    render(<RaceCard {...baseProps} progress="not-started" />);
+    expect(screen.queryByTestId('race-card-status')).not.toBeInTheDocument();
   });
 });

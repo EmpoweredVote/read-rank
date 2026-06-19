@@ -32,6 +32,11 @@ export interface TopicProgress {
 export interface RaceProgress {
   raceId: string;
   positionName: string;
+  /** Clean display fields captured from the RaceSummary at selection time (ADR-0001).
+   *  Optional: races started before this field existed fall back to positionName. */
+  office?: string;
+  seat?: string | null;
+  state?: string | null;
   topics: Record<string, TopicProgress>;
   topicOrder: string[];
   currentTopicKey: string | null;
@@ -106,7 +111,7 @@ interface ReadRankState {
 
   // Race actions
   setPhase: (phase: Phase) => void;
-  selectRace: (payload: RacePayload) => void;
+  selectRace: (payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }) => void;
   setCurrentTopic: (topicKey: string) => void;
   nextTopic: () => void;
   agree: (quote: BlindQuote) => void;
@@ -141,7 +146,7 @@ interface ReadRankState {
 // Helpers
 // ============================================
 
-function buildRaceProgress(payload: RacePayload): RaceProgress {
+function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }): RaceProgress {
   const topics: Record<string, TopicProgress> = {};
   const topicOrder: string[] = [];
   for (const t of payload.topics) {
@@ -159,6 +164,9 @@ function buildRaceProgress(payload: RacePayload): RaceProgress {
   return {
     raceId: payload.raceId,
     positionName: payload.positionName,
+    office: meta?.office,
+    seat: meta?.seat ?? null,
+    state: meta?.state ?? null,
     topics,
     topicOrder,
     currentTopicKey: topicOrder[0] ?? null,
@@ -219,10 +227,10 @@ export const useReadRankStore = create<ReadRankState>()(
         set({ phase });
       },
 
-      selectRace: (payload) => {
+      selectRace: (payload, meta) => {
         const state = get();
         const existing = state.raceProgress[payload.raceId];
-        const race = existing ?? buildRaceProgress(payload);
+        const race = existing ? { ...existing, ...(meta ?? {}) } : buildRaceProgress(payload, meta);
         const nextPhase: Phase = existing ? race.phase : 'issue-selection';
         const selectedTopicKeys = race.selectedTopicKeys ?? race.topicOrder;
         set({
