@@ -30,6 +30,7 @@ export function deriveProgressState(
 ): ProgressInfo {
   const live = Math.max(rankableTopicCount, 0);
   if (!progress) {
+    // No stored selection exists yet, so treat every live scorable topic as "selectable".
     return { state: 'not-started', doneTopics: 0, liveScorableTopics: live, selectedScorableTopics: live };
   }
 

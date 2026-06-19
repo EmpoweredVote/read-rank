@@ -24,8 +24,23 @@ describe('deriveProgressState', () => {
   });
 
   it('in-progress when started but not revealed', () => {
-    const p = race({ topics: { t: topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }] }) } });
-    expect(deriveProgressState(p, 4).state).toBe('in-progress');
+    const p = race({ topics: { t: topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }] }) }, topicOrder: ['t'] });
+    const info = deriveProgressState(p, 4);
+    expect(info.state).toBe('in-progress');
+    expect(info.doneTopics).toBe(0);            // topic is scorable but not fully judged
+    expect(info.selectedScorableTopics).toBe(1); // one scorable topic, selected via topicOrder fallback
+  });
+
+  it('selectedScorableTopics counts only scorable topics in selectedTopicKeys', () => {
+    const a = topic({ topicKey: 'a', quotesToEvaluate: [q('1','x'), q('2','y')] });
+    const b = topic({ topicKey: 'b', quotesToEvaluate: [q('3','x'), q('4','y')] });
+    const p = race({
+      topics: { a, b },
+      topicOrder: ['a', 'b'],
+      selectedTopicKeys: ['a'], // only topic a selected
+    });
+    const info = deriveProgressState(p, 2);
+    expect(info.selectedScorableTopics).toBe(1); // b is scorable but not selected
   });
 
   it('counts a scorable topic as done only when every quote is judged', () => {
