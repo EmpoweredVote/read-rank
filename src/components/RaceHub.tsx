@@ -110,7 +110,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         </motion.div>
       )}
 
-      <div className="race-grid max-w-5xl mx-auto">
+      <div className="race-grid max-w-7xl mx-auto">
         {races.map((race) => {
           const progressState = raceProgress[race.raceId];
           const info = deriveProgressState(progressState, race.rankableTopicCount);
