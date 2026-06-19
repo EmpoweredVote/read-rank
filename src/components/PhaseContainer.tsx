@@ -12,6 +12,8 @@ import { ResultsPhase } from './ResultsPhase';
 import { PracticeRound } from './PracticeRound';
 import { IssueSelection } from './IssueSelection';
 import { RaceBreadcrumb } from './RaceBreadcrumb';
+import { track } from '../lib/analytics';
+import { getAllAgreedQuotes } from '../store/useReadRankStore';
 
 const EASE_CURVE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -46,6 +48,22 @@ export const PhaseContainer: React.FC = () => {
     }
     if (phase !== 'results') hasSynced.current = false;
   }, [phase, isLoggedIn, userId, currentRaceId, getRaceVerdicts]);
+
+  // Ballot reveal — single reliable capture point for "race completed", regardless
+  // of which control triggered finishRace (desktop reveal vs mobile sheet).
+  const revealedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (phase === 'results' && currentRaceId && revealedRef.current !== currentRaceId) {
+      revealedRef.current = currentRaceId;
+      const race = raceProgress[currentRaceId];
+      track('readrank_ballot_revealed', {
+        race_id: currentRaceId,
+        agreed_count: race ? getAllAgreedQuotes(race).length : 0,
+        topic_count: race ? race.topicOrder.length : 0,
+      });
+    }
+    if (phase !== 'results') revealedRef.current = null;
+  }, [phase, currentRaceId, raceProgress]);
 
   // Guest → authed verdicts promotion. Build the "API-empty" signal from the
   // local store: a map of every agreed/disagreed quote across all races.
@@ -97,7 +115,12 @@ export const PhaseContainer: React.FC = () => {
       {phase === 'results' && promoteVerdictsShouldPrompt && (
         <VerdictsPromotionBanner
           payload={promoteVerdictsPayload}
-          onSave={promoteVerdicts}
+          onSave={() => {
+            const map = (promoteVerdictsPayload && typeof promoteVerdictsPayload === 'object')
+              ? (promoteVerdictsPayload as Record<string, unknown>) : {};
+            track('readrank_verdicts_promoted', { count: Object.keys(map).length });
+            promoteVerdicts();
+          }}
           onDismiss={dismissVerdictsPromotion}
           status={promoteVerdictsStatus}
           error={promoteVerdictsError}

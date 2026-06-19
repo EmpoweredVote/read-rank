@@ -10,6 +10,7 @@ import { estimateMinutes } from '../utils/estimateMinutes';
 import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
 import { groupRaces, type TimeFilter } from '../utils/raceGrouping';
 import { getStateName } from '../utils/stateNames';
+import { track } from '../lib/analytics';
 
 interface RaceHubProps {
   hideHeader?: boolean;
@@ -51,6 +52,15 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
       selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state });
+      track('readrank_race_started', {
+        race_id: race.raceId,
+        office: race.office,
+        state: race.state,
+        seat: race.seat ?? null,
+        candidate_count: race.candidateCount,
+        topic_count: race.topicCount,
+        located: locationFilter != null,
+      });
     } finally {
       setStarting(null);
     }

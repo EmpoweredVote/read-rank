@@ -11,6 +11,7 @@ import CoachMark from './CoachMark';
 import { RankDock } from './RankDock';
 import { RankSheet } from './RankSheet';
 import { FirstAgreeCoach } from './FirstAgreeCoach';
+import { track } from '../lib/analytics';
 
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
@@ -94,6 +95,14 @@ export const EvaluationPhase: React.FC = () => {
 
   const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
+    track('readrank_verdict', {
+      verdict: direction,
+      race_id: race?.raceId,
+      topic_key: currentQuote.topicKey,
+      quote_id: currentQuote.id,
+      candidate_token: currentQuote.candidateToken,
+      agreed_so_far: agreed.length,
+    });
     setIsAnimating(true);
     setPendingVerdict(direction);
 

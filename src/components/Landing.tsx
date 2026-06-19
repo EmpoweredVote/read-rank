@@ -2,6 +2,7 @@ import { RaceHub } from './RaceHub';
 import { AddressFilterInput } from './AddressFilterInput';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { PRACTICE_QUOTES } from '../data/practiceData';
+import { track } from '../lib/analytics';
 
 const STEPS = [
   { n: '01', heading: 'Pick an election', body: 'Choose from local and upcoming races in our Alpha communities.', start: true },
@@ -51,7 +52,7 @@ export function Landing() {
           </p>
           <button
             type="button"
-            onClick={() => startPractice(PRACTICE_QUOTES)}
+            onClick={() => { track('readrank_practice_started'); startPractice(PRACTICE_QUOTES); }}
             className="mb-6 px-1 py-2"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
