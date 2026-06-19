@@ -90,6 +90,7 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
     userCounty != null && (r.countyGeoIds ?? []).includes(userCounty);
 
   const your = inBucket.filter((r) => r.isLocal);
+  // isLocal always wins; the county tier only applies to non-local races.
   const inCounty = inBucket.filter((r) => !r.isLocal && matchesCounty(r));
   const sameState = inBucket.filter(
     (r) => !r.isLocal && !matchesCounty(r) && userState != null && r.state === userState,

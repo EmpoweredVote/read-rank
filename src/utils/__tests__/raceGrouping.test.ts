@@ -211,4 +211,21 @@ describe('groupRaces — county tier', () => {
     });
     expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['past-county']);
   });
+
+  it('reports noExactMatch true when only county races exist (no isLocal)', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.noExactMatch).toBe(true);
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+
+  it('county-tiers a race even when userState is null', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: null,
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
 });
