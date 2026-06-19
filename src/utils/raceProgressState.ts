@@ -26,11 +26,10 @@ function isDone(t: TopicProgress): boolean {
 
 export function deriveProgressState(
   progress: RaceProgress | undefined,
-  rankableTopicCount: number,
+  rankableTopicCount?: number,
 ): ProgressInfo {
-  const live = Math.max(rankableTopicCount, 0);
   if (!progress) {
-    // No stored selection exists yet, so treat every live scorable topic as "selectable".
+    const live = Math.max(rankableTopicCount ?? 0, 0);
     return { state: 'not-started', doneTopics: 0, liveScorableTopics: live, selectedScorableTopics: live };
   }
 
@@ -41,9 +40,33 @@ export function deriveProgressState(
   const selectedKeys = progress.selectedTopicKeys ?? progress.topicOrder;
   const selectedScorableTopics = scorable.filter((t) => selectedKeys.includes(t.topicKey)).length;
 
+  // When the live scorable count is unknown, fall back to the scorable topics we
+  // can see in the user's own progress — never to total topicCount, which would
+  // include non-scorable topics and wrongly hold a finished race in 'partial'.
+  const live = Math.max(rankableTopicCount ?? scorable.length, 0);
+
   if (!progress.completed) {
     return { state: 'in-progress', doneTopics, liveScorableTopics: live, selectedScorableTopics };
   }
   const state: ProgressState = doneTopics >= live ? 'complete' : 'partial';
   return { state, doneTopics, liveScorableTopics: live, selectedScorableTopics };
+}
+
+/** The status label shown on a race tile, or null for no label.
+ *  Pure + exhaustive over ProgressState so a new state can't silently fall through. */
+export function progressLabel(info: ProgressInfo): string | null {
+  switch (info.state) {
+    case 'not-started':
+      return null;
+    case 'in-progress':
+      // No scorable topics yet -> no "0 of 0" nonsense; show no label.
+      if (info.selectedScorableTopics <= 0) return null;
+      return info.doneTopics >= info.selectedScorableTopics
+        ? 'Reveal your ballot'
+        : `Continue · ${info.doneTopics} of ${info.selectedScorableTopics} topics`;
+    case 'partial':
+      return `Ranked ${info.doneTopics} of ${info.liveScorableTopics}`;
+    case 'complete':
+      return 'Completed';
+  }
 }

@@ -7,7 +7,7 @@ import { AddressFilterInput } from './AddressFilterInput';
 import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
-import { deriveProgressState, type ProgressState } from '../utils/raceProgressState';
+import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
 
 interface RaceHubProps {
   hideHeader?: boolean;
@@ -113,18 +113,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       <div className="race-grid max-w-5xl mx-auto">
         {races.map((race) => {
           const progressState = raceProgress[race.raceId];
-          const info = deriveProgressState(progressState, race.rankableTopicCount ?? race.topicCount);
+          const info = deriveProgressState(progressState, race.rankableTopicCount);
           const progress: ProgressState = info.state;
-          let progressLabel: string | null = null;
-          if (info.state === 'in-progress') {
-            progressLabel = info.doneTopics >= info.selectedScorableTopics && info.selectedScorableTopics > 0
-              ? 'Reveal your ballot'
-              : `Continue · ${info.doneTopics} of ${info.selectedScorableTopics} topics`;
-          } else if (info.state === 'partial') {
-            progressLabel = `Ranked ${info.doneTopics} of ${info.liveScorableTopics}`;
-          } else if (info.state === 'complete') {
-            progressLabel = 'Completed';
-          }
+          const statusLabel = progressLabel(info);
           const { tier, scope } = deriveTierScope(race);
           const estMinutes = estimateMinutes({
             quoteCount: race.quoteCount,
@@ -146,7 +137,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
               topicCount={race.rankableTopicCount ?? race.topicCount}
               estMinutes={estMinutes}
               progress={progress}
-              progressLabel={progressLabel}
+              progressLabel={statusLabel}
               disabled={starting !== null}
               onSelect={() => handleSelect(race.raceId)}
             />

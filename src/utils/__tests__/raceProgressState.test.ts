@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveProgressState } from '../raceProgressState';
+import { deriveProgressState, progressLabel } from '../raceProgressState';
 import type { RaceProgress, TopicProgress } from '../../store/useReadRankStore';
 
 function topic(over: Partial<TopicProgress>): TopicProgress {
@@ -63,5 +63,32 @@ describe('deriveProgressState', () => {
     const done = topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }], disagreed: [q('2','b')] });
     // Live count is 2 but only one topic was finished -> partial (skipped or newly added).
     expect(deriveProgressState(race({ completed: true, topics: { t: done } }), 2).state).toBe('partial');
+  });
+});
+
+describe('progressLabel', () => {
+  const base = { doneTopics: 0, liveScorableTopics: 0, selectedScorableTopics: 0 };
+
+  it('not-started -> null', () => {
+    expect(progressLabel({ ...base, state: 'not-started', liveScorableTopics: 3, selectedScorableTopics: 3 })).toBeNull();
+  });
+  it('in-progress with topics remaining -> Continue · N of M topics', () => {
+    expect(progressLabel({ ...base, state: 'in-progress', doneTopics: 2, liveScorableTopics: 4, selectedScorableTopics: 4 }))
+      .toBe('Continue · 2 of 4 topics');
+  });
+  it('in-progress with all selected done -> Reveal your ballot', () => {
+    expect(progressLabel({ ...base, state: 'in-progress', doneTopics: 3, liveScorableTopics: 4, selectedScorableTopics: 3 }))
+      .toBe('Reveal your ballot');
+  });
+  it('in-progress with zero scorable topics -> null (no "0 of 0")', () => {
+    expect(progressLabel({ ...base, state: 'in-progress' })).toBeNull();
+  });
+  it('partial -> Ranked N of M', () => {
+    expect(progressLabel({ ...base, state: 'partial', doneTopics: 2, liveScorableTopics: 4, selectedScorableTopics: 2 }))
+      .toBe('Ranked 2 of 4');
+  });
+  it('complete -> Completed', () => {
+    expect(progressLabel({ ...base, state: 'complete', doneTopics: 4, liveScorableTopics: 4, selectedScorableTopics: 4 }))
+      .toBe('Completed');
   });
 });
