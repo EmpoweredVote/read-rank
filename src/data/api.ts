@@ -222,6 +222,7 @@ export interface SearchPoliticiansResult {
   status: string;
   data: SearchPolitician[];
   formattedAddress: string;
+  county: { geoid: string; name: string } | null;
   error?: string;
 }
 
@@ -232,17 +233,18 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
       body: JSON.stringify({ query }),
     });
     if (!res) {
-      return { status: 'error', data: [], error: 'Unauthorized', formattedAddress: '' };
+      return { status: 'error', data: [], error: 'Unauthorized', formattedAddress: '', county: null };
     }
     const status = res.headers.get('X-Data-Status') || res.headers.get('x-data-status') || '';
     const formattedAddress = res.headers.get('X-Formatted-Address') || res.headers.get('x-formatted-address') || '';
     if (!res.ok) {
-      return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '' };
+      return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '', county: null };
     }
     const raw = await res.json();
     const data: SearchPolitician[] = Array.isArray(raw) ? raw : (raw?.politicians ?? []);
-    return { status: status || 'fresh', data, formattedAddress };
+    const county = (raw && !Array.isArray(raw) && raw.county) ? raw.county as { geoid: string; name: string } : null;
+    return { status: status || 'fresh', data, formattedAddress, county };
   } catch (error) {
-    return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '' };
+    return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '', county: null };
   }
 }
