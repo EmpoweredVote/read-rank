@@ -198,11 +198,14 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
           {/* Sections */}
           {sections.map((section) => {
-            const collapsed = section.collapsible && !otherExpanded;
+            // A lone collapsible band (e.g. located voter whose only races are out of
+            // state) renders as a plain, always-expanded band so the screen isn't empty.
+            const showAsCollapsible = section.collapsible && sections.length > 1;
+            const collapsed = showAsCollapsible && !otherExpanded;
             const regionId = `race-grid-${section.kind}`;
             return (
               <div key={`${section.kind}-${section.label}`}>
-                {section.collapsible ? (
+                {showAsCollapsible ? (
                   <button
                     onClick={() => setOtherExpanded((v) => !v)}
                     aria-expanded={otherExpanded}
