@@ -16,6 +16,9 @@ describe('Landing', () => {
     expect(screen.getByText(/choose an election/i)).toBeInTheDocument();
     expect(screen.getByText(/start here/i)).toBeInTheDocument();
     // RaceHub inside the picker resolves the mock race async (fetch fallback).
+    // The demo Indiana race (2024-11-05) is past — switch to Past tab to see it.
+    const pastBtn = await screen.findByRole('button', { name: /^past$/i }, { timeout: 3000 });
+    await userEvent.click(pastBtn);
     expect(await screen.findByText('Governor', undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 

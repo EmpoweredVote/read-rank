@@ -9,6 +9,7 @@ import { useReadRankStore } from './store/useReadRankStore';
 import { searchPoliticians } from './data/api';
 import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
 import { ThemeProvider, useTheme } from './ThemeProvider';
+import { parseStateFromAddress } from './utils/parseStateFromAddress';
 
 function ThemeToggle() {
   const { isDark, toggle } = useTheme();
@@ -61,6 +62,7 @@ function MainApp() {
         setLocationFilter({
           address: decoded,
           politicianIds: result.data.map(p => p.id),
+          state: parseStateFromAddress(decoded),
         });
       }
     });

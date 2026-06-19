@@ -5,18 +5,7 @@ import { searchPoliticians } from '../data/api';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 import { useAuthState } from '../hooks/useAuthState';
 import { evContext, useEvContextPromotion } from '@empoweredvote/ev-ui';
-
-function parseStateFromAddress(addr: string): string | null {
-  if (!addr) return null;
-  const m = addr.match(/\b([A-Z]{2})\b\s*\d{5}(?:-\d{4})?/);
-  if (m) return m[1];
-  const segs = addr.split(',').map((s) => s.trim());
-  for (const seg of segs) {
-    const sm = seg.match(/^([A-Z]{2})(?:\s+\d{5}.*)?$/);
-    if (sm) return sm[1];
-  }
-  return null;
-}
+import { parseStateFromAddress } from '../utils/parseStateFromAddress';
 
 function writeAddressToContext(addr: string, userId?: string | null) {
   const state = parseStateFromAddress(addr);
@@ -52,7 +41,11 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     const politicianIds = result.data.map((p) => p.id);
 
     if (politicianIds.length > 0) {
-      setLocationFilter({ address: formattedAddress, politicianIds });
+      setLocationFilter({
+        address: formattedAddress,
+        politicianIds,
+        state: parseStateFromAddress(formattedAddress),
+      });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
     } else {
       setNoMatchWarning(true);

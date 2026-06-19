@@ -73,6 +73,9 @@ export interface PracticeProgress {
 export interface LocationFilter {
   address: string;
   politicianIds: string[];
+  /** Two-letter state parsed from the address; null when unparseable. Drives the
+   *  same-state ("More in {STATE}") relevance tier on the race hub. */
+  state: string | null;
 }
 
 export type Phase = 'hub' | 'practice' | 'evaluation' | 'results' | 'issue-selection';
@@ -475,7 +478,9 @@ export const useReadRankStore = create<ReadRankState>()(
           ...initialState,
           practiceCompleted: isUpgrade,
           coachMarksCompleted: isUpgrade,
-          locationFilter: prev.locationFilter ?? null,
+          locationFilter: prev.locationFilter
+            ? { ...prev.locationFilter, state: prev.locationFilter.state ?? null }
+            : null,
         };
       },
       partialize: (state) => ({

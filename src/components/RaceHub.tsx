@@ -8,10 +8,17 @@ import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
 import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
+import { groupRaces, type TimeFilter } from '../utils/raceGrouping';
+import { getStateName } from '../utils/stateNames';
 
 interface RaceHubProps {
   hideHeader?: boolean;
   hideFilter?: boolean;
+}
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
@@ -19,22 +26,21 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
+  const [otherExpanded, setOtherExpanded] = useState(false);
 
   const politicianIds = locationFilter?.politicianIds;
 
   useEffect(() => {
     setLoading(true);
     fetchRaces(politicianIds)
-      .then((data) => {
-        // Local races float to the top, then by election date.
-        const sorted = [...data].sort((a, b) => {
-          if (a.isLocal !== b.isLocal) return a.isLocal ? -1 : 1;
-          return (a.electionDate ?? '').localeCompare(b.electionDate ?? '');
-        });
-        setRaces(sorted);
-      })
+      .then((data) => setRaces(data))
       .finally(() => setLoading(false));
   }, [politicianIds]);
+
+  useEffect(() => {
+    setOtherExpanded(false);
+  }, [timeFilter]);
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
@@ -50,6 +56,39 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     }
   }, [selectRace]);
 
+  const renderCard = useCallback((race: RaceSummary) => {
+    const progressState = raceProgress[race.raceId];
+    const info = deriveProgressState(progressState, race.rankableTopicCount);
+    const progress: ProgressState = info.state;
+    const statusLabel = progressLabel(info);
+    const { tier, scope } = deriveTierScope(race);
+    const estMinutes = estimateMinutes({
+      quoteCount: race.quoteCount,
+      candidateCount: race.candidateCount,
+      topicCount: race.topicCount,
+    });
+    return (
+      <RaceCard
+        key={race.raceId}
+        office={race.office}
+        tier={tier}
+        scope={scope}
+        state={race.state}
+        seat={race.seat ?? null}
+        electionDate={race.electionDate}
+        boundaryRef={race.boundaryRef ?? null}
+        frameRef={race.frameRef ?? null}
+        candidateCount={race.candidateCount}
+        topicCount={race.rankableTopicCount ?? race.topicCount}
+        estMinutes={estMinutes}
+        progress={progress}
+        progressLabel={statusLabel}
+        disabled={starting !== null}
+        onSelect={() => handleSelect(race)}
+      />
+    );
+  }, [raceProgress, starting, handleSelect]);
+
   if (loading) {
     return (
       <div className="text-center py-16">
@@ -61,6 +100,18 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       </div>
     );
   }
+
+  const located = locationFilter != null;
+  const userState = locationFilter?.state ?? null;
+  const { sections, noExactMatch } = groupRaces({
+    races, located, userState, timeFilter, today: todayISO(),
+  });
+
+  const sectionLabelStyle: React.CSSProperties = {
+    fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '0.75rem',
+    letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-link)',
+    margin: '1.25rem 0 0.5rem',
+  };
 
   return (
     <div className="pb-12">
@@ -88,11 +139,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
       <div className="max-w-2xl mx-auto">
         {!hideFilter && <AddressFilterInput />}
-        {locationFilter && (
-          <p className="text-center mb-2" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            {races.some((r) => r.isLocal) ? 'Your local races are listed first.' : 'No local races with data yet — showing all.'}
-          </p>
-        )}
       </div>
 
       {races.length === 0 && (
@@ -104,46 +150,90 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1rem' }}>
             We&apos;re still gathering de-identified candidate quotes. Check back soon.
           </p>
-          {locationFilter && (
+          {located && (
             <button className="ev-button-secondary" onClick={clearLocationFilter}>Clear location filter</button>
           )}
         </motion.div>
       )}
 
-      <div className="race-grid max-w-7xl mx-auto">
-        {races.map((race) => {
-          const progressState = raceProgress[race.raceId];
-          const info = deriveProgressState(progressState, race.rankableTopicCount);
-          const progress: ProgressState = info.state;
-          const statusLabel = progressLabel(info);
-          const { tier, scope } = deriveTierScope(race);
-          const estMinutes = estimateMinutes({
-            quoteCount: race.quoteCount,
-            candidateCount: race.candidateCount,
-            topicCount: race.topicCount,
-          });
-          return (
-            <RaceCard
-              key={race.raceId}
-              office={race.office}
-              tier={tier}
-              scope={scope}
-              state={race.state}
-              seat={race.seat ?? null}
-              electionDate={race.electionDate}
-              boundaryRef={race.boundaryRef ?? null}
-              frameRef={race.frameRef ?? null}
-              candidateCount={race.candidateCount}
-              topicCount={race.rankableTopicCount ?? race.topicCount}
-              estMinutes={estMinutes}
-              progress={progress}
-              progressLabel={statusLabel}
-              disabled={starting !== null}
-              onSelect={() => handleSelect(race)}
-            />
-          );
-        })}
-      </div>
+      {races.length > 0 && (
+        <div className="max-w-7xl mx-auto">
+          {/* Time filter chips */}
+          <div className="flex gap-2 justify-center mt-2 mb-1" role="group" aria-label="Filter by election timing">
+            {(['upcoming', 'past'] as const).map((tf) => {
+              const active = timeFilter === tf;
+              return (
+                <button
+                  key={tf}
+                  onClick={() => setTimeFilter(tf)}
+                  aria-pressed={active}
+                  className="rounded-full px-4 py-1.5 text-sm transition-colors"
+                  style={{
+                    fontFamily: "'Manrope', sans-serif", fontWeight: active ? 700 : 500,
+                    border: active ? 'none' : '1px solid var(--border-subtle)',
+                    background: active ? 'var(--color-ev-muted-blue)' : 'transparent',
+                    color: active ? '#fff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {tf === 'upcoming' ? 'Upcoming' : 'Past'}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* No-exact-match note (Orem case) — only when there's a same-state band to point at */}
+          {noExactMatch && sections.some((s) => s.kind === 'state') && (
+            <p className="text-center mb-2" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              We couldn&apos;t pinpoint your exact districts — here are races in {getStateName(userState) ?? 'your state'}.
+            </p>
+          )}
+
+          {/* Empty bucket */}
+          {sections.length === 0 && (
+            <p className="text-center py-10" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              {timeFilter === 'upcoming' ? 'No upcoming races yet — try Past.' : 'No past races.'}
+            </p>
+          )}
+
+          {/* Sections */}
+          {sections.map((section) => {
+            // A lone collapsible band (e.g. located voter whose only races are out of
+            // state) renders as a plain, always-expanded band so the screen isn't empty.
+            const showAsCollapsible = section.collapsible && sections.length > 1;
+            const collapsed = showAsCollapsible && !otherExpanded;
+            const regionId = `race-grid-${section.kind}`;
+            return (
+              <div key={`${section.kind}-${section.label}`}>
+                {showAsCollapsible ? (
+                  <button
+                    onClick={() => setOtherExpanded((v) => !v)}
+                    aria-expanded={otherExpanded}
+                    aria-controls={regionId}
+                    className="flex items-center gap-2 w-full text-left"
+                    style={{ ...sectionLabelStyle, background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    <span aria-hidden="true">{otherExpanded ? '▾' : '▸'}</span>
+                    <span>{section.label}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>· {section.races.length}</span>
+                  </button>
+                ) : (
+                  <div style={sectionLabelStyle}>
+                    {section.label}
+                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}> · {section.races.length}</span>
+                  </div>
+                )}
+
+                {!collapsed && (
+                  <div className="race-grid" id={regionId}>
+                    {section.races.map(renderCard)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
