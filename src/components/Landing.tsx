@@ -76,17 +76,11 @@ export function Landing() {
 
       {/* Picker */}
       <h2
-        className="text-2xl sm:text-3xl font-semibold mb-2"
+        className="text-2xl sm:text-3xl font-semibold mb-6"
         style={{ color: 'var(--text-link)', fontFamily: "'Manrope', sans-serif" }}
       >
         Choose an election
       </h2>
-      <p
-        className="text-base mb-8"
-        style={{ color: 'var(--text-secondary)', fontFamily: "'Manrope', sans-serif" }}
-      >
-        Each one is a preview of the full Read &amp; Rank experience.
-      </p>
       <RaceHub hideHeader hideFilter />
     </section>
   );
