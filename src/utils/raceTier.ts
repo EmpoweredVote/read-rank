@@ -27,8 +27,8 @@ function deriveTier(race: DeriveInput): Tier {
   return 'state';
 }
 
-function deriveScope(positionName: string, tier: Tier): Scope {
-  const n = positionName.toLowerCase();
+function deriveScope(office: string, tier: Tier): Scope {
+  const n = office.toLowerCase();
   if (/county commission|board of supervisors|county council|sheriff|\bcounty\b/.test(n)) return 'county';
   if (/mayor|city of /.test(n)) return 'citywide';
   if (/council|ward|\bdistrict\b|house|assembly|representative|senate district/.test(n)) return 'district';
