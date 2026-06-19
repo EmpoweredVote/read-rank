@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Header } from '@empoweredvote/ev-ui';
+import { Header, getFeedbackUrl } from '@empoweredvote/ev-ui';
 import { PhaseContainer } from './components/PhaseContainer';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
@@ -81,10 +81,14 @@ function MainApp() {
           label: userName || 'Account',
           items: [
             { label: 'Clear Read & Rank', onClick: handleClearReadRank },
+            { label: 'Feedback', href: getFeedbackUrl() },
             { label: 'Sign out', onClick: logout },
           ],
         }
-      : { label: 'Account', items: [{ label: 'Sign in', href: `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}` }] };
+      : { label: 'Account', items: [
+          { label: 'Sign in', href: `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}` },
+          { label: 'Feedback', href: getFeedbackUrl() },
+        ] };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
