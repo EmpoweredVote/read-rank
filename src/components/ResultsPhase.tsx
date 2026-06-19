@@ -12,6 +12,7 @@ import { CompassCrossLink } from './CompassCrossLink';
 import { buildAlignmentGrid, type AlignmentTopic } from '../utils/alignmentGrid';
 import { TierIcon } from './TierIcon';
 import { tierForIndex } from '../utils/tiers';
+import { track } from '../lib/analytics';
 
 // ============================================================
 // MegaParticles — celebratory burst on the #1 card.
@@ -133,7 +134,12 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 1rem',
       }}>
         {entry.perTopic.length > 0 ? (
-          <button onClick={() => setExpanded((e) => !e)} style={{
+          <button onClick={() => {
+            setExpanded((e) => {
+              if (!e) track('readrank_candidate_details_expanded', { candidate_id: entry.candidateId, rank });
+              return !e;
+            });
+          }} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)',
             display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
@@ -146,6 +152,7 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
           </button>
         ) : <span />}
         <a href={buildEssentialsProfileUrl(entry.candidateId, verdictMap, undefined, address)} target="_blank" rel="noopener noreferrer"
+          onClick={() => track('readrank_essentials_link_clicked', { candidate_id: entry.candidateId, rank })}
           style={{
             fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-link)',
             textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap',
@@ -315,7 +322,7 @@ export const ResultsPhase: React.FC = () => {
         <motion.div className="flex justify-center pt-6"
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-          <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+          <button onClick={() => { track('readrank_play_again_clicked'); goToHub(); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
             Play another race near you
           </button>
         </motion.div>

@@ -6,6 +6,7 @@ import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 import { useAuthState } from '../hooks/useAuthState';
 import { evContext, useEvContextPromotion } from '@empoweredvote/ev-ui';
 import { parseStateFromAddress } from '../utils/parseStateFromAddress';
+import { track } from '../lib/analytics';
 
 function writeAddressToContext(addr: string, userId?: string | null) {
   const state = parseStateFromAddress(addr);
@@ -32,13 +33,22 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const [noMatchWarning, setNoMatchWarning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handlePlaceSelected = useCallback(async (formattedAddress: string) => {
+  const handlePlaceSelected = useCallback(async (formattedAddress: string, opts?: { track?: boolean }) => {
     if (!formattedAddress.trim()) return;
     setSearching(true);
     setNoMatchWarning(false);
 
     const result = await searchPoliticians(formattedAddress);
     const politicianIds = result.data.map((p) => p.id);
+
+    // Only count searches the user actively triggered — not silent auto-hydrate.
+    if (opts?.track !== false) {
+      track('readrank_address_searched', {
+        state: parseStateFromAddress(formattedAddress),
+        matched_count: politicianIds.length,
+        matched: politicianIds.length > 0,
+      });
+    }
 
     if (politicianIds.length > 0) {
       setLocationFilter({
@@ -92,7 +102,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
           const slice = await evContext.getAuthedSlice(userId);
           const a = slice && (slice as { address?: { addr?: string; ts?: number } }).address;
           if (a && typeof a.addr === 'string' && (!a.ts || Date.now() - a.ts <= TTL_MS)) {
-            handlePlaceSelected(a.addr);
+            handlePlaceSelected(a.addr, { track: false });
             return;
           }
         }
@@ -100,7 +110,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         const a = shared && (shared as { address?: { addr?: string; ts?: number } }).address;
         if (!a || typeof a.addr !== 'string') return;
         if (a.ts && Date.now() - a.ts > TTL_MS) return;
-        handlePlaceSelected(a.addr);
+        handlePlaceSelected(a.addr, { track: false });
       } catch { /* broker offline — silent fallthrough */ }
     };
     autoAppliedRef.current = true;

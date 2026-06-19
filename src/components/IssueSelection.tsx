@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useReadRankStore } from '../store/useReadRankStore';
+import { track } from '../lib/analytics';
 
 export const IssueSelection: React.FC = () => {
   const { getCurrentRaceProgress, setSelectedTopics, confirmIssueSelection } = useReadRankStore();
@@ -37,6 +38,16 @@ export const IssueSelection: React.FC = () => {
       ? selectedKeys.filter((k) => k !== key)
       : [...selectedKeys, key];
     setSelectedTopics(next);
+  };
+
+  const handleConfirm = () => {
+    track('readrank_issue_selection_confirmed', {
+      race_id: race.raceId,
+      topics_selected: selectedScorableCount,
+      total_quotes: totalSelectedQuotes,
+      estimated_minutes: estimatedMinutes,
+    });
+    confirmIssueSelection();
   };
 
   return (
@@ -88,7 +99,7 @@ export const IssueSelection: React.FC = () => {
           className="ev-button-primary"
           style={{ width: '100%', maxWidth: '28rem', fontSize: '1rem', padding: '0.875rem 1.5rem' }}
           disabled={selectedScorableCount === 0}
-          onClick={confirmIssueSelection}
+          onClick={handleConfirm}
         >
           {selectedScorableCount === 0
             ? 'Select at least one issue'

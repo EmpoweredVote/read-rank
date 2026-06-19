@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Header, getFeedbackUrl } from '@empoweredvote/ev-ui';
+import { track, identify, resetIdentity } from './lib/analytics';
 import { PhaseContainer } from './components/PhaseContainer';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
@@ -11,12 +12,22 @@ import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
 import { ThemeProvider, useTheme } from './ThemeProvider';
 import { parseStateFromAddress } from './utils/parseStateFromAddress';
 
+// Manual SPA pageview tracking — fires on every route change.
+function PostHogPageview() {
+  const location = useLocation();
+  useEffect(() => {
+    track('$pageview');
+    return () => track('$pageleave');
+  }, [location.pathname]);
+  return null;
+}
+
 function ThemeToggle() {
   const { isDark, toggle } = useTheme();
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => { track('readrank_theme_toggled', { to: isDark ? 'light' : 'dark' }); toggle(); }}
       className="theme-toggle-btn"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Light mode' : 'Dark mode'}
@@ -38,11 +49,16 @@ function ThemeToggle() {
 }
 
 function MainApp() {
-  const { isLoggedIn, userName, loading, logout } = useAuthState();
+  const { isLoggedIn, userName, userId, loading, logout } = useAuthState();
   const { reset, setLocationFilter, phase } = useReadRankStore();
   const { isDark } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Tie the analytics session to the signed-in user (creates a person profile).
+  useEffect(() => {
+    if (isLoggedIn && userId) identify(userId);
+  }, [isLoggedIn, userId]);
 
   useEffect(() => {
     // Extract token from hash fragment on initial load (Auth Hub redirect)
@@ -74,6 +90,17 @@ function MainApp() {
     reset();
   };
 
+  const handleSignOut = () => {
+    track('readrank_signed_out');
+    resetIdentity();
+    logout();
+  };
+
+  const handleSignIn = () => {
+    track('readrank_sign_in_initiated');
+    window.location.href = `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}`;
+  };
+
   const profileMenu = loading
     ? undefined
     : isLoggedIn
@@ -82,11 +109,11 @@ function MainApp() {
           items: [
             { label: 'Clear Read & Rank', onClick: handleClearReadRank },
             { label: 'Feedback', href: getFeedbackUrl() },
-            { label: 'Sign out', onClick: logout },
+            { label: 'Sign out', onClick: handleSignOut },
           ],
         }
       : { label: 'Account', items: [
-          { label: 'Sign in', href: `${AUTH_HUB_URL}/login?redirect=${encodeURIComponent(window.location.href)}` },
+          { label: 'Sign in', onClick: handleSignIn },
           { label: 'Feedback', href: getFeedbackUrl() },
         ] };
 
@@ -113,6 +140,7 @@ function App() {
   return (
     <ThemeProvider>
       <BrowserRouter basename="/">
+        <PostHogPageview />
         <Routes>
           <Route path="/" element={<MainApp />} />
           <Route path="/candidate/:candidateId/alignment" element={<CandidateAlignmentPage />} />
