@@ -57,6 +57,14 @@ declare module '@empoweredvote/ev-ui' {
   export const defaultNavItems: NavItem[];
   export const defaultCtaButton: CTAButton;
 
+  // Feedback — builds the empowered.vote/feedback URL with auto-detected
+  // ?feature= (from hostname) and current ?url=.
+  export function getFeedbackUrl(opts?: {
+    feature?: string;
+    baseUrl?: string;
+    includeUrl?: boolean;
+  }): string;
+
   export interface RadarChartCoreProps {
     labels: string[];
     data: number[];
