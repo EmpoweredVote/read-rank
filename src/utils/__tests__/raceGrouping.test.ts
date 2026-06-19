@@ -113,3 +113,29 @@ describe('groupRaces — undated and today are upcoming', () => {
     expect(ids).toContain('today');
   });
 });
+
+describe('groupRaces — located but unparseable state (userState null)', () => {
+  it('puts all non-local races under "other"', () => {
+    const a = race({ raceId: 'a', state: 'UT', isLocal: false, electionDate: '2026-06-23' });
+    const b = race({ raceId: 'b', state: 'CA', isLocal: false, electionDate: '2026-06-23' });
+    const result = groupRaces({
+      races: [a, b],
+      located: true, userState: null, timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.map((s) => s.kind)).toEqual(['other']);
+    expect(result.sections[0].races.map((r) => r.raceId)).toEqual(['a', 'b']);
+  });
+});
+
+describe('groupRaces — not located, null-state races', () => {
+  it('sorts the "Other" bucket after all named states', () => {
+    const oh = race({ raceId: 'oh', state: 'OH', electionDate: '2026-06-23' });
+    const noState = race({ raceId: 'no-state', state: null, electionDate: '2026-06-23' });
+    const ut = race({ raceId: 'ut', state: 'UT', electionDate: '2026-06-23' });
+    const result = groupRaces({
+      races: [noState, ut, oh],
+      located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.map((s) => s.label)).toEqual(['Ohio', 'Utah', 'Other']);
+  });
+});

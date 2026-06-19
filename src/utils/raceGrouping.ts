@@ -53,10 +53,13 @@ function sortByDate(races: RaceSummary[], timeFilter: TimeFilter): RaceSummary[]
 export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
   const { races, located, userState, timeFilter, today } = args;
 
+  // Evaluated against the FULL race list (not the active time bucket) on purpose:
+  // a past local race still means we identified the user's district, so the
+  // "couldn't pinpoint your districts" note should stay suppressed when toggling tabs.
   const noExactMatch = located && !races.some((r) => r.isLocal);
 
   const inBucket = sortByDate(
-    races.filter((r) => (timeFilter === 'upcoming') === isUpcoming(r, today)),
+    races.filter((r) => (timeFilter === 'upcoming' ? isUpcoming(r, today) : !isUpcoming(r, today))),
     timeFilter,
   );
 
@@ -70,7 +73,11 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
       byState.set(label, list);
     }
     const sections: RaceSection[] = [...byState.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => {
+        if (a[0] === 'Other') return 1;
+        if (b[0] === 'Other') return -1;
+        return a[0].localeCompare(b[0]);
+      })
       .map(([label, list]) => ({ kind: 'state-named', label, collapsible: false, races: list }));
     return { sections, noExactMatch: false };
   }
