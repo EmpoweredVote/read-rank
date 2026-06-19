@@ -478,7 +478,9 @@ export const useReadRankStore = create<ReadRankState>()(
           ...initialState,
           practiceCompleted: isUpgrade,
           coachMarksCompleted: isUpgrade,
-          locationFilter: prev.locationFilter ?? null,
+          locationFilter: prev.locationFilter
+            ? { ...prev.locationFilter, state: prev.locationFilter.state ?? null }
+            : null,
         };
       },
       partialize: (state) => ({
