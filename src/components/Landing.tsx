@@ -15,8 +15,12 @@ export function Landing() {
   return (
     <section
       style={{ backgroundColor: 'var(--surface-page)' }}
-      className="w-full px-12 sm:px-16 lg:px-24 py-10"
+      className="w-full py-10"
     >
+      {/* Content is bounded and padded to line up with the ev-ui Header:
+          a centered max-w container matching the Header's 1512px border-box and its
+          24px content inset, so the hero/heading/picker share the logo↔profile edges. */}
+      <div className="mx-auto px-6" style={{ maxWidth: '1512px' }}>
       {/* Hero */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16 lg:gap-24 items-start mb-12 lg:mb-16">
         <div>
@@ -82,6 +86,7 @@ export function Landing() {
         Choose an election
       </h2>
       <RaceHub hideHeader hideFilter />
+      </div>
     </section>
   );
 }
