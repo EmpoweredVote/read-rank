@@ -55,6 +55,8 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         address: formattedAddress,
         politicianIds,
         state: parseStateFromAddress(formattedAddress),
+        county: result.county?.geoid ?? null,
+        countyName: result.county?.name ?? null,
       });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
     } else {

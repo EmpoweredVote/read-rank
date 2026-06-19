@@ -79,6 +79,8 @@ function MainApp() {
           address: decoded,
           politicianIds: result.data.map(p => p.id),
           state: parseStateFromAddress(decoded),
+          county: result.county?.geoid ?? null,
+          countyName: result.county?.name ?? null,
         });
       }
     });
