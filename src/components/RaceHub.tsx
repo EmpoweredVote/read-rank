@@ -17,7 +17,8 @@ interface RaceHubProps {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
@@ -36,6 +37,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       .then((data) => setRaces(data))
       .finally(() => setLoading(false));
   }, [politicianIds]);
+
+  useEffect(() => {
+    setOtherExpanded(false);
+  }, [timeFilter]);
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
@@ -194,16 +199,18 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
           {/* Sections */}
           {sections.map((section) => {
             const collapsed = section.collapsible && !otherExpanded;
+            const regionId = `race-grid-${section.kind}`;
             return (
               <div key={`${section.kind}-${section.label}`}>
                 {section.collapsible ? (
                   <button
                     onClick={() => setOtherExpanded((v) => !v)}
                     aria-expanded={otherExpanded}
+                    aria-controls={regionId}
                     className="flex items-center gap-2 w-full text-left"
                     style={{ ...sectionLabelStyle, background: 'none', border: 'none', cursor: 'pointer' }}
                   >
-                    <span>{otherExpanded ? '▾' : '▸'}</span>
+                    <span aria-hidden="true">{otherExpanded ? '▾' : '▸'}</span>
                     <span>{section.label}</span>
                     <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>· {section.races.length}</span>
                   </button>
@@ -215,7 +222,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
                 )}
 
                 {!collapsed && (
-                  <div className="race-grid">
+                  <div className="race-grid" id={regionId}>
                     {section.races.map(renderCard)}
                   </div>
                 )}
