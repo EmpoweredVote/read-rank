@@ -27,6 +27,9 @@ export interface RaceSummary {
   boundaryRef?: BoundaryRef | null;
   /** Parent boundary to nest the child inside (backend-resolved). Null = render child alone. */
   frameRef?: BoundaryRef | null;
+  /** GEOIDs of the counties this race belongs to (set; state-leg districts cross county
+   *  lines). Absent/[] for statewide, federal, and unframed races. */
+  countyGeoIds?: string[];
   /** Total blind quotes in the race; used for the time estimate. */
   quoteCount?: number;
   /** Topics with enough quotes to rank; falls back to topicCount. */
