@@ -242,7 +242,10 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
     }
     const raw = await res.json();
     const data: SearchPolitician[] = Array.isArray(raw) ? raw : (raw?.politicians ?? []);
-    const county = (raw && !Array.isArray(raw) && raw.county) ? raw.county as { geoid: string; name: string } : null;
+    const rawCounty = (raw && !Array.isArray(raw)) ? raw.county : null;
+    const county = rawCounty && typeof rawCounty.geoid === 'string' && rawCounty.geoid
+      ? { geoid: rawCounty.geoid as string, name: typeof rawCounty.name === 'string' ? rawCounty.name : '' }
+      : null;
     return { status: status || 'fresh', data, formattedAddress, county };
   } catch (error) {
     return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '', county: null };
