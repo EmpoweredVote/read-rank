@@ -41,7 +41,11 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     const politicianIds = result.data.map((p) => p.id);
 
     if (politicianIds.length > 0) {
-      setLocationFilter({ address: formattedAddress, politicianIds });
+      setLocationFilter({
+        address: formattedAddress,
+        politicianIds,
+        state: parseStateFromAddress(formattedAddress),
+      });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
     } else {
       setNoMatchWarning(true);
