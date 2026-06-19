@@ -76,6 +76,11 @@ export interface LocationFilter {
   /** Two-letter state parsed from the address; null when unparseable. Drives the
    *  same-state ("More in {STATE}") relevance tier on the race hub. */
   state: string | null;
+  /** User's home county GEOID (5-digit FIPS) from the address-search geocode; null
+   *  when unresolved. Drives the "In {County}" relevance tier. */
+  county: string | null;
+  /** Display name for the county; null when unknown. */
+  countyName: string | null;
 }
 
 export type Phase = 'hub' | 'practice' | 'evaluation' | 'results' | 'issue-selection';
@@ -479,7 +484,12 @@ export const useReadRankStore = create<ReadRankState>()(
           practiceCompleted: isUpgrade,
           coachMarksCompleted: isUpgrade,
           locationFilter: prev.locationFilter
-            ? { ...prev.locationFilter, state: prev.locationFilter.state ?? null }
+            ? {
+                ...prev.locationFilter,
+                state: prev.locationFilter.state ?? null,
+                county: prev.locationFilter.county ?? null,
+                countyName: prev.locationFilter.countyName ?? null,
+              }
             : null,
         };
       },

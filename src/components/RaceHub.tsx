@@ -113,8 +113,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const located = locationFilter != null;
   const userState = locationFilter?.state ?? null;
+  const userCounty = locationFilter?.county ?? null;
+  const userCountyName = locationFilter?.countyName ?? null;
   const { sections, noExactMatch } = groupRaces({
-    races, located, userState, timeFilter, today: todayISO(),
+    races, located, userState, userCounty, userCountyName, timeFilter, today: todayISO(),
   });
 
   const sectionLabelStyle: React.CSSProperties = {
@@ -192,10 +194,14 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
             })}
           </div>
 
-          {/* No-exact-match note (Orem case) — only when there's a same-state band to point at */}
-          {noExactMatch && sections.some((s) => s.kind === 'state') && (
+          {/* No-exact-match note — point at the county if we have one, else the state */}
+          {noExactMatch && sections.some((s) => s.kind === 'county' || s.kind === 'state') && (
             <p className="text-center mb-2" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              We couldn&apos;t pinpoint your exact districts — here are races in {getStateName(userState) ?? 'your state'}.
+              We couldn&apos;t pinpoint your exact districts — here are races in {
+                sections.some((s) => s.kind === 'county')
+                  ? (userCountyName ?? 'your county')
+                  : (getStateName(userState) ?? 'your state')
+              }.
             </p>
           )}
 

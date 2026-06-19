@@ -3,7 +3,7 @@ import { getStateName } from './stateNames';
 
 export type TimeFilter = 'upcoming' | 'past';
 
-export type SectionKind = 'your' | 'state' | 'other' | 'state-named';
+export type SectionKind = 'your' | 'county' | 'state' | 'other' | 'state-named';
 
 export interface RaceSection {
   kind: SectionKind;
@@ -17,6 +17,10 @@ export interface GroupRacesArgs {
   located: boolean;
   /** Two-letter state code, or null when unknown / not located. */
   userState: string | null;
+  /** User's home county GEOID (5-digit FIPS), or null. Drives the "In {County}" tier. */
+  userCounty?: string | null;
+  /** Display name for the county band label. */
+  userCountyName?: string | null;
   timeFilter: TimeFilter;
   /** ISO YYYY-MM-DD; injected so grouping is deterministic in tests. */
   today: string;
@@ -51,7 +55,7 @@ function sortByDate(races: RaceSummary[], timeFilter: TimeFilter): RaceSummary[]
 }
 
 export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
-  const { races, located, userState, timeFilter, today } = args;
+  const { races, located, userState, userCounty = null, userCountyName = null, timeFilter, today } = args;
 
   // Evaluated against the FULL race list (not the active time bucket) on purpose:
   // a past local race still means we identified the user's district, so the
@@ -82,17 +86,25 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
     return { sections, noExactMatch: false };
   }
 
+  const matchesCounty = (r: RaceSummary) =>
+    userCounty != null && (r.countyGeoIds ?? []).includes(userCounty);
+
   const your = inBucket.filter((r) => r.isLocal);
+  // isLocal always wins; the county tier only applies to non-local races.
+  const inCounty = inBucket.filter((r) => !r.isLocal && matchesCounty(r));
   const sameState = inBucket.filter(
-    (r) => !r.isLocal && userState != null && r.state === userState,
+    (r) => !r.isLocal && !matchesCounty(r) && userState != null && r.state === userState,
   );
   const other = inBucket.filter(
-    (r) => !r.isLocal && !(userState != null && r.state === userState),
+    (r) => !r.isLocal && !matchesCounty(r) && !(userState != null && r.state === userState),
   );
 
   const sections: RaceSection[] = [];
   if (your.length) {
     sections.push({ kind: 'your', label: 'Your races', collapsible: false, races: your });
+  }
+  if (inCounty.length) {
+    sections.push({ kind: 'county', label: `In ${userCountyName ?? 'your county'}`, collapsible: false, races: inCounty });
   }
   if (sameState.length) {
     const stateName = getStateName(userState) ?? 'your state';

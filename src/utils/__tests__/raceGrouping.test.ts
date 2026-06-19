@@ -139,3 +139,93 @@ describe('groupRaces — not located, null-state races', () => {
     expect(result.sections.map((s) => s.label)).toEqual(['Ohio', 'Utah', 'Other']);
   });
 });
+
+describe('groupRaces — county tier', () => {
+  const slcExact = race({ raceId: 'slc-exact', state: 'UT', isLocal: true, countyGeoIds: ['49035'], electionDate: '2026-06-23' });
+  const slcCounty = race({ raceId: 'slc-county', state: 'UT', isLocal: false, countyGeoIds: ['49035'], electionDate: '2026-06-23' });
+  const utElsewhere = race({ raceId: 'ut-elsewhere', state: 'UT', isLocal: false, countyGeoIds: ['49049'], electionDate: '2026-06-23' });
+  const multiCounty = race({ raceId: 'multi', state: 'UT', isLocal: false, countyGeoIds: ['49035', '49045'], electionDate: '2026-06-23' });
+
+  it('orders bands: your, county, state, other', () => {
+    const result = groupRaces({
+      races: [slcExact, slcCounty, utElsewhere, caOther],
+      located: true, userState: 'UT', userCounty: '49035', userCountyName: 'Salt Lake County',
+      timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'county', 'state', 'other']);
+  });
+
+  it('labels the county band with the user county name', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.find((s) => s.kind === 'county')?.label).toBe('In Salt Lake County');
+  });
+
+  it('routes a same-county non-local race to county, not state', () => {
+    const result = groupRaces({
+      races: [slcCounty, utElsewhere], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+    expect(result.sections.find((s) => s.kind === 'state')?.races.map((r) => r.raceId)).toEqual(['ut-elsewhere']);
+  });
+
+  it('puts a multi-county race in the county tier for a voter in any member county', () => {
+    const inA = groupRaces({
+      races: [multiCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    const inB = groupRaces({
+      races: [multiCounty], located: true, userState: 'UT',
+      userCounty: '49045', userCountyName: 'Tooele County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(inA.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['multi']);
+    expect(inB.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['multi']);
+  });
+
+  it('omits the county band when the user has no county', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: 'UT',
+      userCounty: null, userCountyName: null, timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.some((s) => s.kind === 'county')).toBe(false);
+    expect(result.sections.find((s) => s.kind === 'state')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+
+  it('never county-tiers a race with no countyGeoIds', () => {
+    const noCounty = race({ raceId: 'nocounty', state: 'UT', isLocal: false, electionDate: '2026-06-23' });
+    const result = groupRaces({
+      races: [noCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.some((s) => s.kind === 'county')).toBe(false);
+  });
+
+  it('honors the county tier under the Past filter', () => {
+    const pastCounty = race({ raceId: 'past-county', state: 'UT', isLocal: false, countyGeoIds: ['49035'], electionDate: '2026-05-05' });
+    const result = groupRaces({
+      races: [pastCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'past', today: TODAY,
+    });
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['past-county']);
+  });
+
+  it('reports noExactMatch true when only county races exist (no isLocal)', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: 'UT',
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.noExactMatch).toBe(true);
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+
+  it('county-tiers a race even when userState is null', () => {
+    const result = groupRaces({
+      races: [slcCounty], located: true, userState: null,
+      userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
+    });
+    expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+});
