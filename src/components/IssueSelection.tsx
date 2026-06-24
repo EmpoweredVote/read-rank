@@ -6,9 +6,12 @@ export const IssueSelection: React.FC = () => {
   const { getCurrentRaceProgress, setSelectedTopics, confirmIssueSelection } = useReadRankStore();
   const race = getCurrentRaceProgress();
 
-  if (!race) return null;
-
+  // Hooks must run unconditionally and in the same order on every render — the
+  // useMemo below cannot sit behind an early return. When "All races" clears
+  // currentRaceId while this (exiting) view is still mounted, race becomes null;
+  // bailing out before the hook would drop the hook count and trigger React #300.
   const topicData = useMemo(() => {
+    if (!race) return [];
     return race.topicOrder.map((key) => {
       const topic = race.topics[key];
       const uniqueTokens = new Set(topic.quotesToEvaluate.map((q) => q.candidateToken));
@@ -19,7 +22,9 @@ export const IssueSelection: React.FC = () => {
         isScored: uniqueTokens.size > 1,
       };
     });
-  }, [race.topicOrder, race.topics]);
+  }, [race]);
+
+  if (!race) return null;
 
   const selectedKeys = race.selectedTopicKeys ?? race.topicOrder;
 

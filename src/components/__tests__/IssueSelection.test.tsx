@@ -89,4 +89,16 @@ describe('IssueSelection', () => {
     await userEvent.click(screen.getByRole('button', { name: /start/i }));
     expect(useReadRankStore.getState().phase).toBe('evaluation');
   });
+
+  // Regression: clicking "All races" sets currentRaceId to null while the
+  // outgoing IssueSelection is still mounted (AnimatePresence mode="wait").
+  // The re-render must not call fewer hooks than the mount render — otherwise
+  // React throws #300 ("Rendered fewer hooks than expected") and the tree dies.
+  it('does not crash when the current race is cleared while still mounted', () => {
+    const { rerender } = render(<IssueSelection />);
+    expect(screen.getByText('Housing')).toBeInTheDocument();
+    // Simulate goToHub() clearing the race during the exit transition.
+    useReadRankStore.setState({ currentRaceId: null });
+    expect(() => rerender(<IssueSelection />)).not.toThrow();
+  });
 });
