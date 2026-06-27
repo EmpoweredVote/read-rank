@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeRevealTimeline } from '../revealTimeline';
+import { DUR, STAGGER } from '../../motion';
 
 describe('computeRevealTimeline', () => {
   it('collapses every value to 0 when reduced', () => {
@@ -21,14 +22,15 @@ describe('computeRevealTimeline', () => {
     expect(t.gridFrame).toBeLessThan(t.medalsStart);
     expect(t.medalsStart).toBeLessThan(t.cascadeStart);
     expect(t.cascadeStart).toBeLessThan(t.firstLand);
+    expect(t.firstLand - t.cascadeStart).toBe(DUR.moderate);
   });
 
   it('staggers medals by 90ms and cards by 420ms from their bases', () => {
     const t = computeRevealTimeline({ filledCells: 6, reduced: false });
     expect(t.medalDelay(0)).toBe(t.medalsStart);
-    expect(t.medalDelay(2) - t.medalDelay(1)).toBe(90);
+    expect(t.medalDelay(2) - t.medalDelay(1)).toBe(STAGGER.gridCell);
     expect(t.cardDelay(0)).toBe(t.cascadeStart);
-    expect(t.cardDelay(2) - t.cardDelay(1)).toBe(420);
+    expect(t.cardDelay(2) - t.cardDelay(1)).toBe(STAGGER.cascade);
   });
 
   it('pushes the cascade later when there are more medals to assemble', () => {

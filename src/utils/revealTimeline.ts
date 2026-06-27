@@ -37,13 +37,16 @@ export function computeRevealTimeline(opts: {
     };
   }
 
+  const ENTRANCE_OFFSET = 120; // delay before the insight strip enters
+  const CASCADE_BREATH = 120;  // gap between last medal and first card
+
   const heading = 0;
-  const insight = 120;
+  const insight = ENTRANCE_OFFSET;
   const gridFrame = insight + DUR.moderate;          // frame settles after insight lands
   const medalsStart = gridFrame + DUR.base;          // then medals begin popping
   const cells = Math.max(opts.filledCells, 1);
   const medalsEnd = medalsStart + (cells - 1) * STAGGER.gridCell + DUR.moderate;
-  const cascadeStart = medalsEnd + 120;              // small breath, then candidates
+  const cascadeStart = medalsEnd + CASCADE_BREATH;   // small breath, then candidates
   const firstLand = cascadeStart + DUR.moderate;     // #1 has visibly landed
 
   return {
