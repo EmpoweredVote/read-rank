@@ -543,6 +543,16 @@ dialog::backdrop {
 .action-button-agree {
   background-color: var(--action-primary);
   color: var(--action-primary-ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
 
 .action-button-disagree:hover:not(:disabled),
