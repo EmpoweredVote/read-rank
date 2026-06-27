@@ -31,7 +31,6 @@ export const PracticeRound: React.FC = () => {
 
   const [showSplash, setShowSplash] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [pendingVerdict, setPendingVerdict] = useState<'agree' | 'disagree' | null>(null);
   const [showFullRankList, setShowFullRankList] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
@@ -45,9 +44,7 @@ export const PracticeRound: React.FC = () => {
   const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
     setIsAnimating(true);
-    setPendingVerdict(direction);
-    await delay(300);
-    setPendingVerdict(null);
+    await delay(120);
     if (direction === 'agree') agreePractice(currentQuote);
     else disagreePractice(currentQuote);
     await delay(250);
@@ -143,7 +140,6 @@ export const PracticeRound: React.FC = () => {
                 quote={currentQuote}
                 displayNumber={currentIndex + 1}
                 showTrustFooter={false}
-                pendingVerdict={pendingVerdict ?? undefined}
               />
             </AnimatePresence>
           </div>

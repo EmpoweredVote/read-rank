@@ -48,7 +48,6 @@ export const EvaluationPhase: React.FC = () => {
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
   const [isAnimating, setIsAnimating] = useState(false);
-  const [pendingVerdict, setPendingVerdict] = useState<'agree' | 'disagree' | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [flight, setFlight] = useState<{ text: string; from: FlyRect; to: FlyRect } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -104,7 +103,6 @@ export const EvaluationPhase: React.FC = () => {
       agreed_so_far: agreed.length,
     });
     setIsAnimating(true);
-    setPendingVerdict(direction);
 
     // Agree → fly the card into the pile (desktop: sidebar, mobile: dock).
     // Skip the flight for reduced-motion or if either ref is missing; the pile
@@ -112,8 +110,6 @@ export const EvaluationPhase: React.FC = () => {
     const cardEl = quoteCardRef.current;
     const targetEl = isMouseDevice ? sidebarRef.current : dockRef.current;
     if (direction === 'agree' && !prefersReducedMotion && cardEl && targetEl) {
-      await delay(140); // brief stamp flash
-      setPendingVerdict(null);
       setFlight({
         text: currentQuote.text,
         from: cardEl.getBoundingClientRect(),
@@ -129,10 +125,9 @@ export const EvaluationPhase: React.FC = () => {
       return;
     }
 
-    // Disagree, reduced-motion, or missing refs: quick stamp + commit.
-    await delay(300);
+    // Disagree, reduced-motion, or missing refs: brief beat then commit.
+    await delay(120);
     if (!isMountedRef.current) return;
-    setPendingVerdict(null);
     if (tourStep === 1) setTourStep(2);
     if (direction === 'agree') agree(currentQuote);
     else disagree(currentQuote);
@@ -192,7 +187,6 @@ export const EvaluationPhase: React.FC = () => {
                   key={currentQuote.id}
                   quote={currentQuote}
                   displayNumber={currentIndex + 1}
-                  pendingVerdict={pendingVerdict ?? undefined}
                 />
               </AnimatePresence>
             </div>

@@ -55,18 +55,8 @@ describe('QuoteCard blind-trust footer', () => {
     expect(container.firstElementChild).not.toHaveClass('ev-quote-card-active');
   });
 
-  it('shows the agree stamp when pendingVerdict is agree', () => {
-    render(<QuoteCard quote={quote} pendingVerdict="agree" />);
-    expect(document.querySelector('.quote-stamp-agree')).toBeInTheDocument();
-  });
-
-  it('shows the disagree stamp when pendingVerdict is disagree', () => {
-    render(<QuoteCard quote={quote} pendingVerdict="disagree" />);
-    expect(document.querySelector('.quote-stamp-disagree')).toBeInTheDocument();
-  });
-
-  it('shows no stamp when pendingVerdict is not set', () => {
+  it('never renders a verdict stamp overlay', () => {
     render(<QuoteCard quote={quote} />);
-    expect(document.querySelector('.quote-stamp')).not.toBeInTheDocument();
+    expect(document.querySelector('.quote-stamp')).toBeNull();
   });
 });
