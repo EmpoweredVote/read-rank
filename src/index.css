@@ -1891,7 +1891,7 @@ dialog.rank-sheet[open] {
   padding: 0.875rem;
   cursor: pointer;
   font-family: 'Manrope', sans-serif;
-  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
 }
 .race-card-v2:hover {
   border-color: var(--text-link);
