@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
+import { useMotion } from '../motion';
 import { TIER_META, tierAnnouncement, tierForIndex } from '../utils/tiers';
 import { TierIcon } from './TierIcon';
 
@@ -127,6 +128,7 @@ interface RowProps {
 
 const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
+  const m = useMotion();
 
   return (
     <div
@@ -138,7 +140,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
     >
       <motion.div
         layout
-        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+        transition={m.spring()}
         style={{ opacity: isDragging ? 0 : 1 }}
         className={isDragging ? 'rank-row-dragging' : ''}
       >
