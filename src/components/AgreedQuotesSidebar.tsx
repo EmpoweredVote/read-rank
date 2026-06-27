@@ -7,7 +7,12 @@ import { RankRail } from './RankRail';
  * Desktop rank surface — the race-wide agreed pile as a draggable podium.
  * Always visible alongside the triage card; ranking is optional and never forced.
  */
-export const RankedListSidebar = React.forwardRef<HTMLDivElement>((_props, ref) => {
+interface RankedListSidebarProps {
+  /** Id of a row currently being landed on by a verdict flight (seamless handoff). */
+  landingId?: string | null;
+}
+
+export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSidebarProps>(({ landingId }, ref) => {
   const { getCurrentTopicProgress } = useReadRankStore();
   const topic = getCurrentTopicProgress();
   const agreed = topic?.agreed ?? [];
@@ -52,7 +57,7 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement>((_props, ref) 
           Drag to rank.&nbsp; Your top 3 carry the most weight.
         </p>
         <div style={{ overflowY: 'auto', maxHeight: '58vh' }}>
-          <RankRail variant="sidebar" />
+          <RankRail variant="sidebar" landingId={landingId} />
         </div>
       </div>
     </div>

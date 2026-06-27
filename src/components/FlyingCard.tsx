@@ -1,6 +1,7 @@
 // src/components/FlyingCard.tsx
 import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { useMotion, DUR, EASE } from '../motion';
 
 export interface FlyRect {
   top: number;
@@ -14,38 +15,36 @@ interface FlyingCardProps {
   text: string;
   /** Source rect (the live quote card), from getBoundingClientRect(). */
   from: FlyRect;
-  /** Target rect (the pile: sidebar on desktop, dock on mobile). */
+  /** Target rect — the destination ROW box (full size), not a point. */
   to: FlyRect;
-  /** Flight duration in milliseconds. */
-  durationMs: number;
 }
 
 /**
- * A fixed-position, portaled clone of the quote card that arcs from the live
- * card into the ranking pile. Purely presentational — it self-animates and is
- * unmounted by its parent. The store commit is timed by the parent, not by this
- * component's animation lifecycle, so behavior is deterministic in tests.
+ * A fixed-position, portaled clone of the quote card that travels from the live
+ * card into the ranking and resizes to land exactly on the destination row's
+ * box — one connected motion (no shrink-to-dot, no fade-to-nothing). Purely
+ * presentational: the parent times mount/unmount and keeps the real destination
+ * row hidden during the flight, so the handoff is seamless and deterministic
+ * (not dependent on an animation callback). Not rendered under reduced motion.
  */
-export function FlyingCard({ text, from, to, durationMs }: FlyingCardProps) {
-  const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
-  const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+export function FlyingCard({ text, from, to }: FlyingCardProps) {
+  const m = useMotion();
+  if (m.reduced) return null;
 
   return createPortal(
     <motion.div
       data-testid="flying-card"
-      className="ev-quote-card"
+      className="ev-quote-card flying-card-connected"
       aria-hidden="true"
-      initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
-      animate={{ x: dx, y: dy, scale: 0.12, opacity: 0.2 }}
-      transition={{ duration: durationMs / 1000, ease: [0.5, 0, 0.2, 1] }}
+      initial={{ top: from.top, left: from.left, width: from.width, height: from.height }}
+      animate={{ top: to.top, left: to.left, width: to.width, height: to.height }}
+      transition={{ duration: m.dur(DUR.flight) / 1000, ease: EASE.flight }}
       style={{
         position: 'fixed',
-        top: from.top,
-        left: from.left,
-        width: from.width,
         margin: 0,
         zIndex: 9999,
         pointerEvents: 'none',
+        overflow: 'hidden',
       }}
     >
       <div className="ev-quote-text" style={{ fontSize: 'clamp(1.0625rem, 2.5vw, 1.25rem)' }}>

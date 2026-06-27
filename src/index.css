@@ -343,6 +343,11 @@ dialog::backdrop {
   box-shadow: var(--shadow-hover);
 }
 
+/* The verdict flight clone — lifted off the page while it travels to the dock. */
+.flying-card-connected {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 6px 14px rgba(0, 0, 0, 0.10);
+}
+
 /* ============================================
    Animation Keyframes
    ============================================ */

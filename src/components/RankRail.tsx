@@ -5,9 +5,11 @@ import { TierIcon } from './TierIcon';
 
 export interface RankRailProps {
   variant: 'sidebar' | 'sheet';
+  /** Id of a row currently being landed on by a verdict flight (seamless handoff). */
+  landingId?: string | null;
 }
 
-export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
+export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
   const { getCurrentRaceProgress, getCurrentTopicProgress, reorderAgreed, reAgree } = useReadRankStore();
   const race = getCurrentRaceProgress();
   const topic = getCurrentTopicProgress();
@@ -25,6 +27,7 @@ export const RankRail: React.FC<RankRailProps> = ({ variant }) => {
         longPressDrag={isSheet}
         showMoveButtons
         showGhostSlots
+        landingId={landingId}
       />
 
       {agreed.length === 0 && (

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from
 import { AnimatePresence, useReducedMotion } from 'framer-motion';
 import { FlyingCard, type FlyRect } from './FlyingCard';
 import { useReadRankStore } from '../store/useReadRankStore';
+import { DUR } from '../motion';
 import { QuoteCard } from './QuoteCard';
 import { ActionButtons } from './ActionButtons';
 import { RankedListSidebar } from './AgreedQuotesSidebar';
@@ -15,6 +16,7 @@ import { track } from '../lib/analytics';
 import { tierForIndex, TIER_META } from '../utils/tiers';
 
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
+function toFlyRect(r: DOMRect): FlyRect { return { top: r.top, left: r.left, width: r.width, height: r.height }; }
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -52,6 +54,8 @@ export const EvaluationPhase: React.FC = () => {
   const [verdictAnnounce, setVerdictAnnounce] = useState('');
   const prefersReducedMotion = useReducedMotion();
   const [flight, setFlight] = useState<{ text: string; from: FlyRect; to: FlyRect } | null>(null);
+  // Desktop: the just-committed agreed row, hidden while the flight lands on it.
+  const [landingId, setLandingId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
@@ -111,19 +115,43 @@ export const EvaluationPhase: React.FC = () => {
     // still pulses via RankDock / the sidebar effect.
     const cardEl = quoteCardRef.current;
     const targetEl = isMouseDevice ? sidebarRef.current : dockRef.current;
-    if (direction === 'agree' && !prefersReducedMotion && cardEl && targetEl) {
-      setFlight({
-        text: currentQuote.text,
-        from: cardEl.getBoundingClientRect(),
-        to: targetEl.getBoundingClientRect(),
-      });
-      await delay(600); // flight duration (matches FlyingCard)
+    const quote = currentQuote;
+    const canFly = direction === 'agree' && !prefersReducedMotion && cardEl && targetEl;
+
+    // Desktop: commit first so the real row exists, hide it (landingId), measure
+    // it, then fly the card onto it and reveal — one connected, seamless motion.
+    if (canFly && isMouseDevice) {
+      const from = toFlyRect(cardEl!.getBoundingClientRect());
+      if (tourStep === 1) setTourStep(2);
+      agree(quote);
+      setVerdictAnnounce(`Added to your ranking, ${TIER_META[tierForIndex(agreed.length)].name}.`);
+      setLandingId(quote.id);
+      await delay(32); // let the committed row render before measuring it
+      if (!isMountedRef.current) return;
+      const rowEl = sidebarRef.current?.querySelector(`[data-quote-id="${quote.id}"]`) as HTMLElement | null;
+      if (rowEl) {
+        setFlight({ text: quote.text, from, to: toFlyRect(rowEl.getBoundingClientRect()) });
+        await delay(DUR.flight + 60);
+        if (!isMountedRef.current) return;
+        setFlight(null);
+      }
+      setLandingId(null);
+      setIsAnimating(false);
+      return;
+    }
+
+    // Mobile: the dock is collapsed, so the card collapses into it and we commit
+    // on landing (there is no full row to hand off to).
+    if (canFly && !isMouseDevice) {
+      const from = toFlyRect(cardEl!.getBoundingClientRect());
+      setFlight({ text: quote.text, from, to: toFlyRect(targetEl!.getBoundingClientRect()) });
+      await delay(DUR.flight + 60);
       if (!isMountedRef.current) return;
       if (tourStep === 1) setTourStep(2);
-      agree(currentQuote);
+      agree(quote);
       setVerdictAnnounce(`Added to your ranking, ${TIER_META[tierForIndex(agreed.length)].name}.`);
       setFlight(null);
-      await delay(80);
+      await delay(60);
       setIsAnimating(false);
       return;
     }
@@ -188,7 +216,7 @@ export const EvaluationPhase: React.FC = () => {
           <div className="swipe-card-container">
             {/* Hidden while a flight is in progress so the clone reads as the
                 card itself flying (not a ghost detaching from a card left behind). */}
-            <div className="flex justify-center relative z-10" style={{ opacity: flight ? 0 : 1 }}>
+            <div className="flex justify-center relative z-10" style={{ opacity: (flight || landingId) ? 0 : 1 }}>
               <AnimatePresence mode="wait">
                 <QuoteCard
                   ref={quoteCardRef}
@@ -300,11 +328,11 @@ export const EvaluationPhase: React.FC = () => {
           <div className="evaluation-main-panel">{mainColumn}</div>
           <div className="evaluation-sidebar-panel">
             {agreed.length === 1 && <FirstAgreeCoach variant="desktop" />}
-            <RankedListSidebar ref={sidebarRef} />
+            <RankedListSidebar ref={sidebarRef} landingId={landingId} />
           </div>
         </div>
         {coachMarkOverlay}
-        {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} durationMs={600} />}
+        {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} />}
       </div>
     );
   }
@@ -336,7 +364,7 @@ export const EvaluationPhase: React.FC = () => {
         }}
       />
       {coachMarkOverlay}
-      {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} durationMs={600} />}
+      {flight && <FlyingCard text={flight.text} from={flight.from} to={flight.to} />}
     </div>
   );
 };
