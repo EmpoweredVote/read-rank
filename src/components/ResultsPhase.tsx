@@ -93,7 +93,7 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, verdictMap, addre
   const displayCount = useCountUp(agreementCount, {
     durationMs: DUR.moderate,
     reduced: m.reduced,
-    startDelayMs: landBaseDelayMs,
+    startDelayMs: landBaseDelayMs + STAGGER.evidence,
   });
 
   // Per-element landing delays, sub-staggered inside the card. m.transition

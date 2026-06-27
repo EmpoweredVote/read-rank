@@ -767,6 +767,8 @@ dialog::backdrop {
   font-weight: 800;
   font-size: 0.8125rem;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 .podium-rank-badge.r1 { background: var(--podium-gold); color: #3a2e00; }
 .podium-rank-badge.r2 { background: var(--podium-silver); color: #06303a; }
@@ -776,7 +778,6 @@ dialog::backdrop {
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
-.podium-rank-badge { position: relative; overflow: hidden; }
 .podium-rank-badge.gleam::after {
   content: '';
   position: absolute;
