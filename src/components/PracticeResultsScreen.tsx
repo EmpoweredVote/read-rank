@@ -13,10 +13,11 @@ export const PracticeResultsScreen: React.FC = () => {
   const renderCard = (quoteId: string, text: string, token: string, idx: number, kind: 'agreed' | 'disagreed') => {
     const character = PRACTICE_CHARACTERS.find((c) => c.id === token);
     const accent = kind === 'agreed' ? 'var(--color-ev-muted-blue)' : 'var(--border-medium)';
+    const cardEnter = m.enter({ y: 24 });
     return (
       <motion.div key={quoteId}
         style={{ backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderLeft: `3px solid ${accent}`, borderRadius: '0.625rem', overflow: 'hidden' }}
-        initial={m.enter({ y: 24 }).initial} animate={m.enter({ y: 24 }).animate}
+        initial={cardEnter.initial} animate={cardEnter.animate}
         transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : idx * (STAGGER.badge / 1000) })}>
         {character && (
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--surface-sunken)' }}>
@@ -48,10 +49,12 @@ export const PracticeResultsScreen: React.FC = () => {
     );
   };
 
+  const headerEnter = m.enter({ y: 20 });
+
   return (
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-8"
-        initial={m.enter({ y: 20 }).initial} animate={m.enter({ y: 20 }).animate} transition={m.transition(DUR.moderate)}>
+        initial={headerEnter.initial} animate={headerEnter.animate} transition={m.transition(DUR.moderate)}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--text-heading)', marginBottom: '0.375rem', letterSpacing: '-0.02em' }}>
           Your Pizza Topping Rankings
         </h2>
