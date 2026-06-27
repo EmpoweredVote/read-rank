@@ -97,6 +97,18 @@
   --action-primary-ink: #ffffff;
 
   --progress-fill: var(--color-ev-muted-blue);
+
+  /* Motion tokens (mirror of src/motion.ts — keep in sync) */
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-flight: cubic-bezier(0.45, 0, 0.18, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.45, 0.6, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-burst: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-moderate: 400ms;
+  --dur-flight: 580ms;
+  --dur-burst: 800ms;
 }
 
 .dark {
