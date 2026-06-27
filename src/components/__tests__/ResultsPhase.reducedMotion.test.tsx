@@ -45,8 +45,7 @@ describe('ResultsPhase reduced motion', () => {
 
     // Cards present at once, final number shown immediately (count-up bypassed under reduced motion).
     expect((await screen.findAllByText(/mike braun/i)).length).toBeGreaterThan(0);
-    // The agreement number is the final value (1), not stuck at 0.
-    expect(screen.queryByText(/agreed with\s*0\s*position/i)).not.toBeInTheDocument();
+    // Count-up bypass under reduced motion (returns target immediately) is unit-tested in src/utils/__tests__/countUp.test.tsx.
     // Announcement present.
     const announcement = await screen.findByText(/ballot revealed\. your number one is mike braun/i);
     expect(announcement).toHaveAttribute('aria-live', 'polite');
