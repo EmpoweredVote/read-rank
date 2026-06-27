@@ -371,7 +371,12 @@ export const ResultsPhase: React.FC = () => {
             {insight}
           </motion.div>
         )}
-        <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
+        <AlignmentGrid topics={alignmentTopics} rows={alignmentRows}
+          animate
+          frameDelayMs={timeline.gridFrame}
+          medalBaseDelayMs={timeline.medalsStart}
+          spotlightCandidateId={ballot[0]?.candidateId ?? null}
+          spotlightActive={spotlightActive} />
 
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
           How the candidates stack up
