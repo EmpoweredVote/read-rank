@@ -33,6 +33,7 @@ describe('useCountUp', () => {
   it('starts at 0 and reaches the target after the duration elapses', () => {
     const { result } = renderHook(() => useCountUp(8, { durationMs: 300, reduced: false }));
     expect(result.current).toBe(0);
+    // advance past durationMs (300) so the final clamped tick fires and the interval clears
     act(() => { vi.advanceTimersByTime(400); });
     expect(result.current).toBe(8);
   });

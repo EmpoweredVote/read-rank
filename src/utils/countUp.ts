@@ -27,8 +27,7 @@ export function useCountUp(
     const step = 30;
     let elapsed = 0;
     const startTimer = setTimeout(() => {
-      // Kick off from 0 on the first tick
-      setValue(countUpValue(target, elapsed, durationMs));
+      // useState(0) seeds the start; on a deps re-run the first interval tick (≤30ms) overwrites any stale value — fine for a count that animates once on landing.
       intervalRef.current = setInterval(() => {
         elapsed += step;
         setValue(countUpValue(target, elapsed, durationMs));
