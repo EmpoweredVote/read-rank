@@ -47,7 +47,11 @@ export interface Motion {
   dur(ms: number): number;
   /** An easing curve, collapsed to 'linear' when reduced. */
   ease(curve: Ease): Ease | string;
-  /** A framer-motion Transition (duration in SECONDS), reduced-aware. */
+  /**
+   * A framer-motion Transition (duration in SECONDS), reduced-aware.
+   * `extra` is for fields like `delay`/`repeat` — do NOT pass `duration` or
+   * `ease` in it, as they would override the reduced-motion collapse.
+   */
   transition(ms: number, curve?: Ease, extra?: Partial<Transition>): Transition;
   /** The reorder spring, or an instant transition when reduced. */
   spring(): Transition;
