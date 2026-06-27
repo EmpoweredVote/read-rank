@@ -12,6 +12,7 @@ import { RankDock } from './RankDock';
 import { RankSheet } from './RankSheet';
 import { FirstAgreeCoach } from './FirstAgreeCoach';
 import { track } from '../lib/analytics';
+import { tierForIndex, TIER_META } from '../utils/tiers';
 
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
@@ -48,6 +49,7 @@ export const EvaluationPhase: React.FC = () => {
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
   const [isAnimating, setIsAnimating] = useState(false);
+  const [verdictAnnounce, setVerdictAnnounce] = useState('');
   const prefersReducedMotion = useReducedMotion();
   const [flight, setFlight] = useState<{ text: string; from: FlyRect; to: FlyRect } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -119,6 +121,7 @@ export const EvaluationPhase: React.FC = () => {
       if (!isMountedRef.current) return;
       if (tourStep === 1) setTourStep(2);
       agree(currentQuote);
+      setVerdictAnnounce(`Added to your ranking, ${TIER_META[tierForIndex(agreed.length)].name}.`);
       setFlight(null);
       await delay(80);
       setIsAnimating(false);
@@ -129,8 +132,13 @@ export const EvaluationPhase: React.FC = () => {
     await delay(120);
     if (!isMountedRef.current) return;
     if (tourStep === 1) setTourStep(2);
-    if (direction === 'agree') agree(currentQuote);
-    else disagree(currentQuote);
+    if (direction === 'agree') {
+      agree(currentQuote);
+      setVerdictAnnounce(`Added to your ranking, ${TIER_META[tierForIndex(agreed.length)].name}.`);
+    } else {
+      disagree(currentQuote);
+      setVerdictAnnounce('Moved to disagreed.');
+    }
     await delay(250);
     setIsAnimating(false);
   };
@@ -279,10 +287,15 @@ export const EvaluationPhase: React.FC = () => {
     </>
   );
 
+  const verdictLiveRegion = (
+    <div className="sr-only" role="status" aria-live="polite">{verdictAnnounce}</div>
+  );
+
   // Desktop: split layout (triage + persistent rank surface)
   if (isMouseDevice) {
     return (
       <div>
+        {verdictLiveRegion}
         <div className="evaluation-split-layout">
           <div className="evaluation-main-panel">{mainColumn}</div>
           <div className="evaluation-sidebar-panel">
@@ -299,6 +312,7 @@ export const EvaluationPhase: React.FC = () => {
   // Mobile: single column with dock + sheet
   return (
     <div className={`evaluation-mobile ${currentQuote ? 'has-fixed-paddles' : ''}`}>
+      {verdictLiveRegion}
       {mainColumn}
       {agreed.length === 1 && <FirstAgreeCoach variant="mobile" />}
       <RankDock
