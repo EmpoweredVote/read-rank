@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnimatePresence, useReducedMotion } from 'framer-motion';
 import { FlyingCard, type FlyRect } from './FlyingCard';
+import { flushSync } from 'react-dom';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { DUR } from '../motion';
 import { QuoteCard } from './QuoteCard';
@@ -123,11 +124,14 @@ export const EvaluationPhase: React.FC = () => {
     if (canFly && isMouseDevice) {
       const from = toFlyRect(cardEl!.getBoundingClientRect());
       if (tourStep === 1) setTourStep(2);
-      agree(quote);
-      setVerdictAnnounce(`Added to your ranking, ${TIER_META[tierForIndex(agreed.length)].name}.`);
-      setLandingId(quote.id);
-      await delay(32); // let the committed row render before measuring it
-      if (!isMountedRef.current) return;
+      const tierName = TIER_META[tierForIndex(agreed.length)].name; // pre-commit index = new slot
+      // Commit synchronously so the new (hidden) row is in the DOM to measure —
+      // a fixed timeout would race the React commit under CPU pressure.
+      flushSync(() => {
+        agree(quote);
+        setLandingId(quote.id);
+      });
+      setVerdictAnnounce(`Added to your ranking, ${tierName}.`);
       const rowEl = sidebarRef.current?.querySelector(`[data-quote-id="${quote.id}"]`) as HTMLElement | null;
       if (rowEl) {
         setFlight({ text: quote.text, from, to: toFlyRect(rowEl.getBoundingClientRect()) });
