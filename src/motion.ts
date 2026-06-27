@@ -38,7 +38,7 @@ export const STAGGER = {
 /** Drag-to-reorder layout spring. */
 export const SPRING_REORDER: Transition = { type: 'spring', stiffness: 500, damping: 35 };
 
-export type Ease = readonly number[];
+export type Ease = readonly [number, number, number, number];
 
 export interface Motion {
   /** True when the user prefers reduced motion. */
@@ -78,13 +78,17 @@ export function useMotion(): Motion {
     ease: (curve) => (reduced ? 'linear' : curve),
     transition: (ms, curve = EASE.settle, extra = {}) => ({
       duration: (reduced ? DUR.instant : ms) / 1000,
-      ease: reduced ? 'linear' : (curve as [number, number, number, number]),
+      ease: reduced ? 'linear' : curve,
       ...extra,
     }),
     spring: () => (reduced ? { duration: 0 } : SPRING_REORDER),
     enter: (offset = { y: 8 }) => ({
       initial: reduced ? false : { opacity: 0, ...offset },
-      animate: { opacity: 1, x: 0, y: 0 },
+      animate: {
+        opacity: 1,
+        ...(offset.x !== undefined ? { x: 0 } : {}),
+        ...(offset.y !== undefined ? { y: 0 } : {}),
+      },
     }),
     hover: (value) => (reduced ? undefined : value),
     tap: (value) => (reduced ? undefined : value),
