@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { AnimatePresence, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, useReducedMotion, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { FlyingCard, type FlyRect } from './FlyingCard';
 import { flushSync } from 'react-dom';
 import { useReadRankStore } from '../store/useReadRankStore';
@@ -18,6 +18,10 @@ import { tierForIndex, TIER_META } from '../utils/tiers';
 
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 function toFlyRect(r: DOMRect): FlyRect { return { top: r.top, left: r.left, width: r.width, height: r.height }; }
+/** Horizontal swipe distance (px) past which a release commits a verdict. */
+const SWIPE_THRESHOLD = 90;
+/** Horizontal flick velocity (px/s) that commits even below the distance threshold. */
+const SWIPE_VELOCITY = 600;
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -58,6 +62,12 @@ export const EvaluationPhase: React.FC = () => {
   // Desktop: the just-committed agreed row, hidden while the flight lands on it.
   const [landingId, setLandingId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Mobile swipe — drag the quote card; peek labels react to the live offset.
+  const dragX = useMotionValue(0);
+  const agreePeekOpacity = useTransform(dragX, [12, SWIPE_THRESHOLD], [0, 1]);
+  const disagreePeekOpacity = useTransform(dragX, [-SWIPE_THRESHOLD, -12], [1, 0]);
+  const cardRotate = useTransform(dragX, [-240, 240], [-5, 5]);
   const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
   const isMountedRef = useRef(true);
@@ -175,6 +185,20 @@ export const EvaluationPhase: React.FC = () => {
     setIsAnimating(false);
   };
 
+  // Mobile: a release past the distance or velocity threshold commits, and the
+  // verdict flight continues from the card's current (dragged) position. Below
+  // threshold, dragSnapToOrigin springs the card back to center.
+  const handleSwipeEnd = (_: unknown, info: PanInfo) => {
+    const right = info.offset.x > SWIPE_THRESHOLD || info.velocity.x > SWIPE_VELOCITY;
+    const left = info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -SWIPE_VELOCITY;
+    if (!right && !left) return; // dragSnapToOrigin handles the spring-back
+    // handleButtonSwipe reads the dragged card rect synchronously before its
+    // first await, so the flight starts from the finger. Reset x afterward; the
+    // card is hidden during the flight so the reset is never visible.
+    handleButtonSwipe(right ? 'agree' : 'disagree');
+    dragX.set(0);
+  };
+
   // Keep a ref to handleButtonSwipe so the keydown effect can call the latest
   // version without re-registering the listener on every render.
   const handleButtonSwipeRef = useRef(handleButtonSwipe);
@@ -218,17 +242,47 @@ export const EvaluationPhase: React.FC = () => {
       <div ref={swipeAreaRef}>
         {currentQuote ? (
           <div className="swipe-card-container">
+            {!isMouseDevice && (
+              <>
+                <motion.div className="swipe-peek swipe-peek-disagree" style={{ opacity: disagreePeekOpacity }} aria-hidden="true">
+                  ◀ Disagree
+                </motion.div>
+                <motion.div className="swipe-peek swipe-peek-agree" style={{ opacity: agreePeekOpacity }} aria-hidden="true">
+                  Agree ▶
+                </motion.div>
+              </>
+            )}
             {/* Hidden while a flight is in progress so the clone reads as the
                 card itself flying (not a ghost detaching from a card left behind). */}
             <div className="flex justify-center relative z-10" style={{ opacity: (flight || landingId) ? 0 : 1 }}>
-              <AnimatePresence mode="wait">
-                <QuoteCard
-                  ref={quoteCardRef}
-                  key={currentQuote.id}
-                  quote={currentQuote}
-                  displayNumber={currentIndex + 1}
-                />
-              </AnimatePresence>
+              {isMouseDevice ? (
+                <AnimatePresence mode="wait">
+                  <QuoteCard
+                    ref={quoteCardRef}
+                    key={currentQuote.id}
+                    quote={currentQuote}
+                    displayNumber={currentIndex + 1}
+                  />
+                </AnimatePresence>
+              ) : (
+                <motion.div
+                  className="w-full"
+                  drag={isAnimating ? false : 'x'}
+                  dragSnapToOrigin
+                  dragElastic={0.5}
+                  onDragEnd={handleSwipeEnd}
+                  style={{ x: dragX, rotate: cardRotate, touchAction: 'pan-y' }}
+                >
+                  <AnimatePresence mode="wait">
+                    <QuoteCard
+                      ref={quoteCardRef}
+                      key={currentQuote.id}
+                      quote={currentQuote}
+                      displayNumber={currentIndex + 1}
+                    />
+                  </AnimatePresence>
+                </motion.div>
+              )}
             </div>
           </div>
         ) : (

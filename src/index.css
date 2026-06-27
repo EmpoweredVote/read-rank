@@ -447,6 +447,23 @@ dialog::backdrop {
   color: white;
 }
 
+/* Swipe verdict peeks — vertically centered on the card edges (mobile). */
+.swipe-peek-disagree {
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  background: var(--disagree);
+  color: #ffffff;
+}
+
+.swipe-peek-agree {
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  background: var(--agree);
+  color: #ffffff;
+}
+
 .swipe-zone {
   flex: 1;
   transition: opacity 0.1s ease-out;
