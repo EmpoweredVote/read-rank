@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMotion } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { PRACTICE_QUOTES } from '../data/practiceData';
 import { QuoteCard } from './QuoteCard';
@@ -11,6 +12,7 @@ import { PracticeResultsScreen } from './PracticeResultsScreen';
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
 export const PracticeRound: React.FC = () => {
+  const m = useMotion();
   const {
     practiceProgress,
     agreePractice,
@@ -109,7 +111,7 @@ export const PracticeRound: React.FC = () => {
         </div>
 
         <motion.button onClick={() => setShowSplash(false)} className="ev-button-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
-          whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}>
+          whileHover={m.hover({ scale: 1.03, y: -1 })} whileTap={m.tap({ scale: 0.97 })}>
           Let&rsquo;s try it
         </motion.button>
         <button onClick={skipPractice} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: 'var(--text-tertiary)', textDecoration: 'underline', padding: '0.5rem', marginTop: '1rem' }}>
