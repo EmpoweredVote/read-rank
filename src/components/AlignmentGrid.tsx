@@ -82,7 +82,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({
                           transition={play
                             ? { duration: DUR.moderate / 1000, ease: EASE.overshoot, delay: medalDelay / 1000 }
                             : { duration: 0 }}>
-                          <TierIcon tier={tier} size={28} gleam={play} gleamDelayMs={medalDelay + 150} />
+                          <TierIcon tier={tier} size={28} gleam={play} gleamDelayMs={medalDelay + DUR.fast} />
                         </motion.span>
                         <span className="sr-only">{TIER_META[tier].name}</span>
                       </>
