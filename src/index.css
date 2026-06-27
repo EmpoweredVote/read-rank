@@ -776,6 +776,19 @@ dialog::backdrop {
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
+.podium-rank-badge { position: relative; overflow: hidden; }
+.podium-rank-badge.gleam::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85), transparent 70%);
+  transform: translateX(-130%) skewX(-18deg);
+  animation: badge-gleam 0.7s var(--ease-standard) forwards;
+  pointer-events: none;
+}
+@keyframes badge-gleam {
+  to { transform: translateX(130%) skewX(-18deg); }
+}
 
 /* ============================================
    Responsive

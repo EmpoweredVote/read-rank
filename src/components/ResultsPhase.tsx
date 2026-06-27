@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useMotion, EASE, DUR } from '../motion';
+import { useMotion, EASE, DUR, STAGGER } from '../motion';
+import { useCountUp } from '../utils/countUp';
 import { computeRevealTimeline } from '../utils/revealTimeline';
 import { useReadRankStore, getAllAgreedQuotes } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
@@ -89,6 +90,19 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, verdictMap, addre
   const initials = entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
   const { agreementCount, topicsWithAgreement } = entry.evidence;
 
+  const displayCount = useCountUp(agreementCount, {
+    durationMs: DUR.moderate,
+    reduced: m.reduced,
+    startDelayMs: landBaseDelayMs,
+  });
+
+  // Per-element landing delays, sub-staggered inside the card. m.transition
+  // already collapses the delay to 0 under reduced motion.
+  const land = (subStaggerMs: number) =>
+    m.transition(DUR.moderate, EASE.settle, { delay: (landBaseDelayMs + subStaggerMs) / 1000 });
+  const landPop = (subStaggerMs: number) =>
+    m.transition(DUR.moderate, EASE.overshoot, { delay: (landBaseDelayMs + subStaggerMs) / 1000 });
+
   return (
     <motion.div
       className={podiumClass}
@@ -96,43 +110,63 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, verdictMap, addre
         backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-subtle)',
         borderRadius: '0.625rem', overflow: 'hidden', position: 'relative',
       }}
-      initial={m.reduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      transition={m.transition(DUR.moderate, EASE.settle, { delay: landBaseDelayMs / 1000 })}
+      initial={m.reduced ? false : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={land(0)}
     >
       {!m.reduced && rank === 1 && <MegaParticles active={particles} />}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem' }}>
-        <span className={badgeClass} style={{ width: '2rem', height: '2rem', fontSize: '1rem' }}>{rank}</span>
+        <motion.span
+          className={`${badgeClass}${spotlight && rank === 1 ? ' gleam' : ''}`}
+          style={{ width: '2rem', height: '2rem', fontSize: '1rem' }}
+          initial={m.reduced ? false : { scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={landPop(STAGGER.badge)}
+        >{rank}</motion.span>
 
-        {entry.photo && imgOk ? (
-          <img src={entry.photo} alt={entry.name} onError={() => setImgOk(false)} style={{ width: '3rem', height: '3rem', borderRadius: '9999px', objectFit: 'cover', flexShrink: 0 }} />
-        ) : (
-          <div style={{
-            width: '3rem', height: '3rem', borderRadius: '9999px', backgroundColor: 'var(--surface-raised)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            color: 'var(--text-tertiary)', fontFamily: "'Manrope', sans-serif", fontWeight: 700,
-          }}>{initials}</div>
-        )}
+        <motion.div
+          initial={m.reduced ? false : { x: -12, scale: 0.85, opacity: 0 }}
+          animate={{ x: 0, scale: 1, opacity: 1 }}
+          transition={landPop(STAGGER.avatar)}
+          style={{ flexShrink: 0, lineHeight: 0 }}
+        >
+          {entry.photo && imgOk ? (
+            <img src={entry.photo} alt={entry.name} onError={() => setImgOk(false)} style={{ width: '3rem', height: '3rem', borderRadius: '9999px', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: '3rem', height: '3rem', borderRadius: '9999px', backgroundColor: 'var(--surface-raised)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              color: 'var(--text-tertiary)', fontFamily: "'Manrope', sans-serif", fontWeight: 700,
+            }}>{initials}</div>
+          )}
+        </motion.div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <motion.div style={{ flex: 1, minWidth: 0 }}
+          initial={m.reduced ? false : { y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={land(STAGGER.name)}>
           <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '1rem', color: 'var(--text-heading)' }}>
             {entry.name}
           </div>
           <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             {entry.office}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Factual evidence — no score, no % */}
-      <div style={{ padding: '0 1rem 0.75rem' }}>
+      <motion.div style={{ padding: '0 1rem 0.75rem' }}
+        initial={m.reduced ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={land(STAGGER.evidence)}>
         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-strong)' }}>
-          You agreed with <strong>{agreementCount}</strong> of their position{agreementCount === 1 ? '' : 's'}
+          You agreed with <strong>{displayCount}</strong> of their position{agreementCount === 1 ? '' : 's'}
           {entry.perTopic.length > 0 && (
             <> · on <strong>{topicsWithAgreement}</strong> of {entry.perTopic.length} topic{entry.perTopic.length === 1 ? '' : 's'}</>
           )}
         </span>
-      </div>
+      </motion.div>
 
       {/* Actions */}
       <div style={{
