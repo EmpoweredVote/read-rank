@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useMotion, EASE, DUR } from '../motion';
+import { computeRevealTimeline } from '../utils/revealTimeline';
 import { useReadRankStore, getAllAgreedQuotes } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
@@ -61,24 +63,29 @@ interface BallotCardProps {
   index: number;
   verdictMap: VerdictMap;
   address?: string;
-  prefersReducedMotion: boolean | null;
+  /** ms before this card begins its landing (from the reveal timeline). */
+  landBaseDelayMs: number;
+  /** True for the #1 card once it has landed: gold badge gleam + particle burst. */
+  spotlight: boolean;
   /** quoteId → rank index within its topic (for tier icon display). */
   quoteRankMap: Map<string, number>;
 }
 
-export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap, address, prefersReducedMotion, quoteRankMap }) => {
+export const BallotCard: React.FC<BallotCardProps> = ({ entry, index: _index, verdictMap, address, landBaseDelayMs, spotlight, quoteRankMap }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
   const [expanded, setExpanded] = useState(false);
   const [particles, setParticles] = useState(false);
   const [imgOk, setImgOk] = useState(true);
+  const m = useMotion();
   const rank = entry.rank;
   const badgeClass = `podium-rank-badge ${rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rN'}`;
   const podiumClass = rank === 1 ? 'podium-1' : rank === 2 ? 'podium-2' : rank === 3 ? 'podium-3' : '';
 
   useEffect(() => {
-    if (prefersReducedMotion || rank !== 1) return;
-    const t = setTimeout(() => { setParticles(true); setTimeout(() => setParticles(false), 1000); }, index * 80 + 500);
-    return () => clearTimeout(t);
-  }, [index, prefersReducedMotion, rank]);
+    if (m.reduced || rank !== 1 || !spotlight) return;
+    const on = setTimeout(() => setParticles(true), 0);
+    const off = setTimeout(() => setParticles(false), DUR.burst + 200);
+    return () => { clearTimeout(on); clearTimeout(off); };
+  }, [m.reduced, rank, spotlight]);
 
   const initials = entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
   const { agreementCount, topicsWithAgreement } = entry.evidence;
@@ -90,10 +97,10 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, index, verdictMap
         backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-subtle)',
         borderRadius: '0.625rem', overflow: 'hidden', position: 'relative',
       }}
-      initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      initial={m.reduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+      transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : landBaseDelayMs / 1000 })}
     >
-      {!prefersReducedMotion && rank === 1 && <MegaParticles active={particles} />}
+      {!m.reduced && rank === 1 && <MegaParticles active={particles} />}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem' }}>
         <span className={badgeClass} style={{ width: '2rem', height: '2rem', fontSize: '1rem' }}>{rank}</span>
@@ -220,7 +227,8 @@ export const ResultsPhase: React.FC = () => {
   const [reveal, setReveal] = useState<RevealResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [stage, setStage] = useState<'threshold' | 'results'>('threshold');
-  const prefersReducedMotion = useReducedMotion();
+  const m = useMotion();
+  const [spotlightActive, setSpotlightActive] = useState(false);
   const race = getCurrentRaceProgress();
 
   const verdicts = currentRaceId ? getRaceVerdicts(currentRaceId) : [];
@@ -271,6 +279,24 @@ export const ResultsPhase: React.FC = () => {
     return map;
   }, [race]);
 
+  const ballot = reveal?.ballot ?? [];
+  const filledCells = useMemo(
+    () => alignmentRows.reduce((n, r) => n + r.cells.filter(Boolean).length, 0),
+    [alignmentRows]
+  );
+  const timeline = useMemo(
+    () => computeRevealTimeline({ filledCells, reduced: m.reduced }),
+    [filledCells, m.reduced]
+  );
+
+  // One deterministic trigger: flip the #1 spotlight on when card #1 lands.
+  // setTimeout (not framer onAnimationComplete) so it survives the rAF throttle.
+  useEffect(() => {
+    if (stage !== 'results' || m.reduced || ballot.length === 0) return;
+    const t = setTimeout(() => setSpotlightActive(true), timeline.firstLand);
+    return () => clearTimeout(t);
+  }, [stage, m.reduced, ballot.length, timeline.firstLand]);
+
   if (loading) {
     return (
       <div className="text-center py-16">
@@ -283,8 +309,6 @@ export const ResultsPhase: React.FC = () => {
       </div>
     );
   }
-
-  const ballot = reveal?.ballot ?? [];
 
   // Threshold gate.
   if (stage === 'threshold') {
@@ -304,7 +328,7 @@ export const ResultsPhase: React.FC = () => {
     return (
       <div className="pb-12">
         <motion.div className="text-center max-w-2xl mx-auto mb-5"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          {...m.enter({ y: 12 })} transition={m.transition(DUR.moderate)}>
           <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.5rem', letterSpacing: '-0.02em' }}>
             {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
           </h2>
@@ -320,8 +344,7 @@ export const ResultsPhase: React.FC = () => {
         </div>
 
         <motion.div className="flex justify-center pt-6"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+          {...m.enter({ y: 12 })} transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : 0.4 })}>
           <button onClick={() => { track('readrank_play_again_clicked'); goToHub(); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
             Play another race near you
           </button>
@@ -334,14 +357,21 @@ export const ResultsPhase: React.FC = () => {
   return (
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-5"
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+        {...m.enter({ y: 12 })}
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : timeline.heading / 1000 })}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
           {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
         </h2>
       </motion.div>
 
       <div className="max-w-2xl mx-auto space-y-4">
-        {insight && <div className="insight-strip">{insight}</div>}
+        {insight && (
+          <motion.div className="insight-strip"
+            {...m.enter({ y: 12 })}
+            transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : timeline.insight / 1000 })}>
+            {insight}
+          </motion.div>
+        )}
         <AlignmentGrid topics={alignmentTopics} rows={alignmentRows} />
 
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
@@ -349,15 +379,17 @@ export const ResultsPhase: React.FC = () => {
         </h3>
         {ballot.map((entry, i) => (
           <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
-            address={locationFilter?.address} prefersReducedMotion={prefersReducedMotion}
+            address={locationFilter?.address}
+            landBaseDelayMs={timeline.cardDelay(i)}
+            spotlight={entry.rank === 1 && spotlightActive}
             quoteRankMap={quoteRankMap} />
         ))}
         <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={topTopicTitle} />
       </div>
 
       <motion.div className="flex justify-center pt-6"
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: ballot.length * 0.08 + 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+        {...m.enter({ y: 12 })}
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : (timeline.cardDelay(ballot.length) + DUR.moderate) / 1000 })}>
         <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
           Play another race near you
         </button>
