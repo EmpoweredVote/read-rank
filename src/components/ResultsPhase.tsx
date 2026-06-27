@@ -60,7 +60,6 @@ const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
 // ============================================================
 interface BallotCardProps {
   entry: BallotEntry;
-  index: number;
   verdictMap: VerdictMap;
   address?: string;
   /** ms before this card begins its landing (from the reveal timeline). */
@@ -71,7 +70,7 @@ interface BallotCardProps {
   quoteRankMap: Map<string, number>;
 }
 
-export const BallotCard: React.FC<BallotCardProps> = ({ entry, index: _index, verdictMap, address, landBaseDelayMs, spotlight, quoteRankMap }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+export const BallotCard: React.FC<BallotCardProps> = ({ entry, verdictMap, address, landBaseDelayMs, spotlight, quoteRankMap }) => {
   const [expanded, setExpanded] = useState(false);
   const [particles, setParticles] = useState(false);
   const [imgOk, setImgOk] = useState(true);
@@ -378,7 +377,7 @@ export const ResultsPhase: React.FC = () => {
           How the candidates stack up
         </h3>
         {ballot.map((entry, i) => (
-          <BallotCard key={entry.candidateId} entry={entry} index={i} verdictMap={verdictMap}
+          <BallotCard key={entry.candidateId} entry={entry} verdictMap={verdictMap}
             address={locationFilter?.address}
             landBaseDelayMs={timeline.cardDelay(i)}
             spotlight={entry.rank === 1 && spotlightActive}
