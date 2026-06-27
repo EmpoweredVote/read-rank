@@ -46,7 +46,7 @@ const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
           borderRadius: '50%',
           background: p.isLarge ? 'radial-gradient(circle, var(--color-ev-coral), transparent)' : 'var(--color-ev-coral)',
           top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          animation: `megaBurst 0.8s ${p.delay}s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`,
+          animation: `megaBurst var(--dur-burst) ${p.delay}s var(--ease-burst) forwards`,
           ['--dx' as string]: `${p.dx}px`, ['--dy' as string]: `${p.dy}px`,
           opacity: 0.9, filter: p.isLarge ? 'blur(1px)' : 'none',
         }} />
