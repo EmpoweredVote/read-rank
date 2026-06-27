@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { track } from '../lib/analytics';
+import { useMotion, EASE, DUR, STAGGER } from '../motion';
 
 export const IssueSelection: React.FC = () => {
   const { getCurrentRaceProgress, setSelectedTopics, confirmIssueSelection } = useReadRankStore();
@@ -23,6 +25,8 @@ export const IssueSelection: React.FC = () => {
       };
     });
   }, [race]);
+
+  const m = useMotion();
 
   if (!race) return null;
 
@@ -63,37 +67,43 @@ export const IssueSelection: React.FC = () => {
       </p>
 
       <div className="issue-selection-list">
-        {topicData.map((topic) => {
+        {topicData.map((topic, i) => {
           if (!topic.isScored) {
             return (
-              <div key={topic.topicKey} className="issue-row issue-row-unscored">
+              <motion.div key={topic.topicKey} className="issue-row issue-row-unscored"
+                {...m.enter({ y: 10 })}
+                transition={m.transition(DUR.base, EASE.settle, { delay: i * (STAGGER.gridCell / 1000) })}>
                 <span className="issue-check-tile" aria-hidden="true" />
                 <span className="issue-topic-name">{topic.title}</span>
                 <span className="issue-not-scored-label">NOT SCORED</span>
-              </div>
+              </motion.div>
             );
           }
 
           const isSelected = selectedKeys.includes(topic.topicKey);
           return (
-            <button
+            <motion.button
               key={topic.topicKey}
+              {...m.enter({ y: 10 })}
+              transition={m.transition(DUR.base, EASE.settle, { delay: i * (STAGGER.gridCell / 1000) })}
               type="button"
               className={`issue-row issue-row-toggle ${isSelected ? 'issue-row-selected' : ''}`}
               onClick={() => toggleTopic(topic.topicKey)}
               aria-pressed={isSelected}
               aria-label={`${topic.title}, ${topic.quoteCount} quotes`}
             >
-              <span className={`issue-check-tile ${isSelected ? 'issue-check-tile-selected' : ''}`} aria-hidden="true">
+              <motion.span className={`issue-check-tile ${isSelected ? 'issue-check-tile-selected' : ''}`} aria-hidden="true"
+                animate={m.reduced ? undefined : { scale: isSelected ? [1, 1.18, 1] : 1 }}
+                transition={m.transition(DUR.fast, EASE.overshoot)}>
                 {isSelected && (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--action-primary-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
                 )}
-              </span>
+              </motion.span>
               <span className="issue-topic-name">{topic.title}</span>
               <span className="issue-quote-count">{topic.quoteCount} quotes</span>
-            </button>
+            </motion.button>
           );
         })}
       </div>

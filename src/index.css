@@ -1805,7 +1805,7 @@ dialog.rank-sheet[open] {
   text-align: left;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-base) var(--ease-standard), background-color var(--dur-base) var(--ease-standard);
 }
 
 .issue-row-selected {
