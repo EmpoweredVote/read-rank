@@ -97,7 +97,7 @@ export const BallotCard: React.FC<BallotCardProps> = ({ entry, verdictMap, addre
         borderRadius: '0.625rem', overflow: 'hidden', position: 'relative',
       }}
       initial={m.reduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : landBaseDelayMs / 1000 })}
+      transition={m.transition(DUR.moderate, EASE.settle, { delay: landBaseDelayMs / 1000 })}
     >
       {!m.reduced && rank === 1 && <MegaParticles active={particles} />}
 
@@ -293,7 +293,7 @@ export const ResultsPhase: React.FC = () => {
   useEffect(() => {
     if (stage !== 'results' || m.reduced || ballot.length === 0) return;
     const t = setTimeout(() => setSpotlightActive(true), timeline.firstLand);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); setSpotlightActive(false); };
   }, [stage, m.reduced, ballot.length, timeline.firstLand]);
 
   if (loading) {
@@ -343,7 +343,7 @@ export const ResultsPhase: React.FC = () => {
         </div>
 
         <motion.div className="flex justify-center pt-6"
-          {...m.enter({ y: 12 })} transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : 0.4 })}>
+          {...m.enter({ y: 12 })} transition={m.transition(DUR.moderate, EASE.settle, { delay: 0.4 })}>
           <button onClick={() => { track('readrank_play_again_clicked'); goToHub(); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
             Play another race near you
           </button>
@@ -357,7 +357,7 @@ export const ResultsPhase: React.FC = () => {
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-5"
         {...m.enter({ y: 12 })}
-        transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : timeline.heading / 1000 })}>
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.heading / 1000 })}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-heading)', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
           {race?.positionName ?? reveal?.positionName ?? 'Your ballot'}
         </h2>
@@ -367,7 +367,7 @@ export const ResultsPhase: React.FC = () => {
         {insight && (
           <motion.div className="insight-strip"
             {...m.enter({ y: 12 })}
-            transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : timeline.insight / 1000 })}>
+            transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.insight / 1000 })}>
             {insight}
           </motion.div>
         )}
@@ -388,7 +388,7 @@ export const ResultsPhase: React.FC = () => {
 
       <motion.div className="flex justify-center pt-6"
         {...m.enter({ y: 12 })}
-        transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : (timeline.cardDelay(ballot.length) + DUR.moderate) / 1000 })}>
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: (timeline.cardDelay(ballot.length) + DUR.moderate) / 1000 })}>
         <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
           Play another race near you
         </button>

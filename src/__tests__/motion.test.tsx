@@ -75,4 +75,20 @@ describe('useMotion — reduced motion', () => {
   });
 });
 
+describe('useMotion — transition delay collapse', () => {
+  it('keeps a passed delay under normal motion', () => {
+    setReducedMotion(false);
+    const { result } = renderHook(() => useMotion());
+    expect(result.current.transition(DUR.moderate, EASE.settle, { delay: 0.4 }))
+      .toMatchObject({ duration: 0.4, delay: 0.4 });
+  });
+
+  it('collapses a passed delay to 0 when reduced', () => {
+    setReducedMotion(true);
+    const { result } = renderHook(() => useMotion());
+    expect(result.current.transition(DUR.moderate, EASE.settle, { delay: 0.4 }))
+      .toMatchObject({ duration: 0, delay: 0 });
+  });
+});
+
 afterAll(() => setReducedMotion(false));

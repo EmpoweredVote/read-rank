@@ -49,8 +49,10 @@ export interface Motion {
   ease(curve: Ease): Ease | string;
   /**
    * A framer-motion Transition (duration in SECONDS), reduced-aware.
-   * `extra` is for fields like `delay`/`repeat` — do NOT pass `duration` or
-   * `ease` in it, as they would override the reduced-motion collapse.
+   * `extra` is for fields like `delay`/`repeat`. A `delay` MAY be passed here
+   * and is automatically collapsed to 0 when reduced; other extras (e.g.
+   * `repeat`) pass through unchanged. Do NOT pass `duration` or `ease` in it,
+   * as they would override the reduced-motion collapse.
    */
   transition(ms: number, curve?: Ease, extra?: Partial<Transition>): Transition;
   /** The reorder spring, or an instant transition when reduced. */
@@ -84,6 +86,7 @@ export function useMotion(): Motion {
       duration: (reduced ? DUR.instant : ms) / 1000,
       ease: reduced ? 'linear' : curve,
       ...extra,
+      ...(extra.delay !== undefined ? { delay: reduced ? 0 : extra.delay } : {}),
     }),
     spring: () => (reduced ? { duration: 0 } : SPRING_REORDER),
     enter: (offset = { y: 8 }) => ({
