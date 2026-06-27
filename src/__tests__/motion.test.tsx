@@ -1,7 +1,12 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { hasReducedMotionListener, prefersReducedMotion } from 'motion-dom';
 import { EASE, DUR, STAGGER, SPRING_REORDER, useMotion } from '../motion';
+
+const motionMock = vi.hoisted(() => ({ reduced: false }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => motionMock.reduced };
+});
 
 describe('motion tokens', () => {
   it('exposes the approved easing curves', () => {
@@ -33,20 +38,7 @@ describe('motion tokens', () => {
 });
 
 function setReducedMotion(on: boolean) {
-  window.matchMedia = ((query: string) => ({
-    matches: on && query.includes('prefers-reduced-motion'),
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia;
-  // Reset the motion-dom singleton so initPrefersReducedMotion() re-reads
-  // window.matchMedia on the next useReducedMotion() call.
-  hasReducedMotionListener.current = false;
-  prefersReducedMotion.current = null;
+  motionMock.reduced = on;
 }
 
 describe('useMotion — normal motion', () => {
@@ -60,6 +52,7 @@ describe('useMotion — normal motion', () => {
     expect(m.transition(DUR.moderate)).toMatchObject({ duration: 0.4, ease: EASE.settle });
     expect(m.spring()).toEqual(SPRING_REORDER);
     expect(m.enter({ y: 24 }).initial).toEqual({ opacity: 0, y: 24 });
+    expect(m.enter({ y: 24 }).animate).toEqual({ opacity: 1, y: 0 });
     expect(m.hover({ scale: 1.03 })).toEqual({ scale: 1.03 });
     expect(m.tap({ scale: 0.97 })).toEqual({ scale: 0.97 });
   });
@@ -76,6 +69,7 @@ describe('useMotion — reduced motion', () => {
     expect(m.transition(DUR.moderate)).toMatchObject({ duration: 0, ease: 'linear' });
     expect(m.spring()).toEqual({ duration: 0 });
     expect(m.enter({ y: 24 }).initial).toBe(false);
+    expect(m.enter({ y: 24 }).animate).toEqual({ opacity: 1, y: 0 });
     expect(m.hover({ scale: 1.03 })).toBeUndefined();
     expect(m.tap({ scale: 0.97 })).toBeUndefined();
   });
