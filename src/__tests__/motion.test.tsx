@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { EASE, DUR, STAGGER, SPRING_REORDER } from '../motion';
+import { describe, it, expect, afterAll } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { hasReducedMotionListener, prefersReducedMotion } from 'motion-dom';
+import { EASE, DUR, STAGGER, SPRING_REORDER, useMotion } from '../motion';
 
 describe('motion tokens', () => {
   it('exposes the approved easing curves', () => {
@@ -29,3 +31,54 @@ describe('motion tokens', () => {
     expect(SPRING_REORDER).toEqual({ type: 'spring', stiffness: 500, damping: 35 });
   });
 });
+
+function setReducedMotion(on: boolean) {
+  window.matchMedia = ((query: string) => ({
+    matches: on && query.includes('prefers-reduced-motion'),
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+  // Reset the motion-dom singleton so initPrefersReducedMotion() re-reads
+  // window.matchMedia on the next useReducedMotion() call.
+  hasReducedMotionListener.current = false;
+  prefersReducedMotion.current = null;
+}
+
+describe('useMotion — normal motion', () => {
+  it('returns real durations, curves, transforms and hover/tap', () => {
+    setReducedMotion(false);
+    const { result } = renderHook(() => useMotion());
+    const m = result.current;
+    expect(m.reduced).toBe(false);
+    expect(m.dur(DUR.moderate)).toBe(400);
+    expect(m.ease(EASE.settle)).toEqual(EASE.settle);
+    expect(m.transition(DUR.moderate)).toMatchObject({ duration: 0.4, ease: EASE.settle });
+    expect(m.spring()).toEqual(SPRING_REORDER);
+    expect(m.enter({ y: 24 }).initial).toEqual({ opacity: 0, y: 24 });
+    expect(m.hover({ scale: 1.03 })).toEqual({ scale: 1.03 });
+    expect(m.tap({ scale: 0.97 })).toEqual({ scale: 0.97 });
+  });
+});
+
+describe('useMotion — reduced motion', () => {
+  it('collapses durations, curves, transforms and hover/tap', () => {
+    setReducedMotion(true);
+    const { result } = renderHook(() => useMotion());
+    const m = result.current;
+    expect(m.reduced).toBe(true);
+    expect(m.dur(DUR.moderate)).toBe(0);
+    expect(m.ease(EASE.settle)).toBe('linear');
+    expect(m.transition(DUR.moderate)).toMatchObject({ duration: 0, ease: 'linear' });
+    expect(m.spring()).toEqual({ duration: 0 });
+    expect(m.enter({ y: 24 }).initial).toBe(false);
+    expect(m.hover({ scale: 1.03 })).toBeUndefined();
+    expect(m.tap({ scale: 0.97 })).toBeUndefined();
+  });
+});
+
+afterAll(() => setReducedMotion(false));
