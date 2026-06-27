@@ -1201,7 +1201,7 @@ dialog.rank-sheet[open] {
 .tier-tile-gold     { background: linear-gradient(145deg, #ffe27a 0%, #f3b73b 52%, #c98a16 100%); }
 .tier-tile-silver   { background: linear-gradient(145deg, #d7e0e6 0%, #9fb3bd 52%, #6f8693 100%); }
 .tier-tile-bronze   { background: linear-gradient(145deg, #d7a878 0%, #b07d4c 52%, #875b30 100%); }
-.tier-tile-disagreed{ background: linear-gradient(145deg, #9aa2ab 0%, #6b7280 52%, #4b5159 100%); }
+.tier-tile-disagreed { background: linear-gradient(145deg, #9aa2ab 0%, #6b7280 52%, #4b5159 100%); }
 
 /* One-time metallic sheen sweep (reveal grid medals). */
 .tier-gleam-sweep {
