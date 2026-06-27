@@ -90,4 +90,20 @@ describe('ResultsPhase flow', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /calibrate your compass/i })).toBeInTheDocument();
   });
+
+  it('announces the reveal with the #1 candidate and agreement count for screen readers', async () => {
+    window.localStorage?.clear();
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace(flowPayload);
+    const q = flowPayload.topics[0].quotes[0];
+    useReadRankStore.getState().agree(q);
+    useReadRankStore.getState().finishRace();
+
+    render(<ResultsPhase />);
+    const continueBtn = await screen.findByRole('button', { name: /see who you agreed with/i }, { timeout: 3000 });
+    await userEvent.click(continueBtn);
+
+    const announcement = await screen.findByText(/ballot revealed\. your number one is mike braun, agreed with 1 position\./i);
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+  });
 });

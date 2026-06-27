@@ -387,8 +387,14 @@ export const ResultsPhase: React.FC = () => {
   }
 
   // Results — everything revealed at once.
+  const top = ballot[0];
+  const revealAnnouncement = top
+    ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
+    : '';
+
   return (
     <div className="pb-12">
+      <div aria-live="polite" role="status" className="sr-only">{revealAnnouncement}</div>
       <motion.div className="text-center max-w-2xl mx-auto mb-5"
         {...m.enter({ y: 12 })}
         transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.heading / 1000 })}>
