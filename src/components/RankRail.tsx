@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
+import { useMotion, EASE, DUR } from '../motion';
 import { RankList } from './RankList';
 import { TierIcon } from './TierIcon';
 
@@ -17,6 +19,13 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
   const disagreed = race ? Object.values(race.topics).flatMap((t) => t.disagreed) : [];
   const [showDisagreed, setShowDisagreed] = useState(false);
   const isSheet = variant === 'sheet';
+  const m = useMotion();
+  const [recoverMsg, setRecoverMsg] = useState('');
+  const handleRecover = (q: BlindQuote) => {
+    const stub = q.text.length > 40 ? q.text.slice(0, 40) + '…' : q.text;
+    setRecoverMsg(`Moved "${stub}" back to agreed.`);
+    reAgree(q);
+  };
 
   return (
     <div className="rank-rail">
@@ -62,26 +71,34 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              style={{ transform: showDisagreed ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
+              style={{ transform: showDisagreed ? 'rotate(180deg)' : 'none', transition: 'transform var(--dur-fast) var(--ease-standard)' }}
             >
               <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
           {showDisagreed && (
             <div className="rank-rail-disagreed-list">
-              {disagreed.map((q) => (
-                <div key={q.id} className="tier-row tier-row-disagreed rank-rail-disagreed-row">
-                  <TierIcon tier="disagreed" size={13} />
-                  <span className="rank-rail-disagreed-stub tier-disagreed-muted">{q.text}</span>
-                  <button type="button" className="rank-sheet-disagreed-recover" onClick={() => reAgree(q)}>
-                    Move to agreed
-                  </button>
-                </div>
-              ))}
+              <AnimatePresence initial={false}>
+                {disagreed.map((q) => (
+                  <motion.div key={q.id}
+                    layout={!m.reduced}
+                    className="tier-row tier-row-disagreed rank-rail-disagreed-row"
+                    {...m.enter({ y: -4 })}
+                    exit={m.reduced ? undefined : { opacity: 0, height: 0, marginTop: 0 }}
+                    transition={m.transition(DUR.moderate, EASE.standard)}>
+                    <TierIcon tier="disagreed" size={13} />
+                    <span className="rank-rail-disagreed-stub tier-disagreed-muted">{q.text}</span>
+                    <button type="button" className="rank-sheet-disagreed-recover" onClick={() => handleRecover(q)}>
+                      Move to agreed
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
         </section>
       )}
+      <div className="sr-only" role="status" aria-live="polite">{recoverMsg}</div>
     </div>
   );
 };
