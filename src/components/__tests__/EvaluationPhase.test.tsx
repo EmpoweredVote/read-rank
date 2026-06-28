@@ -28,6 +28,27 @@ beforeEach(() => {
   useReadRankStore.getState().completeCoachMarks();
 });
 
+describe('EvaluationPhase screen-reader announcements', () => {
+  it('announces the verdict to screen readers on agree', async () => {
+    render(<EvaluationPhase />);
+    const user = userEvent.setup();
+    // Use getAllByRole to handle cases where ActionButtons renders more than once
+    // (e.g. fixed mobile + any duplicate mount). Click the first agree button.
+    // Anchor the regex to avoid matching "Disagree with this quote".
+    await user.click(screen.getAllByRole('button', { name: /^agree with this quote$/i })[0]);
+    // Wait until at least one status node contains the expected text.
+    // (FirstAgreeCoach also uses role="status"; we poll all of them.)
+    await screen.findByText(/added to your ranking/i, undefined, { timeout: 3000 });
+  });
+
+  it('announces the verdict to screen readers on disagree', async () => {
+    render(<EvaluationPhase />);
+    const user = userEvent.setup();
+    await user.click(screen.getAllByRole('button', { name: /disagree with this quote/i })[0]);
+    await screen.findByText(/moved to disagreed/i, undefined, { timeout: 3000 });
+  });
+});
+
 describe('EvaluationPhase keyboard shortcuts', () => {
   it('judges the current quote with arrow keys', async () => {
     render(<EvaluationPhase />);

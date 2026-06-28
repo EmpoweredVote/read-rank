@@ -97,6 +97,18 @@
   --action-primary-ink: #ffffff;
 
   --progress-fill: var(--color-ev-muted-blue);
+
+  /* Motion tokens (mirror of src/motion.ts — keep in sync) */
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-flight: cubic-bezier(0.45, 0, 0.18, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.45, 0.6, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-burst: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-moderate: 400ms;
+  --dur-flight: 580ms;
+  --dur-burst: 800ms;
 }
 
 .dark {
@@ -331,6 +343,11 @@ dialog::backdrop {
   box-shadow: var(--shadow-hover);
 }
 
+/* The verdict flight clone — lifted off the page while it travels to the dock. */
+.flying-card-connected {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 6px 14px rgba(0, 0, 0, 0.10);
+}
+
 /* ============================================
    Animation Keyframes
    ============================================ */
@@ -342,63 +359,6 @@ dialog::backdrop {
 
 .animate-gentle-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
-}
-
-@keyframes rank-badge-appear {
-  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-  60% { transform: scale(1.1) rotate(8deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes screenShake {
-  0% { transform: translate(0, 0); }
-  15% { transform: translate(-4px, 2px); }
-  30% { transform: translate(3px, -3px); }
-  45% { transform: translate(-2px, 1px); }
-  60% { transform: translate(2px, -1px); }
-  75% { transform: translate(-1px, 1px); }
-  100% { transform: translate(0, 0); }
-}
-.screen-shake { animation: screenShake 0.4s ease-out; }
-
-@keyframes screenFlash {
-  0% { opacity: 0.6; }
-  100% { opacity: 0; }
-}
-
-@keyframes slamDown {
-  0% { transform: translateX(-50%) translateY(-30px) scale(0.5); opacity: 0; }
-  60% { transform: translateX(-50%) translateY(4px) scale(1.1); }
-  100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
-}
-
-@keyframes rankSlam {
-  0% { transform: translateX(60px) scale(0.85); opacity: 0; }
-  40% { transform: translateX(-6px) scale(1.04); }
-  70% { transform: translateX(2px) scale(0.99); }
-  100% { transform: translateX(0) scale(1); opacity: 1; }
-}
-
-@keyframes podiumPop {
-  0% { transform: scale(0.8); opacity: 0; }
-  60% { transform: scale(1.06); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes bannerSlam {
-  0% { transform: scaleX(0.2) scaleY(0); opacity: 0; }
-  60% { transform: scaleX(1.05) scaleY(1.1); }
-  100% { transform: scaleX(1) scaleY(1); opacity: 1; }
 }
 
 @keyframes megaBurst {
@@ -485,6 +445,23 @@ dialog::backdrop {
   right: 0.5rem;
   background: var(--agree);
   color: white;
+}
+
+/* Swipe verdict peeks — vertically centered on the card edges (mobile). */
+.swipe-peek-disagree {
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  background: var(--disagree);
+  color: #ffffff;
+}
+
+.swipe-peek-agree {
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  background: var(--agree);
+  color: #ffffff;
 }
 
 .swipe-zone {
@@ -588,6 +565,16 @@ dialog::backdrop {
 .action-button-agree {
   background-color: var(--action-primary);
   color: var(--action-primary-ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
 
 .action-button-disagree:hover:not(:disabled),
@@ -780,6 +767,8 @@ dialog::backdrop {
   font-weight: 800;
   font-size: 0.8125rem;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 .podium-rank-badge.r1 { background: var(--podium-gold); color: #3a2e00; }
 .podium-rank-badge.r2 { background: var(--podium-silver); color: #06303a; }
@@ -788,6 +777,18 @@ dialog::backdrop {
   background: var(--surface-raised);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
+}
+.podium-rank-badge.gleam::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85), transparent 70%);
+  transform: translateX(-130%) skewX(-18deg);
+  animation: badge-gleam 0.7s var(--ease-standard) forwards;
+  pointer-events: none;
+}
+@keyframes badge-gleam {
+  to { transform: translateX(130%) skewX(-18deg); }
 }
 
 /* ============================================
@@ -1202,8 +1203,38 @@ dialog.rank-sheet[open] {
 .tier-icon-bronze { color: var(--tier-bronze-border); }
 .tier-icon-disagreed { color: var(--tier-disagreed-border); }
 
-/* Tier tile wrappers — solid color tiles housing white icons */
-.tier-tile { flex-shrink: 0; }
+/* Tier tile wrappers — minted metallic tiles housing white icons */
+.tier-tile {
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.tier-tile-diamond  { background: linear-gradient(145deg, #8fd3ff 0%, #4a90e2 52%, #2f6fc0 100%); }
+.tier-tile-gold     { background: linear-gradient(145deg, #ffe27a 0%, #f3b73b 52%, #c98a16 100%); }
+.tier-tile-silver   { background: linear-gradient(145deg, #d7e0e6 0%, #9fb3bd 52%, #6f8693 100%); }
+.tier-tile-bronze   { background: linear-gradient(145deg, #d7a878 0%, #b07d4c 52%, #875b30 100%); }
+.tier-tile-disagreed { background: linear-gradient(145deg, #9aa2ab 0%, #6b7280 52%, #4b5159 100%); }
+
+/* One-time metallic sheen sweep (reveal grid medals). */
+.tier-gleam-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 55%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: tier-gleam var(--dur-moderate) var(--ease-standard) forwards;
+  pointer-events: none;
+}
+
+@keyframes tier-gleam {
+  0%   { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
+}
 
 .tier-rank-num {
   font-family: 'Manrope', sans-serif;
@@ -1233,50 +1264,6 @@ dialog.rank-sheet[open] {
 .tier-ghost-diamond { border: 2px dashed var(--tier-diamond-border); color: var(--tier-diamond-ink); }
 .tier-ghost-gold { border: 2px dashed var(--tier-gold-border); color: var(--tier-gold-ink); }
 .tier-ghost-silver { border: 2px dashed var(--tier-silver-border); color: var(--tier-silver-ink); }
-
-/* ============================================
-   Coin Press Stamp Overlay
-   ============================================ */
-
-.quote-stamp {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  background: rgba(20, 20, 20, 0.55);
-  border-radius: inherit;
-}
-
-.quote-stamp-circle {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(-8deg);
-}
-
-.quote-stamp-agree .quote-stamp-circle {
-  border: 4px solid var(--action-primary);
-}
-
-.quote-stamp-disagree .quote-stamp-circle {
-  border: 4px dashed #8d8d8d;
-}
-
-.quote-stamp-text {
-  font-family: 'Manrope', sans-serif;
-  font-weight: 800;
-  font-size: 1.125rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.quote-stamp-agree .quote-stamp-text { color: var(--action-primary); }
-.quote-stamp-disagree .quote-stamp-text { color: #8d8d8d; }
 
 /* Iron severance — spatial cue #1: a different shelf, not the next rung */
 .disagreed-divider {
@@ -1664,6 +1651,19 @@ dialog.rank-sheet[open] {
   color: var(--text-tertiary);
 }
 
+/* #1 spotlight — the top candidate's Diamond cell(s) pulse ev-yellow. */
+.alignment-grid td.spotlight-diamond {
+  position: relative;
+  border-radius: 0.5rem;
+  animation: diamond-glow 1.4s var(--ease-standard) 2;
+}
+
+@keyframes diamond-glow {
+  0%   { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
+  50%  { box-shadow: inset 0 0 0 3px rgba(254, 209, 46, 0.6); }
+  100% { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
+}
+
 /* ============================================
    Compass cross-link card (REDESIGN_SPEC §10)
    ============================================ */
@@ -1805,7 +1805,7 @@ dialog.rank-sheet[open] {
   text-align: left;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-base) var(--ease-standard), background-color var(--dur-base) var(--ease-standard);
 }
 
 .issue-row-selected {
@@ -1891,7 +1891,7 @@ dialog.rank-sheet[open] {
   padding: 0.875rem;
   cursor: pointer;
   font-family: 'Manrope', sans-serif;
-  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
 }
 .race-card-v2:hover {
   border-color: var(--text-link);

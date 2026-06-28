@@ -10,11 +10,10 @@ interface QuoteCardProps {
   stackIndex?: number;
   displayNumber?: number;
   showTrustFooter?: boolean;
-  pendingVerdict?: 'agree' | 'disagree';
 }
 
 export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
-  ({ quote, isStacked = false, stackIndex = 0, displayNumber, showTrustFooter = true, pendingVerdict }, ref) => {
+  ({ quote, isStacked = false, stackIndex = 0, displayNumber, showTrustFooter = true }, ref) => {
     const scaleValue = isStacked ? 0.95 - stackIndex * 0.02 : 1;
     const zIndexValue = isStacked ? 100 - stackIndex * 10 : 100;
 
@@ -96,20 +95,6 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
           </div>
         )}
 
-        {/* Coin press stamp overlay */}
-        {pendingVerdict && (
-          <motion.div
-            className={`quote-stamp quote-stamp-${pendingVerdict}`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.12 }}
-            aria-hidden="true"
-          >
-            <div className="quote-stamp-circle">
-              <span className="quote-stamp-text">{pendingVerdict === 'agree' ? 'AGREE' : 'DISAGREE'}</span>
-            </div>
-          </motion.div>
-        )}
       </motion.div>
     );
   }

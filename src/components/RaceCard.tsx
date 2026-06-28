@@ -1,5 +1,7 @@
 // src/components/RaceCard.tsx
 import React from 'react';
+import { motion } from 'framer-motion';
+import { useMotion, EASE, DUR, STAGGER } from '../motion';
 import { Motif } from './motif/Motif';
 import type { Tier, Scope } from '../utils/raceTier';
 import type { BoundaryRef } from '../data/api';
@@ -28,23 +30,31 @@ export interface RaceCardProps {
   progressLabel?: string | null;
   disabled?: boolean;
   onSelect: () => void;
+  /** When set, the card mounts with a staggered entrance (race grid reveal). */
+  enterIndex?: number;
 }
 
 export const RaceCard: React.FC<RaceCardProps> = (props) => {
   const {
     office, tier, scope, state, seat, electionDate, boundaryRef, frameRef,
     candidateCount, topicCount, estMinutes,
-    progress = 'not-started', progressLabel, disabled, onSelect,
+    progress = 'not-started', progressLabel, disabled, onSelect, enterIndex,
   } = props;
 
   const stateName = getStateName(state);
   const date = formatElectionDate(electionDate);
   const scopeText = [stateName, date].filter(Boolean).join(' · ');
 
+  const m = useMotion();
+  const entrance = enterIndex === undefined
+    ? {}
+    : { ...m.enter({ y: 12 }), transition: m.transition(DUR.moderate, EASE.settle, { delay: Math.min(enterIndex, 8) * (STAGGER.gridCell / 1000) }) };
+
   function activate() { if (!disabled) onSelect(); }
 
   return (
-    <button
+    <motion.button
+      {...entrance}
       type="button"
       className={`race-card-v2 race-card-v2--${progress}`}
       aria-label={`Open ${office} race`}
@@ -76,6 +86,6 @@ export const RaceCard: React.FC<RaceCardProps> = (props) => {
           <span className="race-card-v2__status-text">{progressLabel}</span>
         </div>
       )}
-    </button>
+    </motion.button>
   );
 }

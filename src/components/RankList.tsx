@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
+import { useMotion } from '../motion';
 import { TIER_META, tierAnnouncement, tierForIndex } from '../utils/tiers';
 import { TierIcon } from './TierIcon';
 
@@ -123,22 +124,27 @@ interface RowProps {
   onMove?: (from: number, dir: -1 | 1) => void;
   isFirst?: boolean;
   isLast?: boolean;
+  /** True while a flight is landing on this row — hidden but still laid out so its box can be measured. */
+  hidden?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast, hidden }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
+  const m = useMotion();
 
   return (
     <div
       ref={setNodeRef}
+      data-quote-id={quote.id}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
+        visibility: hidden ? 'hidden' : undefined,
       }}
     >
       <motion.div
         layout
-        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+        transition={m.spring()}
         style={{ opacity: isDragging ? 0 : 1 }}
         className={isDragging ? 'rank-row-dragging' : ''}
       >
@@ -164,9 +170,11 @@ interface RankListProps {
   longPressDrag?: boolean;
   showMoveButtons?: boolean;
   showGhostSlots?: boolean;
+  /** Id of a row currently being landed on by a verdict flight — rendered hidden for a seamless handoff. */
+  landingId?: string | null;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons, showGhostSlots }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons, showGhostSlots, landingId }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -248,6 +256,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
               onMove={showMoveButtons ? handleMove : undefined}
               isFirst={i === 0}
               isLast={i === items.length - 1}
+              hidden={q.id === landingId}
             />
           ))}
           {showGhostSlots && items.length < 3 &&

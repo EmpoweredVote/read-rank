@@ -34,7 +34,7 @@ const entry: BallotEntry = {
 
 describe('BallotCard source attribution', () => {
   it('shows a verify link for each quote in the expanded breakdown', async () => {
-    render(<BallotCard entry={entry} index={0} verdictMap={{}} prefersReducedMotion={true} quoteRankMap={new Map()} />);
+    render(<BallotCard entry={entry} verdictMap={{}} landBaseDelayMs={0} spotlight={false} quoteRankMap={new Map()} />);
     await userEvent.click(screen.getByRole('button', { name: /see what they said/i }));
     const link = screen.getByRole('link', { name: /verify source: KQED Forum/i });
     expect(link).toHaveAttribute('href', 'https://example.com/kqed');
@@ -89,5 +89,21 @@ describe('ResultsPhase flow', () => {
     expect(screen.getByText(/how the candidates stack up/i)).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /calibrate your compass/i })).toBeInTheDocument();
+  });
+
+  it('announces the reveal with the #1 candidate and agreement count for screen readers', async () => {
+    window.localStorage?.clear();
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace(flowPayload);
+    const q = flowPayload.topics[0].quotes[0];
+    useReadRankStore.getState().agree(q);
+    useReadRankStore.getState().finishRace();
+
+    render(<ResultsPhase />);
+    const continueBtn = await screen.findByRole('button', { name: /see who you agreed with/i }, { timeout: 3000 });
+    await userEvent.click(continueBtn);
+
+    const announcement = await screen.findByText(/ballot revealed\. your number one is mike braun, agreed with 1 position\./i);
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
   });
 });

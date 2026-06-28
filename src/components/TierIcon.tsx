@@ -4,21 +4,19 @@ import type { Tier } from '../utils/tiers';
 export interface TierIconProps {
   tier: Tier;
   size?: number;
+  /** Play a one-time metallic sheen sweep across the tile (reveal grid only). */
+  gleam?: boolean;
+  /** ms to delay the gleam sweep so it lands as the medal settles. */
+  gleamDelayMs?: number;
 }
 
-const TILE_COLORS: Record<Tier, string> = {
-  diamond: '#60a5fa',
-  gold: '#fbbf24',
-  silver: '#94a3b8',
-  bronze: '#a78bfa',
-  disagreed: '#6b7280',
-};
-
 /**
- * Decorative tier glyphs (REDESIGN_SPEC §3.4): solid colored tile with white
- * icon inside. Always paired with a visible text label — the icon alone never carries the tier.
+ * Decorative tier glyphs (REDESIGN_SPEC §3.4): a minted metallic tile with a
+ * white icon inside. The per-tier gradient + inset highlight live in CSS
+ * (`.tier-tile-${tier}`). Always paired with a visible text label — the icon
+ * alone never carries the tier. Optionally plays a one-time gleam sweep.
  */
-export const TierIcon: React.FC<TierIconProps> = ({ tier, size = 14 }) => {
+export const TierIcon: React.FC<TierIconProps> = ({ tier, size = 14, gleam = false, gleamDelayMs = 0 }) => {
   const radius = Math.round(size * 0.3);
   const iconSize = Math.round(size * 0.7);
 
@@ -87,11 +85,13 @@ export const TierIcon: React.FC<TierIconProps> = ({ tier, size = 14 }) => {
         width: size,
         height: size,
         borderRadius: radius,
-        backgroundColor: TILE_COLORS[tier],
         flexShrink: 0,
       }}
     >
       {icon}
+      {gleam && (
+        <span className="tier-gleam-sweep" aria-hidden="true" style={{ animationDelay: `${gleamDelayMs}ms` }} />
+      )}
     </span>
   );
 };

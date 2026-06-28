@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { PRACTICE_CHARACTERS } from '../data/practiceData';
+import { useMotion, DUR, EASE, STAGGER } from '../motion';
 
 export const PracticeResultsScreen: React.FC = () => {
+  const m = useMotion();
   const { practiceProgress, completePractice } = useReadRankStore();
   const agreed = practiceProgress?.agreed ?? [];
   const disagreed = practiceProgress?.disagreed ?? [];
@@ -11,11 +13,12 @@ export const PracticeResultsScreen: React.FC = () => {
   const renderCard = (quoteId: string, text: string, token: string, idx: number, kind: 'agreed' | 'disagreed') => {
     const character = PRACTICE_CHARACTERS.find((c) => c.id === token);
     const accent = kind === 'agreed' ? 'var(--color-ev-muted-blue)' : 'var(--border-medium)';
+    const cardEnter = m.enter({ y: 24 });
     return (
       <motion.div key={quoteId}
         style={{ backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderLeft: `3px solid ${accent}`, borderRadius: '0.625rem', overflow: 'hidden' }}
-        initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: idx * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+        initial={cardEnter.initial} animate={cardEnter.animate}
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: m.reduced ? 0 : idx * (STAGGER.badge / 1000) })}>
         {character && (
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--surface-sunken)' }}>
             <div className="flex items-center justify-between">
@@ -46,10 +49,12 @@ export const PracticeResultsScreen: React.FC = () => {
     );
   };
 
+  const headerEnter = m.enter({ y: 20 });
+
   return (
     <div className="pb-12">
       <motion.div className="text-center max-w-2xl mx-auto mb-8"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
+        initial={headerEnter.initial} animate={headerEnter.animate} transition={m.transition(DUR.moderate)}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--text-heading)', marginBottom: '0.375rem', letterSpacing: '-0.02em' }}>
           Your Pizza Topping Rankings
         </h2>
@@ -65,9 +70,9 @@ export const PracticeResultsScreen: React.FC = () => {
         {disagreed.map((q, i) => renderCard(q.id, q.text, q.candidateToken, agreed.length + i, 'disagreed'))}
       </div>
 
-      <motion.div className="flex justify-center pt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+      <motion.div className="flex justify-center pt-4" initial={m.reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={m.transition(DUR.base, EASE.settle, { delay: m.reduced ? 0 : 0.6 })}>
         <motion.button onClick={completePractice} className="ev-button-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
-          whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}>
+          whileHover={m.hover({ scale: 1.03, y: -1 })} whileTap={m.tap({ scale: 0.97 })}>
           You have the hang of it.&nbsp; Pick a real race.
         </motion.button>
       </motion.div>

@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotion, DUR, EASE } from "../motion";
 
 // Padding around the spotlight cutout (px)
 const SPOTLIGHT_PADDING = 8;
@@ -188,6 +189,7 @@ export default function CoachMark({
   show = true,
   allowSpotlightInteraction = false,
 }: CoachMarkProps): React.ReactPortal {
+  const m = useMotion();
   const [rect, setRect] = useState<Rect | null>(null);
   const [vpSize, setVpSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   const observerRef = useRef<ResizeObserver | null>(null);
@@ -280,7 +282,7 @@ export default function CoachMark({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={m.transition(DUR.fast)}
           className="fixed inset-0"
           style={{ zIndex: 60 }}
           onPointerDown={(e) => e.stopPropagation()}
@@ -300,7 +302,7 @@ export default function CoachMark({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={m.transition(DUR.fast)}
         >
           {/* Top strip: full width, from viewport top to cutout top */}
           <div
@@ -337,7 +339,7 @@ export default function CoachMark({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
+        transition={m.transition(DUR.fast)}
         className="fixed inset-0"
         style={{ zIndex: 60 }}
         onPointerDown={(e) => e.stopPropagation()}
@@ -382,10 +384,10 @@ export default function CoachMark({
           {tooltipPos && (
             <motion.div
               key="coach-tooltip"
-              initial={{ opacity: 0, y: 6 }}
+              initial={m.reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              exit={m.reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+              transition={m.transition(DUR.base, EASE.standard)}
               style={{
                 position: "fixed",
                 top: tooltipPos.top,

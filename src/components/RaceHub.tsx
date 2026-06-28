@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useMotion, EASE, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
@@ -30,6 +31,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
   const [otherExpanded, setOtherExpanded] = useState(false);
 
+  const m = useMotion();
   const politicianIds = locationFilter?.politicianIds;
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     }
   }, [selectRace]);
 
-  const renderCard = useCallback((race: RaceSummary) => {
+  const renderCard = useCallback((race: RaceSummary, enterIndex?: number) => {
     const progressState = raceProgress[race.raceId];
     const info = deriveProgressState(progressState, race.rankableTopicCount);
     const progress: ProgressState = info.state;
@@ -95,6 +97,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         progressLabel={statusLabel}
         disabled={starting !== null}
         onSelect={() => handleSelect(race)}
+        enterIndex={enterIndex}
       />
     );
   }, [raceProgress, starting, handleSelect]);
@@ -130,8 +133,8 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       {!hideHeader && (
         <motion.div
           className="max-w-2xl mx-auto mb-4"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          {...m.enter({ y: 12 })}
+          transition={m.transition(DUR.moderate, EASE.settle)}
         >
           <h1 className="text-center" style={{
             fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem',
@@ -155,7 +158,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
       {races.length === 0 && (
         <motion.div className="max-w-2xl mx-auto text-center py-12"
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          {...m.enter({ y: 8 })} transition={m.transition(DUR.base, EASE.settle)}>
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
             No races available yet
           </p>
@@ -242,7 +245,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
                 {!collapsed && (
                   <div className="race-grid" id={regionId}>
-                    {section.races.map(renderCard)}
+                    {section.races.map((race, i) => renderCard(race, i))}
                   </div>
                 )}
               </div>

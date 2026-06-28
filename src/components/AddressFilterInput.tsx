@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMotion, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { searchPoliticians } from '../data/api';
 import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
@@ -26,6 +27,7 @@ interface AddressFilterInputProps {
 }
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
+  const m = useMotion();
   const { locationFilter, setLocationFilter, clearLocationFilter } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
@@ -140,10 +142,10 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         {locationFilter !== null ? (
           <motion.div
             key="chip"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={m.reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+            exit={m.reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+            transition={m.transition(DUR.base)}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e8f4f6]">
               <svg
@@ -169,10 +171,10 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         ) : (
           <motion.div
             key="input"
-            initial={{ opacity: 0, y: 4 }}
+            initial={m.reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.2 }}
+            exit={m.reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
+            transition={m.transition(DUR.base)}
           >
             <div className="flex gap-2">
               <input
