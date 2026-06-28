@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
+import { useMotion } from '../motion';
 import { RankRail } from './RankRail';
 
 export interface RankSheetProps {
@@ -19,6 +20,7 @@ export const RankSheet: React.FC<RankSheetProps> = (props) => {
 
 const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults }) => {
   const ref = useRef<HTMLDialogElement>(null);
+  const m = useMotion();
   const { getCurrentTopicProgress } = useReadRankStore();
   const topic = getCurrentTopicProgress();
   const agreed = topic?.agreed ?? [];
@@ -42,10 +44,10 @@ const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResu
     >
       <motion.div
         className="rank-sheet-handle-region"
-        drag="y"
+        drag={m.reduced ? false : 'y'}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0, bottom: 0.5 }}
-        onDragEnd={(_, info) => {
+        onDragEnd={m.reduced ? undefined : (_, info) => {
           if (info.offset.y > 80) onClose();
         }}
       >
