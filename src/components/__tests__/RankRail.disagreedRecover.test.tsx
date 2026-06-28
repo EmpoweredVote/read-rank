@@ -19,7 +19,7 @@ const payload: RacePayload = {
   ],
 };
 
-describe('RankRail iron recover', () => {
+describe('RankRail disagreed recover', () => {
   it('announces when a disagreed quote is moved back to agreed', async () => {
     window.localStorage?.clear();
     useReadRankStore.getState().reset();
@@ -27,7 +27,7 @@ describe('RankRail iron recover', () => {
     useReadRankStore.getState().disagree(payload.topics[0].quotes[0]);
 
     render(<RankRail variant="sidebar" />);
-    await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
+    await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
 
     const statusNodes = screen.getAllByRole('status');

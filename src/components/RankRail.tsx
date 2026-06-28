@@ -32,9 +32,7 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
       <RankList
         items={agreed}
         onReorder={reorderAgreed}
-        compact={isSheet}
         longPressDrag={isSheet}
-        showMoveButtons
         showGhostSlots
         landingId={landingId}
       />
@@ -47,20 +45,15 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
 
       {disagreed.length > 0 && (
         <section className="rank-rail-disagreed">
-          {agreed.length > 0 && (
-            <div className="disagreed-divider" role="separator">
-              <span>You disagreed with everything below this line</span>
-            </div>
-          )}
           <button
             type="button"
-            className="rank-sheet-disagreed-toggle"
+            className="rank-sheet-disagreed-toggle rank-disagreed-line"
             aria-expanded={showDisagreed}
-            aria-label={`Disagreed (${disagreed.length})`}
+            aria-label={`${disagreed.length} disagreed.  Review or recover.`}
             onClick={() => setShowDisagreed((p) => !p)}
           >
-            <TierIcon tier="disagreed" size={13} />
-            Disagreed ({disagreed.length})
+            <TierIcon tier="disagreed" size={18} />
+            <span>{disagreed.length} disagreed<span className="rank-disagreed-sub">&nbsp; — review or recover</span></span>
             <svg
               width="12"
               height="12"

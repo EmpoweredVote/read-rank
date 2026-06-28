@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { RankList } from '../RankList';
 import type { AgreedQuote } from '../../store/useReadRankStore';
 
@@ -10,59 +9,33 @@ const items: AgreedQuote[] = [
   { id: 'c', text: 'Charlie quote.', candidateToken: 't3', topicKey: 'k', addedAt: 3 },
 ];
 
-describe('RankList move buttons', () => {
-  it('renders no move buttons by default', () => {
+describe('RankList rows', () => {
+  it('renders no ▲▼ move buttons — reorder is drag-only', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /move up/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /move down/i })).not.toBeInTheDocument();
   });
 
-  it('moves a row down and reports the new order', async () => {
-    const onReorder = vi.fn();
-    render(<RankList items={items} onReorder={onReorder} showMoveButtons />);
-    await userEvent.click(screen.getByRole('button', { name: /move down.*ranked 1/i }));
-    expect(onReorder).toHaveBeenCalledWith(['b', 'a', 'c']);
-  });
-
-  it('moves a row up and reports the new order', async () => {
-    const onReorder = vi.fn();
-    render(<RankList items={items} onReorder={onReorder} showMoveButtons />);
-    await userEvent.click(screen.getByRole('button', { name: /move up.*ranked 3/i }));
-    expect(onReorder).toHaveBeenCalledWith(['a', 'c', 'b']);
-  });
-
-  it('disables the boundary buttons via aria-disabled and does not call onReorder when clicked', async () => {
-    const onReorder = vi.fn();
-    render(<RankList items={items} onReorder={onReorder} showMoveButtons />);
-    const moveUpFirst = screen.getByRole('button', { name: /move up.*ranked 1/i });
-    const moveDownLast = screen.getByRole('button', { name: /move down.*ranked 3/i });
-    expect(moveUpFirst).toHaveAttribute('aria-disabled', 'true');
-    expect(moveDownLast).toHaveAttribute('aria-disabled', 'true');
-    await userEvent.click(moveUpFirst);
-    expect(onReorder).not.toHaveBeenCalled();
-  });
-
-  it('announces moves with the tier', async () => {
-    render(<RankList items={items} onReorder={vi.fn()} showMoveButtons />);
-    await userEvent.click(screen.getByRole('button', { name: /move down, currently ranked 1/i }));
-    const region = screen.getAllByRole('status').find((el) => /moved/i.test(el.textContent ?? ''));
-    expect(region).toHaveTextContent(/moved .*to 2nd choice, gold/i);
-  });
-
-  it('frames the top three rows by tier with icon labels', () => {
+  it('exposes a keyboard-operable drag handle per row', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
-    expect(screen.getByText('1st choice')).toBeInTheDocument();
-    expect(screen.getByText('2nd choice')).toBeInTheDocument();
-    expect(screen.getByText('3rd choice')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /reorder, currently ranked/i })).toHaveLength(3);
+  });
+
+  it('frames the top three rows by tier with ordinal badges', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    expect(screen.getByText('1st')).toBeInTheDocument();
+    expect(screen.getByText('2nd')).toBeInTheDocument();
+    expect(screen.getByText('3rd')).toBeInTheDocument();
     expect(screen.getByText('Alpha quote.').closest('.tier-row')).toHaveClass('tier-row-diamond');
     expect(screen.getByText('Bravo quote.').closest('.tier-row')).toHaveClass('tier-row-gold');
     expect(screen.getByText('Charlie quote.').closest('.tier-row')).toHaveClass('tier-row-silver');
   });
 
-  it('frames rows past third as Bronze without a per-row label', () => {
+  it('frames rows past third as Bronze without an ordinal', () => {
     const four = [...items, { id: 'd', text: 'Delta quote.', candidateToken: 't4', topicKey: 'k', addedAt: 4 }];
     render(<RankList items={four} onReorder={vi.fn()} />);
     expect(screen.getByText('Delta quote.').closest('.tier-row')).toHaveClass('tier-row-bronze');
-    expect(screen.queryByText('Agreed')).not.toBeInTheDocument();
+    expect(screen.queryByText('4th')).not.toBeInTheDocument();
   });
 
   it('renders ghost slots for unfilled podium positions', () => {
@@ -86,9 +59,8 @@ describe('RankList move buttons', () => {
     expect(textEl.style.overflow).not.toBe('hidden');
   });
 
-  it('hides the original row during drag (opacity 0 via rank-row-dragging class)', () => {
+  it('does not mark any row as dragging at rest', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
-    // Initially no row has the dragging class
     const rows = document.querySelectorAll('.tier-row');
     expect(rows.length).toBe(3);
     rows.forEach((r) => expect(r).not.toHaveClass('rank-row-dragging'));

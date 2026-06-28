@@ -47,12 +47,12 @@ describe('RankSheet', () => {
 
   it('recovers a disagreed quote into the ranking', async () => {
     render(<RankSheet open allDone={false} onClose={vi.fn()} onSeeResults={vi.fn()} />);
-    await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
+    await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
     expect(race.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
     expect(race.topics.housing.disagreed).toEqual([]);
-    expect(screen.queryByRole('button', { name: /disagreed \(/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /review or recover/i })).not.toBeInTheDocument();
     expect(screen.getByText('A disagreed quote.')).toBeInTheDocument();
   });
 

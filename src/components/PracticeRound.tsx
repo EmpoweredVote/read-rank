@@ -189,7 +189,7 @@ export const PracticeRound: React.FC = () => {
       )}
       {showFullRankList && !isMouseDevice && (
         <div className="inline-rank-panel">
-          <RankList items={agreed} onReorder={reorderPracticeAgreed} compact />
+          <RankList items={agreed} onReorder={reorderPracticeAgreed} />
         </div>
       )}
 
