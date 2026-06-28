@@ -1,55 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useReadRankStore } from '../store/useReadRankStore';
+import { TopicPickerSheet } from './TopicPickerSheet';
 
-/** Horizontal topic progress for the current race. Tap a topic to jump to it. */
+/**
+ * The issue header for the current race. A single compact eyebrow (issue
+ * position + title) keeps the quote and question as the hero (REDESIGN_SPEC
+ * §178); the full issue list lives behind a tap in the TopicPickerSheet
+ * rather than a wrapping chip grid that pushed the quote below the fold.
+ */
 export const TopicStepper: React.FC = () => {
-  const { getCurrentRaceProgress, setCurrentTopic } = useReadRankStore();
+  const { getCurrentRaceProgress } = useReadRankStore();
   const race = getCurrentRaceProgress();
+  const [pickerOpen, setPickerOpen] = useState(false);
   if (!race) return null;
 
   const current = race.currentTopicKey;
   const topic = current ? race.topics[current] : null;
+  const total = race.topicOrder.length;
+  const position = current ? race.topicOrder.indexOf(current) + 1 : 0;
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '0.875rem' }}>
-        {race.topicOrder.map((key) => {
-          const t = race.topics[key];
-          const done = t.currentIndex >= t.quotesToEvaluate.length;
-          const isCurrent = key === current;
-          return (
-            <button
-              key={key}
-              onClick={() => setCurrentTopic(key)}
-              title={t.title}
-              className={isCurrent ? 'topic-chip topic-chip-current' : 'topic-chip'}
-              style={{
-                fontFamily: "'Manrope', sans-serif",
-                fontSize: '0.6875rem',
-                fontWeight: isCurrent ? 700 : 500,
-                padding: '0.25rem 0.625rem',
-                borderRadius: '9999px',
-                cursor: 'pointer',
-                border: `1px solid ${isCurrent ? 'var(--text-link)' : 'var(--border-subtle)'}`,
-                backgroundColor: isCurrent ? 'var(--agree-bg)' : done ? 'var(--surface-raised)' : 'var(--surface-card)',
-                color: isCurrent ? 'var(--text-link)' : done ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                whiteSpace: 'nowrap',
-                position: 'relative',
-              }}
-            >
-              {done && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-              {t.title}
-            </button>
-          );
-        })}
-      </div>
+      <button
+        type="button"
+        className="issue-eyebrow"
+        onClick={() => setPickerOpen(true)}
+        aria-label={`Issue ${position} of ${total}${topic ? `, ${topic.title}` : ''}.  Tap to change issue.`}
+      >
+        <span className="issue-eyebrow-kicker">Issue {position} of {total}</span>
+        {topic && <span className="issue-eyebrow-sep" aria-hidden="true">·</span>}
+        {topic && <span className="issue-eyebrow-topic">{topic.title}</span>}
+        <svg className="issue-eyebrow-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
 
       {topic && (
         <div className="question-banner">
@@ -58,6 +42,8 @@ export const TopicStepper: React.FC = () => {
           </h2>
         </div>
       )}
+
+      <TopicPickerSheet open={pickerOpen} onClose={() => setPickerOpen(false)} />
     </div>
   );
 };

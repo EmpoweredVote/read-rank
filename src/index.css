@@ -590,9 +590,9 @@ dialog::backdrop {
 .action-button-disagree.keyboard-active { filter: brightness(1.2); }
 .action-button-agree.keyboard-active { filter: brightness(1.1); }
 
-/* Extra bottom clearance for fixed verdict paddles on mobile */
+/* Extra bottom clearance for the fixed verdict stack (paddles + dock) on mobile */
 .has-fixed-paddles {
-  padding-bottom: calc(78px + env(safe-area-inset-bottom) + 1rem);
+  padding-bottom: calc(78px + 5rem + env(safe-area-inset-bottom) + 1rem);
 }
 
 @media (pointer: coarse) {
@@ -622,11 +622,198 @@ dialog::backdrop {
 }
 
 /* ============================================
+   Issue Eyebrow + Topic Picker
+   ============================================ */
+
+.issue-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  padding: 0.1rem 0.125rem 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.issue-eyebrow-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.issue-eyebrow-sep { color: var(--text-tertiary); }
+
+.issue-eyebrow-topic {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-link);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.issue-eyebrow-chevron {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.issue-eyebrow:hover .issue-eyebrow-topic { text-decoration: underline; }
+.issue-eyebrow:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; border-radius: 0.25rem; }
+
+dialog.topic-picker-sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 30rem;
+  max-height: 82dvh;
+  border: none;
+  border-radius: 1rem 1rem 0 0;
+  padding: 0;
+  background: var(--surface-card);
+  color: var(--text-ink);
+}
+
+dialog.topic-picker-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.topic-picker-handle-region {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.topic-picker-handle {
+  width: 2.5rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background-color: var(--border-medium);
+}
+
+.topic-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 1rem 0.625rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.topic-picker-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.topic-picker-done {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-link);
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+}
+
+.topic-picker-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.topic-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.625rem;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  color: var(--text-ink);
+}
+
+.topic-picker-row:hover { background-color: var(--surface-raised); }
+.topic-picker-row:focus-visible { outline: 2px solid var(--text-link); outline-offset: -2px; }
+
+.topic-picker-row-current {
+  background-color: var(--agree-bg);
+}
+
+.topic-picker-dot {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-medium);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-link);
+}
+
+.topic-picker-row-done .topic-picker-dot { border-color: var(--text-link); }
+.topic-picker-row-current .topic-picker-dot { border-color: var(--text-link); }
+
+.topic-picker-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+}
+
+.topic-picker-row-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-ink);
+}
+
+.topic-picker-row-current .topic-picker-row-title { color: var(--text-link); }
+
+.topic-picker-row-q {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topic-picker-row-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* ============================================
    Split Layout — Desktop Evaluation + Sidebar
    ============================================ */
 
 .evaluation-mobile {
-  padding-bottom: 5.5rem;
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
 .evaluation-split-layout {
@@ -829,23 +1016,56 @@ dialog::backdrop {
    Rank Dock (mobile collapsed strip)
    ============================================ */
 
-.rank-dock {
+/* Fixed bottom stack: verdict paddles above, dock below — so the dock is
+   always visible during evaluation instead of hidden behind the paddles. */
+.mobile-verdict-stack {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-dock {
+  position: relative;
+  width: 100%;
   background-color: var(--surface-card);
   border: none;
   border-top: 1px solid var(--border-subtle);
   box-shadow: 0 -4px 16px rgba(28, 28, 28, 0.08);
-  padding: 0.25rem 0.875rem calc(0.5rem + env(safe-area-inset-bottom));
+  padding: 0.3rem 0.875rem calc(0.5rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.25rem;
+  gap: 0.3rem;
   cursor: pointer;
-  min-height: 3.5rem;
+  text-align: left;
+}
+
+.rank-dock-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.125rem;
+}
+
+.rank-dock-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.rank-dock-hint {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 0.625rem;
+  color: var(--text-link);
 }
 
 .dark .rank-dock {
@@ -915,17 +1135,25 @@ dialog::backdrop {
   flex-shrink: 0;
 }
 
-.rank-dock-slot-stub,
+.rank-dock-slot-stub {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  color: var(--text-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .rank-dock-slot-ghost {
   font-family: 'Manrope', sans-serif;
   font-size: 0.6875rem;
-  color: var(--text-ink);
+  color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.rank-dock-slot-ghost { color: var(--text-tertiary); }
 
 .rank-dock-counter {
   font-family: 'Manrope', sans-serif;
@@ -1097,6 +1325,18 @@ dialog.rank-sheet[open] {
 }
 
 
+/* Disagreed shelf — one discoverable line; quotes stay hidden until tapped. */
+.rank-disagreed-line {
+  width: 100%;
+  border: 1px solid var(--border-medium);
+  background-color: var(--surface-sunken);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--text-secondary);
+}
+.rank-disagreed-line > svg { margin-left: auto; }
+.rank-disagreed-sub { color: var(--text-tertiary); font-weight: 500; }
+
 .rank-sheet-disagreed-recover {
   background: none;
   border: 1px solid var(--border-medium);
@@ -1152,6 +1392,62 @@ dialog.rank-sheet[open] {
 .tier-row-bronze {
   border: 1px solid var(--tier-bronze-border);
   background-color: var(--tier-bronze-bg);
+}
+
+/* Ranked row (desktop rail + mobile sheet): rank badge column + full quote +
+   drag-only grip. Tile + ordinal share the left gutter so the quote owns the
+   row height. */
+.rank-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.55rem;
+}
+
+.rank-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  width: 2.125rem;
+}
+
+.rank-ord {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.rank-ord-diamond { color: var(--tier-diamond-ink); }
+.rank-ord-gold { color: var(--tier-gold-ink); }
+.rank-ord-silver { color: var(--tier-silver-ink); }
+
+.rank-row-quote {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-ink);
+  padding-top: 0.15rem;
+}
+
+.rank-row .rank-drag-handle {
+  align-self: center;
+  color: var(--text-tertiary);
+}
+
+/* Lighter, calmer frames in the rank surface so the quotes lead; bronze drops
+   its frame entirely (below 3rd, order does not matter — it is just "agreed"). */
+.rank-rail .tier-row-diamond { border-width: 2px; }
+.rank-rail .tier-row-gold { border-width: 1.5px; }
+.rank-rail .tier-row-silver { border-width: 1px; }
+.rank-rail .tier-row-bronze {
+  border: 1px solid var(--border-subtle);
+  background-color: var(--surface-sunken);
 }
 
 .tier-row-disagreed {
@@ -1264,27 +1560,6 @@ dialog.rank-sheet[open] {
 .tier-ghost-diamond { border: 2px dashed var(--tier-diamond-border); color: var(--tier-diamond-ink); }
 .tier-ghost-gold { border: 2px dashed var(--tier-gold-border); color: var(--tier-gold-ink); }
 .tier-ghost-silver { border: 2px dashed var(--tier-silver-border); color: var(--tier-silver-ink); }
-
-/* Iron severance — spatial cue #1: a different shelf, not the next rung */
-.disagreed-divider {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  margin: 1rem 0 0.5rem;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.disagreed-divider::before,
-.disagreed-divider::after {
-  content: '';
-  flex: 1;
-  border-top: 1px dashed var(--tier-disagreed-border);
-}
 
 /* ============================================
    RankRail — unified rank surface
@@ -1749,8 +2024,9 @@ dialog.rank-sheet[open] {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  z-index: 41; /* one above the dock */
+  /* Float just above the fixed verdict stack (paddles + dock). */
+  bottom: calc(78px + 5rem + env(safe-area-inset-bottom) + 0.5rem);
+  z-index: 101; /* above the verdict stack */
   max-width: calc(100vw - 2rem);
 }
 

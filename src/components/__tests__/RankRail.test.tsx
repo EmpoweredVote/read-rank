@@ -33,23 +33,25 @@ describe('RankRail', () => {
     expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
   });
 
-  it('severs Iron below a labeled divider', async () => {
+  it('collapses disagreed behind a single line, with no divider', async () => {
     const [q1, q2] = payload.topics[0].quotes;
     useReadRankStore.getState().agree(q1);
     useReadRankStore.getState().disagree(q2);
     render(<RankRail variant="sheet" />);
-    expect(screen.getByText(/you disagreed with everything below this line/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
-    const ironRow = screen.getByText('Rail disagreed quote.').closest('.tier-row');
-    expect(ironRow).toHaveClass('tier-row-disagreed');
+    expect(screen.queryByText(/below this line/i)).not.toBeInTheDocument();
+    // Quote stays hidden until the line is tapped.
+    expect(screen.queryByText('Rail disagreed quote.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
+    const disagreedRow = screen.getByText('Rail disagreed quote.').closest('.tier-row');
+    expect(disagreedRow).toHaveClass('tier-row-disagreed');
   });
 
-  it('omits the severance line when nothing is agreed yet', () => {
+  it('shows the disagreed line even when nothing is agreed yet', () => {
     const [, q2] = payload.topics[0].quotes;
     useReadRankStore.getState().disagree(q2);
     render(<RankRail variant="sheet" />);
     expect(screen.queryByText(/below this line/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /disagreed \(1\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /1 disagreed.*review or recover/i })).toBeInTheDocument();
   });
 
   it('recovers a disagreed quote into the ranking', async () => {
@@ -57,9 +59,9 @@ describe('RankRail', () => {
     useReadRankStore.getState().agree(q1);
     useReadRankStore.getState().disagree(q2);
     render(<RankRail variant="sheet" />);
-    await userEvent.click(screen.getByRole('button', { name: /disagreed \(1\)/i }));
+    await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
-    expect(screen.queryByRole('button', { name: /disagreed \(/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /review or recover/i })).not.toBeInTheDocument();
   });
 });

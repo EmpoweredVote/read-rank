@@ -20,9 +20,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
-import { useMotion } from '../motion';
 import { TIER_META, tierAnnouncement, tierForIndex } from '../utils/tiers';
 import { TierIcon } from './TierIcon';
+
+const RANK_ORD = ['1st', '2nd', '3rd'];
 
 function GripIcon() {
   return (
@@ -37,29 +38,28 @@ function GripIcon() {
 interface RowContentProps {
   quote: AgreedQuote;
   index: number;
-  compact?: boolean;
-  onMove?: (from: number, dir: -1 | 1) => void;
-  isFirst?: boolean;
-  isLast?: boolean;
   dragHandleProps?: Record<string, unknown>;
 }
 
-/** The visual content of a ranked row — shared between SortableRow and DragOverlay. */
-function RowContent({ quote, index, compact, onMove, isFirst, isLast, dragHandleProps }: RowContentProps) {
+/**
+ * The visual content of a ranked row — shared between SortableRow and DragOverlay,
+ * and identical on desktop (rail) and mobile (sheet). A rank badge column (tier
+ * tile + ordinal for the top three) keeps the quote at full length as the hero;
+ * reorder is drag-only via the grip, keyboard-operable through dnd-kit's
+ * KeyboardSensor (so no separate ▲▼ buttons).
+ */
+function RowContent({ quote, index, dragHandleProps }: RowContentProps) {
   const rank = index + 1;
   const tier = tierForIndex(index);
   const meta = TIER_META[tier];
 
   return (
-    <div
-      style={{
-        padding: compact ? '0.5rem 0.625rem' : '0.625rem 0.75rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.625rem',
-      }}
-      className={`tier-row tier-row-${tier}`}
-    >
+    <div className={`tier-row tier-row-${tier} rank-row`}>
+      <span className="rank-badge">
+        <TierIcon tier={tier} size={28} />
+        {tier !== 'bronze' && <span className={`rank-ord rank-ord-${tier}`}>{RANK_ORD[index]}</span>}
+      </span>
+      <div className="rank-row-quote">{quote.text}</div>
       <button
         type="button"
         className="rank-drag-handle"
@@ -69,50 +69,6 @@ function RowContent({ quote, index, compact, onMove, isFirst, isLast, dragHandle
       >
         <GripIcon />
       </button>
-
-      <TierIcon tier={tier} size={32} />
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {tier !== 'bronze' && (
-          <div className={`tier-label tier-label-${tier}`}>
-            {meta.label}
-          </div>
-        )}
-        <div
-          style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontWeight: 400,
-            fontSize: compact ? '0.75rem' : '0.8125rem',
-            lineHeight: 1.45,
-            color: 'var(--text-ink)',
-          }}
-        >
-          {quote.text}
-        </div>
-      </div>
-
-      {onMove && (
-        <span style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.125rem' }}>
-          <button
-            type="button"
-            className="rank-move-button"
-            aria-label={`Move up, currently ranked ${rank}, ${meta.name}`}
-            aria-disabled={isFirst || undefined}
-            onClick={() => { if (!isFirst) onMove(index, -1); }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6" /></svg>
-          </button>
-          <button
-            type="button"
-            className="rank-move-button"
-            aria-label={`Move down, currently ranked ${rank}, ${meta.name}`}
-            aria-disabled={isLast || undefined}
-            onClick={() => { if (!isLast) onMove(index, 1); }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-          </button>
-        </span>
-      )}
     </div>
   );
 }
@@ -120,17 +76,12 @@ function RowContent({ quote, index, compact, onMove, isFirst, isLast, dragHandle
 interface RowProps {
   quote: AgreedQuote;
   index: number;
-  compact?: boolean;
-  onMove?: (from: number, dir: -1 | 1) => void;
-  isFirst?: boolean;
-  isLast?: boolean;
   /** True while a flight is landing on this row — hidden but still laid out so its box can be measured. */
   hidden?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirst, isLast, hidden }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, hidden }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
-  const m = useMotion();
 
   return (
     <div
@@ -144,19 +95,10 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
     >
       <motion.div
         layout
-        transition={m.spring()}
         style={{ opacity: isDragging ? 0 : 1 }}
         className={isDragging ? 'rank-row-dragging' : ''}
       >
-        <RowContent
-          quote={quote}
-          index={index}
-          compact={compact}
-          onMove={onMove}
-          isFirst={isFirst}
-          isLast={isLast}
-          dragHandleProps={{ ...attributes, ...listeners }}
-        />
+        <RowContent quote={quote} index={index} dragHandleProps={{ ...attributes, ...listeners }} />
       </motion.div>
     </div>
   );
@@ -165,16 +107,14 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, compact, onMove, isFirs
 interface RankListProps {
   items: AgreedQuote[];
   onReorder: (orderedIds: string[]) => void;
-  compact?: boolean;
   emptyHint?: string;
   longPressDrag?: boolean;
-  showMoveButtons?: boolean;
   showGhostSlots?: boolean;
   /** Id of a row currently being landed on by a verdict flight — rendered hidden for a seamless handoff. */
   landingId?: string | null;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, emptyHint, longPressDrag, showMoveButtons, showGhostSlots, landingId }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, emptyHint, longPressDrag, showGhostSlots, landingId }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -187,17 +127,6 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
 
   const activeItem = activeId ? items.find((q) => q.id === activeId) : null;
   const activeIndex = activeItem ? items.indexOf(activeItem) : -1;
-
-  const handleMove = (from: number, dir: -1 | 1) => {
-    const to = from + dir;
-    if (to < 0 || to >= items.length) return;
-    const moved = items[from];
-    const stub = moved.text.length > 40 ? moved.text.slice(0, 40) + '…' : moved.text;
-    const ids = items.map((q) => q.id);
-    [ids[from], ids[to]] = [ids[to], ids[from]];
-    onReorder(ids);
-    setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(to, ids.length)}`);
-  };
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(String(e.active.id));
@@ -214,6 +143,9 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
     const next = [...ids];
     next.splice(to, 0, next.splice(from, 1)[0]);
     onReorder(next);
+    const moved = items[from];
+    const stub = moved.text.length > 40 ? moved.text.slice(0, 40) + '…' : moved.text;
+    setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(to, next.length)}`);
   };
 
   if (items.length === 0 && !showGhostSlots) {
@@ -252,10 +184,6 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
               key={q.id}
               quote={q}
               index={i}
-              compact={compact}
-              onMove={showMoveButtons ? handleMove : undefined}
-              isFirst={i === 0}
-              isLast={i === items.length - 1}
               hidden={q.id === landingId}
             />
           ))}
@@ -282,14 +210,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, compact, e
             overflow: 'hidden',
             opacity: 0.95,
           }}>
-            <RowContent
-              quote={activeItem}
-              index={activeIndex}
-              compact={compact}
-              onMove={showMoveButtons ? handleMove : undefined}
-              isFirst={activeIndex === 0}
-              isLast={activeIndex === items.length - 1}
-            />
+            <RowContent quote={activeItem} index={activeIndex} />
           </div>
         ) : null}
       </DragOverlay>

@@ -2,6 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { motion, useAnimate, useReducedMotion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
 import { tierForIndex } from '../utils/tiers';
+import { TierIcon } from './TierIcon';
 
 const GHOST_LABELS = ['1st', '2nd', '3rd'];
 
@@ -43,13 +44,21 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
         aria-label={`Open your ranking. ${agreed.length} ranked, ${disagreedCount} disagreed.`}
       >
         <span className="rank-dock-handle" aria-hidden="true" />
+        <span className="rank-dock-head" aria-hidden="true">
+          <span className="rank-dock-title">Your ranking</span>
+          <span className="rank-dock-hint">Tap to reorder ›</span>
+        </span>
         <span className="rank-dock-row">
           {[0, 1, 2].map((i) => {
             const q = agreed[i];
             const tier = tierForIndex(i);
             return (
               <span key={i} className={`rank-dock-slot ${q ? `rank-dock-slot-${tier}` : 'rank-dock-slot-empty'}`}>
-                <span className="rank-dock-slot-rank" aria-hidden="true">{i + 1}</span>
+                {q ? (
+                  <TierIcon tier={tier} size={18} />
+                ) : (
+                  <span className="rank-dock-slot-rank" aria-hidden="true">{i + 1}</span>
+                )}
                 {q ? (
                   <span className="rank-dock-slot-stub">{q.text}</span>
                 ) : (
@@ -62,9 +71,6 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
           {disagreedCount > 0 && (
             <span className="rank-dock-counter rank-dock-counter-disagreed">⊘ {disagreedCount}</span>
           )}
-          <svg className="rank-dock-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M18 15l-6-6-6 6" />
-          </svg>
         </span>
       </motion.button>
     );

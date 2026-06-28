@@ -303,12 +303,15 @@ export const EvaluationPhase: React.FC = () => {
           </div>
         )}
 
-        {currentQuote && (
+        {/* Desktop: paddles sit in the flow under the card. Mobile renders them
+            in the fixed bottom stack (with the dock) so the dock is no longer
+            hidden behind them. */}
+        {currentQuote && isMouseDevice && (
           <ActionButtons
             onAgree={() => handleButtonSwipe('agree')}
             onDisagree={() => handleButtonSwipe('disagree')}
             disabled={isAnimating}
-            fixed={!isMouseDevice}
+            fixed={false}
           />
         )}
       </div>
@@ -401,12 +404,22 @@ export const EvaluationPhase: React.FC = () => {
       {verdictLiveRegion}
       {mainColumn}
       {agreed.length === 1 && <FirstAgreeCoach variant="mobile" />}
-      <RankDock
-        ref={dockRef}
-        agreed={agreed}
-        disagreedCount={disagreedCount}
-        onOpen={() => setSheetOpen(true)}
-      />
+      <div className="mobile-verdict-stack">
+        {currentQuote && (
+          <ActionButtons
+            onAgree={() => handleButtonSwipe('agree')}
+            onDisagree={() => handleButtonSwipe('disagree')}
+            disabled={isAnimating}
+            fixed={false}
+          />
+        )}
+        <RankDock
+          ref={dockRef}
+          agreed={agreed}
+          disagreedCount={disagreedCount}
+          onOpen={() => setSheetOpen(true)}
+        />
+      </div>
       <RankSheet
         open={sheetOpen}
         allDone={allTopicsDone}
