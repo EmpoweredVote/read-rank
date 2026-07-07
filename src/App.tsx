@@ -122,7 +122,8 @@ function MainApp() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
       <Header
-        logoSrc={`${import.meta.env.BASE_URL}EVLogo.svg`}
+        logoSrc={`${import.meta.env.BASE_URL}${isDark ? 'read-and-rank-logo-dark.svg' : 'read-and-rank-logo-light.svg'}`}
+        logoAlt="Read & Rank"
         logoHref="https://empowered.vote"
         navItems={[]}
         darkMode={isDark}
