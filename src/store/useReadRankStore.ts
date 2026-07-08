@@ -51,6 +51,18 @@ export function getAllAgreedQuotes(race: RaceProgress): AgreedQuote[] {
   return race.topicOrder.flatMap((k) => race.topics[k]?.agreed ?? []);
 }
 
+/** The topics the user chose to evaluate, in canonical `topicOrder` sequence.
+ *  This — not `topicOrder` — is what the evaluation flow iterates. Falls back to
+ *  the full order for races started before `selectedTopicKeys` existed, or if a
+ *  selection somehow filtered everything out. */
+export function getActiveTopicKeys(race: RaceProgress): string[] {
+  const selected = race.selectedTopicKeys;
+  if (!selected || selected.length === 0) return race.topicOrder;
+  const set = new Set(selected);
+  const active = race.topicOrder.filter((k) => set.has(k));
+  return active.length > 0 ? active : race.topicOrder;
+}
+
 /** Shape returned by fetchRaceQuotes / mock data, consumed by selectRace. */
 export interface RacePayload {
   raceId: string;
@@ -261,8 +273,10 @@ export const useReadRankStore = create<ReadRankState>()(
       nextTopic: () => {
         const patch = withCurrentRace(get(), (race) => {
           if (!race.currentTopicKey) return race;
-          const idx = race.topicOrder.indexOf(race.currentTopicKey);
-          const next = race.topicOrder[idx + 1];
+          // Advance within the user's selected topics, skipping deselected ones.
+          const active = getActiveTopicKeys(race);
+          const idx = active.indexOf(race.currentTopicKey);
+          const next = active[idx + 1];
           return next ? { ...race, currentTopicKey: next } : race;
         });
         if (patch) set(patch);
@@ -349,10 +363,16 @@ export const useReadRankStore = create<ReadRankState>()(
 
       confirmIssueSelection: () => {
         const state = get();
-        const patch = withCurrentRace(state, (race) => ({
-          ...race,
-          phase: 'evaluation' as const,
-        }));
+        const patch = withCurrentRace(state, (race) => {
+          // Start on the first selected topic — the first catalog topic may have
+          // been deselected.
+          const active = getActiveTopicKeys(race);
+          const currentTopicKey =
+            race.currentTopicKey && active.includes(race.currentTopicKey)
+              ? race.currentTopicKey
+              : active[0] ?? race.currentTopicKey;
+          return { ...race, phase: 'evaluation' as const, currentTopicKey };
+        });
         if (patch) set({ phase: 'evaluation', ...patch });
         else set({ phase: 'evaluation' });
       },

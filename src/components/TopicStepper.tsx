@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { useReadRankStore, getActiveTopicKeys } from '../store/useReadRankStore';
 import { TopicPickerSheet } from './TopicPickerSheet';
 
 /**
@@ -16,8 +16,9 @@ export const TopicStepper: React.FC = () => {
 
   const current = race.currentTopicKey;
   const topic = current ? race.topics[current] : null;
-  const total = race.topicOrder.length;
-  const position = current ? race.topicOrder.indexOf(current) + 1 : 0;
+  const activeKeys = getActiveTopicKeys(race);
+  const total = activeKeys.length;
+  const position = current ? activeKeys.indexOf(current) + 1 : 0;
 
   return (
     <div>
