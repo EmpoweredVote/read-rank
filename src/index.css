@@ -332,14 +332,12 @@ dialog::backdrop {
   font-size: 5rem;
   line-height: 1;
   color: var(--color-ev-yellow);
-  opacity: 0.5;
+  opacity: 1;
   position: absolute;
   top: 0.25rem;
   left: 0.75rem;
   pointer-events: none;
 }
-/* Yellow reads brighter on the dark card — keep it a whisper. */
-.dark .ev-quote-card::before { opacity: 0.28; }
 
 .ev-quote-card-dragging {
   border-color: var(--border-medium);
