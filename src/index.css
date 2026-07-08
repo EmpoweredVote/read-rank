@@ -2566,3 +2566,18 @@ button.rank-num:focus-visible .rank-num-badge {
   .race-card-v2 { transition: border-color 0.15s; }
   .race-card-v2:hover { transform: none; }
 }
+
+/* ============================================
+   Reveal marks (spec §2) — numbers-led, no medals
+   ============================================ */
+.rank-number {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; background: var(--text-link); color: #fff;
+  font-family: 'Manrope', sans-serif; font-weight: 800; flex-shrink: 0; line-height: 1;
+}
+.dark .rank-number { background: var(--color-ev-light-blue); color: #06232b; }
+.alignment-mark { display: inline-flex; align-items: center; justify-content: center; }
+.mark-agreed { color: var(--agree); }
+.mark-disagreed { color: #a8a29e; }
+.dark .mark-disagreed { color: #8b96a5; }
+.mark-none { color: var(--border-medium); }
