@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR, STAGGER } from '../motion';
 import { useCountUp } from '../utils/countUp';
 import { computeRevealTimeline } from '../utils/revealTimeline';
-import { useReadRankStore, getAllAgreedQuotes } from '../store/useReadRankStore';
+import { useReadRankStore, getAllAgreedQuotes, getActiveTopicKeys } from '../store/useReadRankStore';
 import { fetchRaceReveal, type BallotEntry, type RevealResult } from '../data/api';
 import { buildEssentialsProfileUrl, type VerdictMap } from '../utils/verdictFragment';
 import { SourceLine } from './SourceLine';
@@ -276,7 +276,9 @@ export const ResultsPhase: React.FC = () => {
   }, [currentRaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const agreedList = race ? getAllAgreedQuotes(race) : [];
-  const topicCount = race ? race.topicOrder.length : 0;
+  // Results reflect only the topics the user chose to evaluate.
+  const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
+  const topicCount = activeTopicKeys.length;
 
   const identities = useMemo(
     (): Map<string, QuoteIdentity> => (reveal ? buildQuoteIdentityMap(reveal) : new Map<string, QuoteIdentity>()),
@@ -289,7 +291,7 @@ export const ResultsPhase: React.FC = () => {
   );
 
   const alignmentTopics = useMemo<AlignmentTopic[]>(
-    () => (race ? race.topicOrder.map((key) => ({ key, title: race.topics[key].title })) : []),
+    () => (race ? getActiveTopicKeys(race).map((key) => ({ key, title: race.topics[key].title })) : []),
     [race]
   );
   const alignmentRows = useMemo(

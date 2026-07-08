@@ -138,7 +138,6 @@ export const PracticeRound: React.FC = () => {
               <QuoteCard
                 key={currentQuote.id}
                 quote={currentQuote}
-                displayNumber={currentIndex + 1}
                 showTrustFooter={false}
               />
             </AnimatePresence>

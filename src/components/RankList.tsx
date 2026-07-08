@@ -1,5 +1,5 @@
 // src/components/RankList.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -20,10 +20,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
-import { TIER_META, tierAnnouncement, tierForIndex } from '../utils/tiers';
-import { TierIcon } from './TierIcon';
+import { tierAnnouncement } from '../utils/tiers';
 
-const RANK_ORD = ['1st', '2nd', '3rd'];
+/** Ordinal labels for the top three podium positions. */
+const ORD = ['', '1st', '2nd', '3rd'];
 
 function GripIcon() {
   return (
@@ -38,33 +38,49 @@ function GripIcon() {
 interface RowContentProps {
   quote: AgreedQuote;
   index: number;
+  reorderMode: boolean;
+  /** view mode only: open the assign popover for this row's number. */
+  onNumberClick?: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
+  popOpen?: boolean;
   dragHandleProps?: Record<string, unknown>;
 }
 
 /**
- * The visual content of a ranked row — shared between SortableRow and DragOverlay,
- * and identical on desktop (rail) and mobile (sheet). A rank badge column (tier
- * tile + ordinal for the top three) keeps the quote at full length as the hero;
- * reorder is drag-only via the grip, keyboard-operable through dnd-kit's
- * KeyboardSensor (so no separate ▲▼ buttons).
+ * A ranked row. In view mode it is a full-quote "slip" whose number is a button
+ * that opens the tap-to-assign popover; the quote leads and the grip drags.
+ * In reorder mode it collapses to a compact two-line row that is itself the
+ * drag handle, so the whole list fits and drags stay short (spec: Record).
  */
-function RowContent({ quote, index, dragHandleProps }: RowContentProps) {
-  const rank = index + 1;
-  const tier = tierForIndex(index);
-  const meta = TIER_META[tier];
+function RowContent({ quote, index, reorderMode, onNumberClick, popOpen, dragHandleProps }: RowContentProps) {
+  const num = index + 1;
+
+  if (reorderMode) {
+    return (
+      <div className={`rank-mini${index > 2 ? ' rank-mini-sub' : ''}`} {...dragHandleProps}>
+        <span className="rank-mini-grip" aria-hidden><GripIcon /></span>
+        <span className="rank-mini-num">{num}</span>
+        <span className="rank-mini-quote">{quote.text}</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={`tier-row tier-row-${tier} rank-row`}>
-      <span className="rank-badge">
-        <TierIcon tier={tier} size={28} />
-        {tier !== 'bronze' && <span className={`rank-ord rank-ord-${tier}`}>{RANK_ORD[index]}</span>}
-      </span>
-      <div className="rank-row-quote">{quote.text}</div>
+    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}`}>
       <button
         type="button"
-        className="rank-drag-handle"
-        aria-label={`Reorder, currently ranked ${rank}, ${meta.name}`}
-        style={{ background: 'none', border: 'none', padding: 0, display: 'flex', cursor: 'grab' }}
+        className="rank-num"
+        aria-haspopup="menu"
+        aria-expanded={!!popOpen}
+        aria-label={index < 3 ? `Ranked ${num}. Change position` : `Position ${num}. Move to top three`}
+        onClick={(e) => onNumberClick?.(e, quote.id)}
+      >
+        <span className="rank-num-badge">{num}</span>
+      </button>
+      <div className="rank-slip-quote">{quote.text}</div>
+      <button
+        type="button"
+        className="rank-grip"
+        aria-label={`Reorder, currently ranked ${num}`}
         {...dragHandleProps}
       >
         <GripIcon />
@@ -76,11 +92,14 @@ function RowContent({ quote, index, dragHandleProps }: RowContentProps) {
 interface RowProps {
   quote: AgreedQuote;
   index: number;
+  reorderMode: boolean;
+  onNumberClick?: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
+  popOpen?: boolean;
   /** True while a flight is landing on this row — hidden but still laid out so its box can be measured. */
   hidden?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, hidden }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, reorderMode, onNumberClick, popOpen, hidden }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
 
   return (
@@ -98,7 +117,14 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, hidden }) => {
         style={{ opacity: isDragging ? 0 : 1 }}
         className={isDragging ? 'rank-row-dragging' : ''}
       >
-        <RowContent quote={quote} index={index} dragHandleProps={{ ...attributes, ...listeners }} />
+        <RowContent
+          quote={quote}
+          index={index}
+          reorderMode={reorderMode}
+          onNumberClick={onNumberClick}
+          popOpen={popOpen}
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
       </motion.div>
     </div>
   );
@@ -107,16 +133,21 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, hidden }) => {
 interface RankListProps {
   items: AgreedQuote[];
   onReorder: (orderedIds: string[]) => void;
+  /** Tap-to-assign: place a quote at a 1-based podium position. */
+  onAssign?: (id: string, position: number) => void;
+  /** Collapse rows to compact draggable lines. */
+  reorderMode?: boolean;
   emptyHint?: string;
   longPressDrag?: boolean;
-  showGhostSlots?: boolean;
   /** Id of a row currently being landed on by a verdict flight — rendered hidden for a seamless handoff. */
   landingId?: string | null;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, emptyHint, longPressDrag, showGhostSlots, landingId }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, reorderMode = false, emptyHint, longPressDrag, landingId }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pop, setPop] = useState<{ id: string; top: number; left: number } | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -128,9 +159,44 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, emptyHint,
   const activeItem = activeId ? items.find((q) => q.id === activeId) : null;
   const activeIndex = activeItem ? items.indexOf(activeItem) : -1;
 
-  const handleDragStart = (e: DragStartEvent) => {
-    setActiveId(String(e.active.id));
+  // Tap-to-assign popover: any click outside it (including the Reorder toggle or
+  // a grip) closes it, so entering reorder mode never leaves a stale popover.
+  useEffect(() => {
+    if (!pop) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest('.rank-pop') && !t.closest('.rank-num')) setPop(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPop(null); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [pop]);
+
+  const openPop = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    if (pop && pop.id === id) { setPop(null); return; }
+    const badge = e.currentTarget.querySelector('.rank-num-badge') as HTMLElement | null;
+    const wrap = wrapRef.current;
+    if (!badge || !wrap) return;
+    const wr = wrap.getBoundingClientRect();
+    const br = badge.getBoundingClientRect();
+    setPop({ id, top: br.bottom - wr.top + 6, left: Math.max(4, br.left - wr.left) });
   };
+
+  const assign = (id: string, position: number) => {
+    setPop(null);
+    onAssign?.(id, position);
+    const moved = items.find((q) => q.id === id);
+    if (moved) {
+      const stub = moved.text.length > 40 ? moved.text.slice(0, 40) + '…' : moved.text;
+      setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(position - 1, items.length)}`);
+    }
+  };
+
+  const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
@@ -148,27 +214,21 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, emptyHint,
     setAnnouncement(`Moved "${stub}" to ${tierAnnouncement(to, next.length)}`);
   };
 
-  if (items.length === 0 && !showGhostSlots) {
+  if (items.length === 0) {
+    if (!emptyHint) return null;
     return (
       <div
         className="sidebar-empty-state"
-        style={{
-          border: '1.5px dashed var(--border-subtle)',
-          borderRadius: '8px',
-          padding: '1.5rem 1rem',
-          flexDirection: 'column',
-          gap: '0.5rem',
-        }}
+        style={{ border: '1.5px dashed var(--border-subtle)', borderRadius: '8px', padding: '1.5rem 1rem', flexDirection: 'column', gap: '0.5rem' }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--border-medium)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 6h16M4 12h10M4 18h7" />
-        </svg>
         <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-tertiary)', textAlign: 'center', margin: 0 }}>
-          {emptyHint ?? 'Agree with quotes, then drag to rank them. Your top 3 form your podium.'}
+          {emptyHint}
         </p>
       </div>
     );
   }
+
+  const currentPos = pop ? items.findIndex((q) => q.id === pop.id) + 1 : 0;
 
   return (
     <DndContext
@@ -178,39 +238,46 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, emptyHint,
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+        <div ref={wrapRef} className="rank-list-wrap">
           {items.map((q, i) => (
-            <SortableRow
-              key={q.id}
-              quote={q}
-              index={i}
-              hidden={q.id === landingId}
-            />
+            <React.Fragment key={q.id}>
+              {i === 3 && (
+                <div className={reorderMode ? 'rank-rule' : 'rank-rule'} aria-hidden="true">Also agreed</div>
+              )}
+              <SortableRow
+                quote={q}
+                index={i}
+                reorderMode={reorderMode}
+                onNumberClick={openPop}
+                popOpen={pop?.id === q.id}
+                hidden={q.id === landingId}
+              />
+            </React.Fragment>
           ))}
-          {showGhostSlots && items.length < 3 &&
-            Array.from({ length: 3 - items.length }, (_, k) => {
-              const idx = items.length + k;
-              const meta = TIER_META[tierForIndex(idx)];
-              return (
-                <div key={`ghost-${meta.tier}`} className={`tier-ghost tier-ghost-${meta.tier}`} aria-hidden="true">
-                  <TierIcon tier={meta.tier} size={14} />
-                  <span>{meta.label}</span>
-                </div>
-              );
-            })}
+
+          {pop && !reorderMode && (
+            <div className="rank-pop" role="menu" style={{ top: pop.top, left: pop.left }}>
+              <span className="rank-pop-lab">Place</span>
+              {[1, 2, 3].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="menuitem"
+                  className={currentPos === n ? 'cur' : undefined}
+                  onClick={() => assign(pop.id, n)}
+                >
+                  {ORD[n]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </SortableContext>
 
       <DragOverlay>
         {activeItem && activeIndex !== -1 ? (
-          <div style={{
-            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-            transform: 'scale(1.02)',
-            borderRadius: '0.5rem',
-            overflow: 'hidden',
-            opacity: 0.95,
-          }}>
-            <RowContent quote={activeItem} index={activeIndex} />
+          <div style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.18)', borderRadius: '0.625rem', overflow: 'hidden', opacity: 0.97 }}>
+            <RowContent quote={activeItem} index={activeIndex} reorderMode={reorderMode} />
           </div>
         ) : null}
       </DragOverlay>

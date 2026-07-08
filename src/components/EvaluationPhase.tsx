@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from
 import { AnimatePresence, useReducedMotion, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { FlyingCard, type FlyRect } from './FlyingCard';
 import { flushSync } from 'react-dom';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { useReadRankStore, getActiveTopicKeys } from '../store/useReadRankStore';
 import { DUR } from '../motion';
 import { QuoteCard } from './QuoteCard';
 import { ActionButtons } from './ActionButtons';
@@ -43,13 +43,17 @@ export const EvaluationPhase: React.FC = () => {
   const currentIndex = topic?.currentIndex ?? 0;
   const currentQuote = quotesToEvaluate[currentIndex];
 
-  const topicOrder = race?.topicOrder ?? [];
-  const currentTopicIdx = race?.currentTopicKey ? topicOrder.indexOf(race.currentTopicKey) : 0;
-  const isLastTopic = currentTopicIdx >= topicOrder.length - 1;
+  // Only the topics the user selected drive the flow, in canonical order.
+  const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
+  const currentTopicIdx = race?.currentTopicKey ? activeTopicKeys.indexOf(race.currentTopicKey) : 0;
+  const isLastTopic = currentTopicIdx >= activeTopicKeys.length - 1;
   const topicExhausted = !currentQuote;
-  // All topics fully triaged?
+  // All selected topics fully triaged?
   const allTopicsDone = race
-    ? Object.values(race.topics).every((t) => t.currentIndex >= t.quotesToEvaluate.length)
+    ? activeTopicKeys.every((k) => {
+        const t = race.topics[k];
+        return t ? t.currentIndex >= t.quotesToEvaluate.length : true;
+      })
     : false;
 
   const deviceType = useDeviceType();
@@ -76,9 +80,9 @@ export const EvaluationPhase: React.FC = () => {
     return () => { isMountedRef.current = false; };
   }, []);
 
-  const disagreedCount = race
-    ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
-    : 0;
+  // Per-topic, matching the `agreed` pile shown alongside it in the dock: the
+  // ranking surface is scoped to the current topic, disagreed included.
+  const disagreedCount = topic?.disagreed.length ?? 0;
 
   const [tourStep, setTourStep] = useState<1 | 2 | null>(null);
   const swipeAreaRef = useRef<HTMLDivElement>(null);
@@ -261,7 +265,6 @@ export const EvaluationPhase: React.FC = () => {
                     ref={quoteCardRef}
                     key={currentQuote.id}
                     quote={currentQuote}
-                    displayNumber={currentIndex + 1}
                   />
                 </AnimatePresence>
               ) : (
@@ -278,7 +281,6 @@ export const EvaluationPhase: React.FC = () => {
                       ref={quoteCardRef}
                       key={currentQuote.id}
                       quote={currentQuote}
-                      displayNumber={currentIndex + 1}
                     />
                   </AnimatePresence>
                 </motion.div>

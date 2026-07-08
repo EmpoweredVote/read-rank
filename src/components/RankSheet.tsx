@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { useMotion } from '../motion';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail } from './RankRail';
 
 export interface RankSheetProps {
@@ -20,6 +21,7 @@ export const RankSheet: React.FC<RankSheetProps> = (props) => {
 
 const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults }) => {
   const ref = useRef<HTMLDialogElement>(null);
+  const bodyRef = useScrollFade<HTMLDivElement>();
   const m = useMotion();
   const { getCurrentTopicProgress } = useReadRankStore();
   const topic = getCurrentTopicProgress();
@@ -67,7 +69,7 @@ const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResu
         </button>
       </header>
 
-      <div className="rank-sheet-body">
+      <div ref={bodyRef} className="rank-sheet-body">
         <RankRail variant="sheet" />
       </div>
 

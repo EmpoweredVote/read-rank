@@ -10,12 +10,17 @@ const quote: BlindQuote = {
   topicKey: 'housing',
 };
 
-describe('QuoteCard blind-trust footer', () => {
-  it('shows the footer with explainer trigger by default', () => {
+describe('QuoteCard blind-trust affordance', () => {
+  it('shows only the sourcing info button, not a verified label', () => {
     render(<QuoteCard quote={quote} />);
-    expect(screen.getByText(/verified quote/i)).toBeInTheDocument();
-    expect(screen.getByText(/source shown at the reveal/i)).toBeInTheDocument();
+    expect(screen.queryByText(/verified quote/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/source shown at the reveal/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /how we source quotes/i })).toBeInTheDocument();
+  });
+
+  it('does not render a quote number (the progress bar carries it)', () => {
+    render(<QuoteCard quote={quote} />);
+    expect(screen.queryByText(/^Quote \d+/)).not.toBeInTheDocument();
   });
 
   it('never renders per-quote source attribution', () => {
@@ -23,21 +28,21 @@ describe('QuoteCard blind-trust footer', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
-  it('hides the footer when showTrustFooter is false', () => {
+  it('hides the info button when showTrustFooter is false', () => {
     render(<QuoteCard quote={quote} showTrustFooter={false} />);
-    expect(screen.queryByText(/verified quote/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /how we source quotes/i })).not.toBeInTheDocument();
   });
 
-  it('stops footer pointer events from reaching the drag surface', () => {
+  it('stops info-button pointer events from reaching the drag surface', () => {
     const { container } = render(<QuoteCard quote={quote} />);
     const card = container.firstElementChild as HTMLElement;
     const dragSpy = vi.fn();
     card.addEventListener('pointerdown', dragSpy);
-    fireEvent.pointerDown(screen.getByText(/verified quote/i));
+    fireEvent.pointerDown(screen.getByRole('button', { name: /how we source quotes/i }));
     expect(dragSpy).not.toHaveBeenCalled();
   });
 
-  it('still opens the explainer when the footer info button is clicked', () => {
+  it('still opens the explainer when the info button is clicked', () => {
     render(<QuoteCard quote={quote} />);
     fireEvent.click(screen.getByRole('button', { name: /how we source quotes/i }));
     expect(screen.getByRole('dialog')).toHaveAccessibleName(/how we source quotes/i);

@@ -1,10 +1,6 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { motion, useAnimate, useReducedMotion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
-import { tierForIndex } from '../utils/tiers';
-import { TierIcon } from './TierIcon';
-
-const GHOST_LABELS = ['1st', '2nd', '3rd'];
 
 export interface RankDockProps {
   agreed: AgreedQuote[];
@@ -13,9 +9,9 @@ export interface RankDockProps {
 }
 
 /**
- * Collapsed mobile rank strip (REDESIGN_SPEC §1.3): a live, glanceable
- * scoreboard of the top 3 + overflow/disagreed counters, and the single
- * entry point to the RankSheet. Always visible during mobile evaluation.
+ * Collapsed mobile rank strip (spec: Record). A single slim line so the quote
+ * stays the hero during evaluation — it names the ranking, shows the count, and
+ * is the one entry point to the RankSheet. Always visible during evaluation.
  */
 export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
   ({ agreed, disagreedCount, onOpen }, ref) => {
@@ -33,7 +29,8 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
       prevCount.current = agreed.length;
     }, [agreed.length, animate, prefersReducedMotion, scope]);
 
-    const overflow = Math.max(0, agreed.length - 3);
+    const ranked = agreed.length;
+    const countLabel = ranked === 0 ? 'nothing ranked yet' : `${ranked} ranked`;
 
     return (
       <motion.button
@@ -41,36 +38,13 @@ export const RankDock = React.forwardRef<HTMLButtonElement, RankDockProps>(
         type="button"
         className="rank-dock"
         onClick={onOpen}
-        aria-label={`Open your ranking. ${agreed.length} ranked, ${disagreedCount} disagreed.`}
+        aria-label={`Open your ranking. ${ranked} ranked, ${disagreedCount} disagreed.`}
       >
         <span className="rank-dock-handle" aria-hidden="true" />
-        <span className="rank-dock-head" aria-hidden="true">
-          <span className="rank-dock-title">Your ranking</span>
-          <span className="rank-dock-hint">Tap to reorder ›</span>
-        </span>
-        <span className="rank-dock-row">
-          {[0, 1, 2].map((i) => {
-            const q = agreed[i];
-            const tier = tierForIndex(i);
-            return (
-              <span key={i} className={`rank-dock-slot ${q ? `rank-dock-slot-${tier}` : 'rank-dock-slot-empty'}`}>
-                {q ? (
-                  <TierIcon tier={tier} size={18} />
-                ) : (
-                  <span className="rank-dock-slot-rank" aria-hidden="true">{i + 1}</span>
-                )}
-                {q ? (
-                  <span className="rank-dock-slot-stub">{q.text}</span>
-                ) : (
-                  <span className="rank-dock-slot-ghost">{GHOST_LABELS[i]}</span>
-                )}
-              </span>
-            );
-          })}
-          {overflow > 0 && <span className="rank-dock-counter">+{overflow}</span>}
-          {disagreedCount > 0 && (
-            <span className="rank-dock-counter rank-dock-counter-disagreed">⊘ {disagreedCount}</span>
-          )}
+        <span className="rank-dock-line" aria-hidden="true">
+          <span className="rank-dock-name">Your ranking</span>
+          <span className="rank-dock-count">· {countLabel}</span>
+          <span className="rank-dock-cta">Rank ›</span>
         </span>
       </motion.button>
     );

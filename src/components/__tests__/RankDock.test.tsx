@@ -9,21 +9,18 @@ const quote = (id: string, text: string): AgreedQuote => ({
 });
 
 describe('RankDock', () => {
-  it('shows ghost slots when nothing is ranked', () => {
-    render(<RankDock agreed={[]} disagreedCount={0} onOpen={vi.fn()} />);
-    expect(screen.getByText('1st')).toBeInTheDocument();
-    expect(screen.getByText('2nd')).toBeInTheDocument();
-    expect(screen.getByText('3rd')).toBeInTheDocument();
+  it('is a slim bar showing the ranked count', () => {
+    const agreed = [quote('a', 'Alpha quote.'), quote('b', 'Bravo quote.'), quote('c', 'Charlie quote.')];
+    render(<RankDock agreed={agreed} disagreedCount={0} onOpen={vi.fn()} />);
+    expect(screen.getByText('Your ranking')).toBeInTheDocument();
+    expect(screen.getByText(/3 ranked/)).toBeInTheDocument();
+    // The slim bar no longer previews quote stubs.
+    expect(screen.queryByText('Alpha quote.')).not.toBeInTheDocument();
   });
 
-  it('fills slots with quote stubs and shows overflow + disagreed counters', () => {
-    const agreed = [quote('a', 'Alpha quote.'), quote('b', 'Bravo quote.'), quote('c', 'Charlie quote.'), quote('d', 'Delta quote.'), quote('e', 'Echo quote.')];
-    render(<RankDock agreed={agreed} disagreedCount={2} onOpen={vi.fn()} />);
-    expect(screen.getByText('Alpha quote.')).toBeInTheDocument();
-    expect(screen.getByText('Charlie quote.')).toBeInTheDocument();
-    expect(screen.queryByText('Delta quote.')).not.toBeInTheDocument();
-    expect(screen.getByText('+2')).toBeInTheDocument();
-    expect(screen.getByText(/⊘ 2/)).toBeInTheDocument();
+  it('shows a nothing-ranked hint when empty', () => {
+    render(<RankDock agreed={[]} disagreedCount={0} onOpen={vi.fn()} />);
+    expect(screen.getByText(/nothing ranked yet/)).toBeInTheDocument();
   });
 
   it('is one labeled button that opens the sheet', async () => {
@@ -32,13 +29,5 @@ describe('RankDock', () => {
     const dock = screen.getByRole('button', { name: /open your ranking.*1 ranked.*1 disagreed/i });
     await userEvent.click(dock);
     expect(onOpen).toHaveBeenCalledOnce();
-  });
-
-  it('frames filled slots by tier', () => {
-    const agreed = [quote('a', 'Alpha quote.'), quote('b', 'Bravo quote.')];
-    render(<RankDock agreed={agreed} disagreedCount={0} onOpen={vi.fn()} />);
-    expect(screen.getByText('Alpha quote.').closest('.rank-dock-slot')).toHaveClass('rank-dock-slot-diamond');
-    expect(screen.getByText('Bravo quote.').closest('.rank-dock-slot')).toHaveClass('rank-dock-slot-gold');
-    expect(screen.getByText('3rd')).toBeInTheDocument();
   });
 });

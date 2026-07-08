@@ -27,9 +27,9 @@ beforeEach(() => {
 });
 
 describe('RankRail', () => {
-  it('shows three ghost slots before anything is ranked', () => {
+  it('shows a nothing-ranked hint and no ghost slots before anything is ranked', () => {
     render(<RankRail variant="sidebar" />);
-    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
+    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(0);
     expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
   });
 
@@ -63,5 +63,51 @@ describe('RankRail', () => {
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
     expect(screen.queryByRole('button', { name: /review or recover/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('RankRail — per-topic isolation', () => {
+  const multiTopic: RacePayload = {
+    raceId: 'race-rail-multi',
+    positionName: 'Governor',
+    topics: [
+      {
+        topicKey: 'housing',
+        title: 'Housing',
+        question: 'How to fix housing?',
+        quotes: [
+          { id: 'h1', text: 'Housing quote one.', candidateToken: 'a', topicKey: 'housing' },
+          { id: 'h2', text: 'Housing disagreed quote.', candidateToken: 'b', topicKey: 'housing' },
+        ],
+      },
+      {
+        topicKey: 'schools',
+        title: 'Schools',
+        question: 'How to fix schools?',
+        quotes: [
+          { id: 's1', text: 'Schools quote one.', candidateToken: 'a', topicKey: 'schools' },
+          { id: 's2', text: 'Schools quote two.', candidateToken: 'b', topicKey: 'schools' },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    window.localStorage?.clear();
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace(multiTopic);
+    useReadRankStore.getState().confirmIssueSelection();
+  });
+
+  it('does not carry a previous topic\'s disagreed quote into the next topic', () => {
+    // Disagree a quote on the housing topic, then advance to schools.
+    useReadRankStore.getState().disagree(multiTopic.topics[0].quotes[1]);
+    useReadRankStore.getState().nextTopic();
+    expect(useReadRankStore.getState().getCurrentRaceProgress()!.currentTopicKey).toBe('schools');
+
+    render(<RankRail variant="sheet" />);
+    // The new topic starts with an empty disagreed section — no housing leak.
+    expect(screen.queryByRole('button', { name: /disagreed.*review or recover/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Housing disagreed quote.')).not.toBeInTheDocument();
   });
 });

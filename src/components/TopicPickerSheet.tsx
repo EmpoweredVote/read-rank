@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useReadRankStore } from '../store/useReadRankStore';
+import { useReadRankStore, getActiveTopicKeys } from '../store/useReadRankStore';
 
 export interface TopicPickerSheetProps {
   open: boolean;
@@ -30,6 +30,7 @@ const TopicPickerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   if (!race) return null;
   const current = race.currentTopicKey;
+  const activeKeys = getActiveTopicKeys(race);
 
   const choose = (key: string) => {
     setCurrentTopic(key);
@@ -59,7 +60,7 @@ const TopicPickerDialog: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       </header>
 
       <div className="topic-picker-body">
-        {race.topicOrder.map((key) => {
+        {activeKeys.map((key) => {
           const t = race.topics[key];
           const total = t.quotesToEvaluate.length;
           const seen = Math.min(t.currentIndex, total);
