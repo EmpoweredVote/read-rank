@@ -36,16 +36,11 @@ const topics = [
 ];
 
 describe('buildAlignmentGrid', () => {
-  it('maps each candidate-topic cell to the tier the user gave that quote', () => {
-    const grid = buildAlignmentGrid(reveal, ['q1', 'q3', 'q4', 'q2'], topics);
-    expect(grid).toEqual([
-      { candidateId: 'jane', name: 'Jane Doe', cells: ['diamond', 'disagreed'] },
-      { candidateId: 'sam', name: 'Sam Roe', cells: ['bronze', null] },
-    ]);
-  });
-
-  it('marks unjudged or missing topics as null', () => {
-    const grid = buildAlignmentGrid(reveal, [], topics);
-    expect(grid[0].cells).toEqual([null, 'disagreed']);
+  it('maps each candidate-topic cell to a mark', () => {
+    const grid = buildAlignmentGrid(reveal, topics);
+    // Jane: topic a rank 1 -> rank mark; topic b disagreed -> disagreed
+    expect(grid[0].cells).toEqual([{ kind: 'rank', rank: 1 }, { kind: 'disagreed' }]);
+    // Sam: topic a rank 4 -> agreed; topic b none -> null
+    expect(grid[1].cells).toEqual([{ kind: 'agreed' }, null]);
   });
 });
