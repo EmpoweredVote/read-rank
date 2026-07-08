@@ -2154,6 +2154,8 @@ button.rank-num:focus-visible .rank-num-badge {
    Sticky candidate column, rotated topic headers, horizontal edge fade.
    ============================================ */
 
+.alignment-section-label { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 0.5rem; }
+
 .alignment-grid-wrap {
   position: relative;
   overflow-x: auto;
