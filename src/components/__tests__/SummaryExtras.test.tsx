@@ -9,16 +9,17 @@ beforeEach(() => {
 });
 
 describe('AlignmentGrid', () => {
-  it('renders an accessible tier table', () => {
+  it('renders an accessible mark table', () => {
     render(
       <AlignmentGrid
         topics={[{ key: 'a', title: 'Housing' }]}
-        rows={[{ candidateId: 'jane', name: 'Jane Doe', cells: ['diamond'] }]}
+        rows={[{ candidateId: 'jane', name: 'Jane Doe', cells: [{ kind: 'rank', rank: 1 }] }]}
       />
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'Jane Doe' })).toBeInTheDocument();
-    expect(screen.getByText('Diamond')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('Ranked 1')).toHaveClass('sr-only');
   });
 });
 

@@ -2149,68 +2149,32 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 
 /* ============================================
-   Alignment Grid (REDESIGN_SPEC §1.6)
-   Candidates × topics tier table — colorblind-safe (icon + sr-only text).
+   Alignment Grid (REDESIGN_SPEC §1.6, spec §3)
+   Candidates × topics mark table — colorblind-safe (icon + sr-only text).
+   Sticky candidate column, rotated topic headers, horizontal edge fade.
    ============================================ */
 
 .alignment-grid-wrap {
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--border-medium);
   border-radius: 0.75rem;
   background-color: var(--surface-card);
 }
-
-.alignment-grid {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.875rem;
+.alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
+.alignment-grid th, .alignment-grid td { padding: 0.75rem 0.75rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
+.alignment-grid thead th { vertical-align: bottom; }
+.alignment-grid .alignment-col-label {
+  display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg);
+  font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase;
+  color: var(--text-secondary); max-height: 68px; white-space: nowrap;
 }
-
-.alignment-grid th,
-.alignment-grid td {
-  padding: 0.75rem 0.875rem;
-  text-align: center;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.alignment-grid thead th {
-  font-weight: 700;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .alignment-grid tbody th {
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--text-heading);
-  white-space: nowrap;
+  text-align: left; font-weight: 700; font-size: 0.875rem; color: var(--text-heading); white-space: nowrap;
+  position: sticky; left: 0; background: var(--surface-card); box-shadow: 1px 0 0 var(--border-subtle); z-index: 1;
 }
-
-.alignment-grid tbody tr:last-child th,
-.alignment-grid tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.alignment-grid-empty {
-  color: var(--text-tertiary);
-}
-
-/* #1 spotlight — the top candidate's Diamond cell(s) pulse ev-yellow. */
-.alignment-grid td.spotlight-diamond {
-  position: relative;
-  border-radius: 0.5rem;
-  animation: diamond-glow 1.4s var(--ease-standard) 2;
-}
-
-@keyframes diamond-glow {
-  0%   { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
-  50%  { box-shadow: inset 0 0 0 3px rgba(254, 209, 46, 0.6); }
-  100% { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
-}
+.alignment-grid-corner { position: sticky; left: 0; background: var(--surface-card); z-index: 2; text-align: left; font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
+.alignment-grid tbody tr:last-child th, .alignment-grid tbody tr:last-child td { border-bottom: none; }
 
 /* ============================================
    Compass cross-link card (REDESIGN_SPEC §10)
