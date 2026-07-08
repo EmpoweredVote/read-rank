@@ -2569,3 +2569,26 @@ button.rank-num:focus-visible .rank-num-badge {
 .essentials-logo-dark { display: none; }
 .dark .essentials-logo-light { display: none; }
 .dark .essentials-logo-dark { display: inline; }
+
+/* Quote drawer blocks (spec §5) */
+.quote-block { padding: 0.6875rem 0; border-bottom: 1px solid var(--border-faint); }
+.quote-block:last-child { border-bottom: none; }
+.quote-block-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4375rem; }
+.quote-block-topic { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.quote-edited { font-family: 'Manrope', sans-serif; font-size: 0.8125rem; line-height: 1.6; margin: 0 0 0.375rem; color: var(--text-ink); }
+.quote-verbatim { font-family: 'Manrope', sans-serif; font-size: 0.8125rem; line-height: 1.62; margin: 0 0 0.375rem; color: var(--text-strong); } /* AAA-safe surrounding tone */
+.quote-verbatim b { color: var(--text-heading); font-weight: 700; }
+.dark .quote-verbatim b { font-weight: 800; } /* weight carries emphasis in dark */
+.quote-edited.is-dis, .quote-verbatim.is-dis { color: var(--text-tertiary); }
+.quote-attrib { font-family: 'Manrope', sans-serif; font-size: 0.6875rem; color: var(--text-tertiary); margin: 0; }
+.quote-src { font-weight: 600; color: var(--text-secondary); }
+.quote-srclink { color: var(--text-link); font-weight: 600; text-decoration: none; }
+.quote-video { color: var(--color-ev-coral, #ff5740); font-weight: 600; text-decoration: none; }
+.quote-actions { display: flex; align-items: center; gap: 0.875rem; margin-top: 0.375rem; }
+.quote-toggle { background: none; border: none; padding: 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); }
+.quote-toggle:hover { text-decoration: underline; }
+/* Editor's note footnote + popover */
+.editor-note { position: relative; display: inline-flex; }
+.editor-note-trigger { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.6875rem; font-weight: 400; color: var(--text-tertiary); }
+.editor-note-trigger:hover { color: var(--text-secondary); text-decoration: underline; }
+.editor-note-pop { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 20; width: max-content; max-width: 280px; background: var(--surface-card); border-left: 3px solid var(--color-ev-yellow, #fed12e); border-radius: 0 6px 6px 0; box-shadow: var(--shadow-hover); padding: 0.5rem 0.6875rem; font-family: 'Manrope', sans-serif; font-size: 0.75rem; line-height: 1.5; color: var(--text-secondary); }
