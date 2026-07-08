@@ -254,8 +254,9 @@ body::before {
 .ev-quote-text {
   font-family: 'Manrope', sans-serif;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500; /* medium: light-on-dark reads thinner than dark-on-light; 500 firms up the stroke */
   line-height: 1.6;
+  max-width: 66ch; /* cap line length ≤ ~80 chars (WCAG 1.4.8 measure) for readability */
   color: var(--text-ink);
 }
 
