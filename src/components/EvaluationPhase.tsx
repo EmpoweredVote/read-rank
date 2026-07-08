@@ -80,9 +80,9 @@ export const EvaluationPhase: React.FC = () => {
     return () => { isMountedRef.current = false; };
   }, []);
 
-  const disagreedCount = race
-    ? Object.values(race.topics).reduce((n, t) => n + t.disagreed.length, 0)
-    : 0;
+  // Per-topic, matching the `agreed` pile shown alongside it in the dock: the
+  // ranking surface is scoped to the current topic, disagreed included.
+  const disagreedCount = topic?.disagreed.length ?? 0;
 
   const [tourStep, setTourStep] = useState<1 | 2 | null>(null);
   const swipeAreaRef = useRef<HTMLDivElement>(null);

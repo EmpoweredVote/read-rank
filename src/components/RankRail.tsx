@@ -12,11 +12,12 @@ export interface RankRailProps {
 }
 
 export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
-  const { getCurrentRaceProgress, getCurrentTopicProgress, reorderAgreed, reAgree } = useReadRankStore();
-  const race = getCurrentRaceProgress();
+  const { getCurrentTopicProgress, reorderAgreed, reAgree } = useReadRankStore();
   const topic = getCurrentTopicProgress();
   const agreed = topic?.agreed ?? [];
-  const disagreed = race ? Object.values(race.topics).flatMap((t) => t.disagreed) : [];
+  // Per-topic, like `agreed`: each topic owns its own ranking. Disagreed quotes
+  // must not bleed across topics — the next topic starts with an empty pile.
+  const disagreed = topic?.disagreed ?? [];
   const [showDisagreed, setShowDisagreed] = useState(false);
   const isSheet = variant === 'sheet';
   const m = useMotion();
