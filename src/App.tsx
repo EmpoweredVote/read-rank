@@ -122,9 +122,12 @@ function MainApp() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
       <Header
-        logoSrc={`${import.meta.env.BASE_URL}${isDark ? 'read-and-rank-logo-dark.svg' : 'read-and-rank-logo-light.svg'}`}
-        logoAlt="Read & Rank"
+        logoSrc={`${import.meta.env.BASE_URL}EVLogo.svg`}
+        logoAlt="Empowered Vote"
         logoHref="https://empowered.vote"
+        centerLogoSrc={`${import.meta.env.BASE_URL}${isDark ? 'read-and-rank-logo-dark.svg' : 'read-and-rank-logo-light.svg'}`}
+        centerLogoAlt="Read & Rank"
+        centerLogoHref="https://readrank.empowered.vote"
         navItems={[]}
         darkMode={isDark}
         profileMenu={profileMenu}
