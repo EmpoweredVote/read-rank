@@ -1,6 +1,7 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { useAnimate, useReducedMotion } from 'framer-motion';
 import { useReadRankStore } from '../store/useReadRankStore';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail } from './RankRail';
 
 /**
@@ -20,6 +21,7 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
   const prefersReducedMotion = useReducedMotion();
   const prevCount = useRef(agreed.length);
   const [scope, animate] = useAnimate();
+  const scrollRef = useScrollFade<HTMLDivElement>();
   useImperativeHandle(ref, () => scope.current as HTMLDivElement);
 
   useEffect(() => {
@@ -50,13 +52,7 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
       </div>
 
       <div style={{ padding: '0.75rem' }}>
-        <p style={{
-          fontFamily: "'Manrope', sans-serif", fontSize: '0.6875rem', color: 'var(--text-tertiary)',
-          margin: '0 0 0.625rem', lineHeight: 1.5,
-        }}>
-          Drag to rank.&nbsp; Your top 3 carry the most weight.
-        </p>
-        <div style={{ overflowY: 'auto', maxHeight: '58vh' }}>
+        <div ref={scrollRef} style={{ overflowY: 'auto', maxHeight: '58vh' }}>
           <RankRail variant="sidebar" landingId={landingId} />
         </div>
       </div>

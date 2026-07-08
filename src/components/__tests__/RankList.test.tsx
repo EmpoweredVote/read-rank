@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RankList } from '../RankList';
 import type { AgreedQuote } from '../../store/useReadRankStore';
 
@@ -10,7 +11,7 @@ const items: AgreedQuote[] = [
 ];
 
 describe('RankList rows', () => {
-  it('renders no ▲▼ move buttons — reorder is drag-only', () => {
+  it('renders no ▲▼ move buttons — reorder is drag or tap-to-assign', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /move up/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /move down/i })).not.toBeInTheDocument();
@@ -21,39 +22,39 @@ describe('RankList rows', () => {
     expect(screen.getAllByRole('button', { name: /reorder, currently ranked/i })).toHaveLength(3);
   });
 
-  it('frames the top three rows by tier with ordinal badges', () => {
+  it('leads each slip with a plain position number', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
-    expect(screen.getByText('1st')).toBeInTheDocument();
-    expect(screen.getByText('2nd')).toBeInTheDocument();
-    expect(screen.getByText('3rd')).toBeInTheDocument();
-    expect(screen.getByText('Alpha quote.').closest('.tier-row')).toHaveClass('tier-row-diamond');
-    expect(screen.getByText('Bravo quote.').closest('.tier-row')).toHaveClass('tier-row-gold');
-    expect(screen.getByText('Charlie quote.').closest('.tier-row')).toHaveClass('tier-row-silver');
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('Alpha quote.').closest('.rank-slip')).toHaveClass('rank-slip-top');
+    expect(screen.getByText('Charlie quote.').closest('.rank-slip')).toHaveClass('rank-slip-top');
   });
 
-  it('frames rows past third as Bronze without an ordinal', () => {
+  it('demotes rows past third under "Also agreed" but still numbers them', () => {
     const four = [...items, { id: 'd', text: 'Delta quote.', candidateToken: 't4', topicKey: 'k', addedAt: 4 }];
     render(<RankList items={four} onReorder={vi.fn()} />);
-    expect(screen.getByText('Delta quote.').closest('.tier-row')).toHaveClass('tier-row-bronze');
-    expect(screen.queryByText('4th')).not.toBeInTheDocument();
+    expect(screen.getByText('Delta quote.').closest('.rank-slip')).toHaveClass('rank-slip-sub');
+    expect(screen.getByText('Also agreed')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
   });
 
-  it('renders ghost slots for unfilled podium positions', () => {
-    render(<RankList items={items.slice(0, 1)} onReorder={vi.fn()} showGhostSlots />);
-    expect(screen.getByText('Alpha quote.').closest('.tier-row')).toHaveClass('tier-row-diamond');
-    const ghosts = document.querySelectorAll('.tier-ghost');
-    expect(ghosts).toHaveLength(2);
-    expect(ghosts[0]).toHaveClass('tier-ghost-gold');
-    expect(ghosts[1]).toHaveClass('tier-ghost-silver');
+  it('tapping a number opens the place menu and assigns a position', async () => {
+    const onAssign = vi.fn();
+    render(<RankList items={items} onReorder={vi.fn()} onAssign={onAssign} />);
+    await userEvent.click(screen.getByRole('button', { name: /ranked 1\. change position/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '2nd' }));
+    expect(onAssign).toHaveBeenCalledWith('a', 2);
   });
 
-  it('renders three ghost slots instead of the empty state when showGhostSlots', () => {
-    render(<RankList items={[]} onReorder={vi.fn()} showGhostSlots />);
-    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
-    expect(screen.queryByText(/agree with quotes/i)).not.toBeInTheDocument();
+  it('collapses to compact draggable rows in reorder mode', () => {
+    render(<RankList items={items} onReorder={vi.fn()} reorderMode />);
+    expect(document.querySelectorAll('.rank-mini')).toHaveLength(3);
+    // No tap-to-assign number buttons while reordering.
+    expect(screen.queryByRole('button', { name: /change position/i })).not.toBeInTheDocument();
   });
 
-  it('renders full quote text without line-clamp', () => {
+  it('renders full quote text without line-clamp in view mode', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
     const textEl = screen.getByText('Alpha quote.');
     expect(textEl.style.overflow).not.toBe('hidden');
@@ -61,8 +62,8 @@ describe('RankList rows', () => {
 
   it('does not mark any row as dragging at rest', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
-    const rows = document.querySelectorAll('.tier-row');
+    const rows = document.querySelectorAll('.rank-slip');
     expect(rows.length).toBe(3);
-    rows.forEach((r) => expect(r).not.toHaveClass('rank-row-dragging'));
+    rows.forEach((r) => expect(r.parentElement).not.toHaveClass('rank-row-dragging'));
   });
 });

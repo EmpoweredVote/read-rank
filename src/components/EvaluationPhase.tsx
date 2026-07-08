@@ -265,7 +265,6 @@ export const EvaluationPhase: React.FC = () => {
                     ref={quoteCardRef}
                     key={currentQuote.id}
                     quote={currentQuote}
-                    displayNumber={currentIndex + 1}
                   />
                 </AnimatePresence>
               ) : (
@@ -282,7 +281,6 @@ export const EvaluationPhase: React.FC = () => {
                       ref={quoteCardRef}
                       key={currentQuote.id}
                       quote={currentQuote}
-                      displayNumber={currentIndex + 1}
                     />
                   </AnimatePresence>
                 </motion.div>

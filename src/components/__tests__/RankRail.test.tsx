@@ -27,9 +27,9 @@ beforeEach(() => {
 });
 
 describe('RankRail', () => {
-  it('shows three ghost slots before anything is ranked', () => {
+  it('shows a nothing-ranked hint and no ghost slots before anything is ranked', () => {
     render(<RankRail variant="sidebar" />);
-    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(3);
+    expect(document.querySelectorAll('.tier-ghost')).toHaveLength(0);
     expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
   });
 
