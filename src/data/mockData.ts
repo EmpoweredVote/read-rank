@@ -15,6 +15,9 @@ interface MockIdentity {
   candidateId: string;
   name: string;
   office: string;
+  title?: string;
+  chamber?: string;
+  district?: string;
   photo: string;
 }
 
@@ -25,24 +28,36 @@ const MOCK_IDENTITIES: Record<string, MockIdentity> = {
     candidateId: 'donald-rainwater',
     name: 'Donald Rainwater',
     office: 'Candidate for Indiana Governor',
+    title: 'Candidate for Governor',
+    chamber: 'State of Indiana',
+    district: '',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/DonaldRainwater2024.jpg',
   },
   'tok-c7e2': {
     candidateId: 'jennifer-mccormick',
     name: 'Jennifer McCormick',
     office: 'Candidate for Indiana Governor',
+    title: 'Candidate for Governor',
+    chamber: 'State of Indiana',
+    district: '',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Jennifer_McCormick.jpg',
   },
   'tok-9d4b': {
     candidateId: 'mike-braun',
     name: 'Mike Braun',
     office: 'Candidate for Indiana Governor',
+    title: 'Candidate for Governor',
+    chamber: 'State of Indiana',
+    district: '',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/100/100/Mike_Braun.png',
   },
   'tok-5b61': {
     candidateId: 'maureen-bauer',
     name: 'Maureen Bauer',
     office: 'Candidate for Indiana Governor',
+    title: 'Candidate for Governor',
+    chamber: 'State of Indiana',
+    district: '',
     photo: 'https://s3.amazonaws.com/ballotpedia-api4/files/thumbs/200/300/Mar3020201125PM_80182230_1BA7F9ECD19D4A52829D0F47A0BE6754.jpeg',
   },
 };
@@ -78,13 +93,24 @@ interface MockQuoteFull {
   topicKey: string;
   sourceUrl?: string;
   sourceName?: string;
+  sourceDate?: string;
+  verbatimText?: string;
+  editorNote?: string;
+  videoUrl?: string;
+  videoTimestampSeconds?: number;
 }
 
 const MOCK_QUOTES: MockQuoteFull[] = [
   // ===== CANNABIS =====
   { id: 'q-101', token: 'tok-a3f8', topicKey: 'cannabis-legalization',
     text: "We don't need to expand government, add a new commission, or write new regulations. We can make cannabis legal in all forms — medicinal and recreational — right now, and expunge all nonviolent cannabis-related offenses.",
-    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
+    sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate",
+    sourceDate: 'Aug 28, 2024',
+    verbatimText: "Look, I've heard enough studies and enough commissions on this. We don't need to expand government, add a new commission, or write new regulations. We can make cannabis legal in all forms — medicinal and recreational — right now, and expunge all nonviolent cannabis-related offenses. That's the kind of leadership Hoosiers are asking for.",
+    editorNote: 'Bolded text is what appeared on the blind card. A rhetorical opener and closing aside were trimmed; the policy proposal is unchanged.',
+    videoUrl: 'https://www.youtube.com/watch?v=example',
+    videoTimestampSeconds: 512,
+  },
   { id: 'q-102', token: 'tok-c7e2', topicKey: 'cannabis-legalization',
     text: 'About 80% of residents support legalization. My plan calls for a conversation on medical use before adult use. The state is losing out on roughly $177 million in tax revenue because surrounding states have legalized. We need a commission on cannabis use.',
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
@@ -107,7 +133,13 @@ const MOCK_QUOTES: MockQuoteFull[] = [
     sourceUrl: 'https://www.wishtv.com/news/election/qa-from-all-indiana-politics-special-the-governors-debate/', sourceName: "WISH-TV Governor's Debate" },
   { id: 'q-108', token: 'tok-5b61', topicKey: 'education-funding',
     text: 'To improve outcomes we need early childhood education available to all families, fair and adequate funding for K-12 and teacher salaries, and reduced food insecurity through expanded school meal programs.',
-    sourceUrl: 'https://www.maureenbauer.com', sourceName: 'Campaign Website' },
+    sourceUrl: 'https://www.maureenbauer.com', sourceName: 'Campaign Website',
+    sourceDate: 'May 14, 2024',
+    verbatimText: "You know, I taught in these classrooms for years before I ran for office, and I've seen what works. To improve outcomes we need early childhood education available to all families, fair and adequate funding for K-12 and teacher salaries, and reduced food insecurity through expanded school meal programs. None of this is complicated — it just takes the will to fund it.",
+    editorNote: "Bolded text is what appeared on the blind card. A personal aside about her teaching background and a closing remark were trimmed; the policy proposals are unchanged.",
+    videoUrl: 'https://www.youtube.com/watch?v=example2',
+    videoTimestampSeconds: 218,
+  },
 
   // ===== ABORTION =====
   { id: 'q-109', token: 'tok-a3f8', topicKey: 'abortion-rights',
@@ -204,7 +236,12 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
       const quotes = MOCK_QUOTES.filter((q) => q.token === a.token && q.topicKey === t.topicKey)
         .map((q) => {
           const v = verdictByQuote.get(q.id);
-          return v ? { quoteId: q.id, text: q.text, supported: v.supported, rank: v.rank, sourceName: q.sourceName, sourceUrl: q.sourceUrl } : null;
+          return v ? {
+            quoteId: q.id, text: q.text, supported: v.supported, rank: v.rank,
+            sourceName: q.sourceName, sourceUrl: q.sourceUrl,
+            sourceDate: q.sourceDate, verbatimText: q.verbatimText, editorNote: q.editorNote,
+            videoUrl: q.videoUrl, videoTimestampSeconds: q.videoTimestampSeconds,
+          } : null;
         })
         .filter(Boolean) as BallotEntry['perTopic'][number]['quotes'];
       if (quotes.length === 0) continue;
@@ -228,6 +265,9 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
       candidateId: id.candidateId,
       name: id.name,
       office: id.office,
+      title: id.title,
+      chamber: id.chamber,
+      district: id.district,
       photo: id.photo,
       essentialsUrl: `https://essentials.empowered.vote/politician/${id.candidateId}`,
       evidence: {
