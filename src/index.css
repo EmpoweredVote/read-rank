@@ -2116,8 +2116,10 @@ button.rank-num:focus-visible .rank-num-badge {
   border-radius: 0.75rem;
   background-color: var(--surface-card);
 }
-.alignment-grid { border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; margin: 0 auto; }
-.alignment-grid th, .alignment-grid td { padding: 0.5rem 0.375rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
+/* Full-width so row dividers span the whole card; content packs left and the
+   flexible trailing spacer soaks up the slack on the right. */
+.alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
+.alignment-grid th, .alignment-grid td { padding: 0.5rem 0.5rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
 /* Equal, tight mark columns. */
 .alignment-grid thead th.alignment-topic-col, .alignment-grid td.alignment-mark-col { width: 3rem; }
 .alignment-grid thead th { position: relative; vertical-align: bottom; height: 92px; padding: 0; overflow: visible; }
@@ -2126,15 +2128,17 @@ button.rank-num:focus-visible .rank-num-badge {
   font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase;
   color: var(--text-secondary); width: 84px; line-height: 1.2; text-align: left; white-space: normal;
 }
-/* Thin candidate column — names wrap instead of forcing a wide nowrap column. */
+/* Candidate column: one line, left padding off the card edge. */
 .alignment-grid tbody th {
-  text-align: left; font-weight: 700; font-size: 0.8125rem; line-height: 1.2; color: var(--text-heading); white-space: normal;
+  text-align: left; font-weight: 700; font-size: 0.8125rem; color: var(--text-heading); white-space: nowrap;
+  padding-left: 1.125rem; padding-right: 1rem;
   position: sticky; left: 0; background: var(--surface-card); box-shadow: 1px 0 0 var(--border-subtle); z-index: 1;
 }
-.alignment-grid-corner { position: sticky; left: 0; background: var(--surface-card); z-index: 2; text-align: left; font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
-/* Uniform trailing spacer absorbs the last angled label's overhang (no per-column asymmetry). */
-.alignment-grid .alignment-spacer { width: 2.75rem; padding: 0; }
-.alignment-grid tbody th { max-width: 8.5rem; }
+.alignment-grid-corner { position: sticky; left: 0; background: var(--surface-card); z-index: 2; text-align: left; padding-left: 1.125rem; font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
+/* Flexible trailing spacer: takes the remaining width (packs real columns left)
+   and gives the last angled label room so it never triggers horizontal scroll. */
+.alignment-grid .alignment-spacer { width: 100%; padding: 0; }
+.alignment-grid thead th.alignment-spacer { height: 92px; }
 .alignment-grid tbody tr:last-child th, .alignment-grid tbody tr:last-child td { border-bottom: none; }
 
 /* ============================================
