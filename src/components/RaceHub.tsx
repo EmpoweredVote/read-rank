@@ -238,7 +238,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     const laRaces = racesInCounty(races, LA_COUNTY_GEOID);
     content = (
       <div className="w-full">
-        <div className="rr-example-eyebrow">New here? Here&apos;s a Los Angeles ballot</div>
         <p className="rr-example-note">Enter your address above to see your own races.</p>
         <div className="race-grid">
           {laRaces.map((r, i) => renderCard(r, i))}
