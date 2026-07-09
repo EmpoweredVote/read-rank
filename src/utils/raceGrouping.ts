@@ -89,14 +89,14 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
   const matchesCounty = (r: RaceSummary) =>
     userCounty != null && (r.countyGeoIds ?? []).includes(userCounty);
 
-  const your = inBucket.filter((r) => r.isLocal);
+  // Empties are hidden from the located tiers — browsing other states/races is now
+  // an explicit action (RaceBrowse), not a dump at the bottom of the located ballot.
+  const rankable = inBucket.filter((r) => (r.rankableTopicCount ?? r.topicCount) > 0);
+  const your = rankable.filter((r) => r.isLocal);
   // isLocal always wins; the county tier only applies to non-local races.
-  const inCounty = inBucket.filter((r) => !r.isLocal && matchesCounty(r));
-  const sameState = inBucket.filter(
+  const inCounty = rankable.filter((r) => !r.isLocal && matchesCounty(r));
+  const sameState = rankable.filter(
     (r) => !r.isLocal && !matchesCounty(r) && userState != null && r.state === userState,
-  );
-  const other = inBucket.filter(
-    (r) => !r.isLocal && !matchesCounty(r) && !(userState != null && r.state === userState),
   );
 
   const sections: RaceSection[] = [];
@@ -109,9 +109,6 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
   if (sameState.length) {
     const stateName = getStateName(userState) ?? 'your state';
     sections.push({ kind: 'state', label: `More in ${stateName}`, collapsible: false, races: sameState });
-  }
-  if (other.length) {
-    sections.push({ kind: 'other', label: 'Other states', collapsible: true, races: other });
   }
 
   return { sections, noExactMatch };

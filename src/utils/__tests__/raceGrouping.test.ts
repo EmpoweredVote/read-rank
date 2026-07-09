@@ -34,17 +34,16 @@ describe('groupRaces — located, upcoming', () => {
     located: true, userState: 'UT', timeFilter: 'upcoming', today: TODAY,
   });
 
-  it('orders bands: your, state, other', () => {
-    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'state', 'other']);
+  it('orders bands: your, state (no other-states dump)', () => {
+    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'state']);
   });
 
   it('labels the state band with the full state name', () => {
     expect(result.sections.find((s) => s.kind === 'state')?.label).toBe('More in Utah');
   });
 
-  it('marks only "other" collapsible', () => {
-    expect(result.sections.find((s) => s.kind === 'other')?.collapsible).toBe(true);
-    expect(result.sections.find((s) => s.kind === 'your')?.collapsible).toBe(false);
+  it('never emits an other-states band', () => {
+    expect(result.sections.some((s) => s.kind === 'other')).toBe(false);
   });
 
   it('excludes the all-past Indiana race from upcoming', () => {
@@ -79,9 +78,12 @@ describe('groupRaces — located, no exact match (the Orem case)', () => {
 describe('groupRaces — past filter', () => {
   it('shows only past races, most-recent-first', () => {
     const older = race({ raceId: 'older', state: 'IN', electionDate: '2026-03-01' });
+    // userState matches IN here (rather than UT) so the past races still land in the
+    // "state" band — since Task 9 dropped the other-states dump, races out of the
+    // user's state are no longer shown at all in the located view.
     const result = groupRaces({
       races: [utExact, inPast, older],
-      located: true, userState: 'UT', timeFilter: 'past', today: TODAY,
+      located: true, userState: 'IN', timeFilter: 'past', today: TODAY,
     });
     const ids = result.sections.flatMap((s) => s.races.map((r) => r.raceId));
     expect(ids).toEqual(['in-past', 'older']); // 05-05 before 03-01
@@ -119,15 +121,14 @@ describe('groupRaces — undated and today are upcoming', () => {
 });
 
 describe('groupRaces — located but unparseable state (userState null)', () => {
-  it('puts all non-local races under "other"', () => {
+  it('surfaces no bands for non-local races once state is unknown (no other-states dump)', () => {
     const a = race({ raceId: 'a', state: 'UT', isLocal: false, electionDate: '2026-06-23' });
     const b = race({ raceId: 'b', state: 'CA', isLocal: false, electionDate: '2026-06-23' });
     const result = groupRaces({
       races: [a, b],
       located: true, userState: null, timeFilter: 'upcoming', today: TODAY,
     });
-    expect(result.sections.map((s) => s.kind)).toEqual(['other']);
-    expect(result.sections[0].races.map((r) => r.raceId)).toEqual(['a', 'b']);
+    expect(result.sections).toEqual([]);
   });
 });
 
@@ -150,13 +151,13 @@ describe('groupRaces — county tier', () => {
   const utElsewhere = race({ raceId: 'ut-elsewhere', state: 'UT', isLocal: false, countyGeoIds: ['49049'], electionDate: '2026-06-23' });
   const multiCounty = race({ raceId: 'multi', state: 'UT', isLocal: false, countyGeoIds: ['49035', '49045'], electionDate: '2026-06-23' });
 
-  it('orders bands: your, county, state, other', () => {
+  it('orders bands: your, county, state (no other-states dump)', () => {
     const result = groupRaces({
       races: [slcExact, slcCounty, utElsewhere, caOther],
       located: true, userState: 'UT', userCounty: '49035', userCountyName: 'Salt Lake County',
       timeFilter: 'upcoming', today: TODAY,
     });
-    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'county', 'state', 'other']);
+    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'county', 'state']);
   });
 
   it('labels the county band with the user county name', () => {
