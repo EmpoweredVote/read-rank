@@ -2118,11 +2118,14 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
 .alignment-grid th, .alignment-grid td { padding: 0.75rem 0.75rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
-.alignment-grid thead th { vertical-align: bottom; height: 88px; padding: 0 0 0.5rem 0.25rem; overflow: visible; }
+/* Trailing room so the last angled header label doesn't overhang → no spurious scroll. */
+.alignment-grid th:last-child, .alignment-grid td:last-child { padding-right: 2.25rem; }
+.alignment-grid thead th { position: relative; vertical-align: bottom; height: 92px; padding: 0; overflow: visible; }
+.alignment-grid thead th:last-child { padding-right: 2.25rem; }
 .alignment-grid .alignment-col-label {
-  display: inline-block; transform: rotate(-40deg); transform-origin: left bottom;
+  position: absolute; bottom: 0.5rem; left: 50%; transform-origin: left bottom; transform: rotate(-40deg);
   font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase;
-  color: var(--text-secondary); width: 96px; line-height: 1.2; text-align: left; white-space: normal;
+  color: var(--text-secondary); width: 92px; line-height: 1.2; text-align: left; white-space: normal;
 }
 .alignment-grid tbody th {
   text-align: left; font-weight: 700; font-size: 0.875rem; color: var(--text-heading); white-space: nowrap;
