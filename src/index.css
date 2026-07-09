@@ -2367,6 +2367,17 @@ button.rank-num:focus-visible .rank-num-badge {
 .race-browse-row__name { font-weight: 800; font-size: 0.98rem; color: var(--text-heading); }
 .race-browse-row__count { font-size: 0.8rem; font-weight: 700; color: var(--text-tertiary); }
 
+/* Example (default, no-location) ballot header */
+.rr-example-eyebrow {
+  font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 0.75rem;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-link);
+  margin: 1.25rem 0 0.25rem;
+}
+.rr-example-note {
+  font-family: 'Manrope', sans-serif; font-size: 0.8125rem; color: var(--text-secondary);
+  line-height: 1.5; margin: 0 0 0.75rem;
+}
+
 .race-card-v2 {
   display: flex;
   flex-direction: column;
