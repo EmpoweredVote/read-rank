@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
-import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
+import { fetchRaces, fetchRaceQuotes, type RaceSummary, type CountyIndex } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
 import { RaceCard } from './RaceCard';
@@ -26,6 +26,10 @@ function todayISO(): string {
 export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
   const { raceProgress, selectRace, locationFilter, clearLocationFilter } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
+  // `counties` is consumed by the browse/search views added in a later task; kept here so
+  // this fetch caller doesn't need to change again when those views land.
+  const [counties, setCounties] = useState<CountyIndex>({});
+  void counties;
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
@@ -37,7 +41,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   useEffect(() => {
     setLoading(true);
     fetchRaces(politicianIds)
-      .then((data) => setRaces(data))
+      .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
       .finally(() => setLoading(false));
   }, [politicianIds]);
 
