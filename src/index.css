@@ -2118,11 +2118,11 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
 .alignment-grid th, .alignment-grid td { padding: 0.75rem 0.75rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
-.alignment-grid thead th { vertical-align: bottom; }
+.alignment-grid thead th { vertical-align: bottom; height: 104px; padding-bottom: 0.5rem; overflow: visible; }
 .alignment-grid .alignment-col-label {
-  display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg);
+  display: inline-block; transform: rotate(-38deg); transform-origin: center bottom;
   font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase;
-  color: var(--text-secondary); max-height: 68px; white-space: nowrap;
+  color: var(--text-secondary); width: 84px; line-height: 1.2; text-align: center; white-space: normal;
 }
 .alignment-grid tbody th {
   text-align: left; font-weight: 700; font-size: 0.875rem; color: var(--text-heading); white-space: nowrap;
@@ -2494,7 +2494,7 @@ button.rank-num:focus-visible .rank-num-badge {
   border-radius: 9999px; background: var(--text-link); color: #fff;
   font-family: 'Manrope', sans-serif; font-weight: 800; flex-shrink: 0; line-height: 1;
 }
-.dark .rank-number { background: var(--color-ev-light-blue); color: #06232b; }
+.dark .rank-number { background: #1c7a94; color: #ffffff; }
 .alignment-mark { display: inline-flex; align-items: center; justify-content: center; }
 .mark-agreed { color: var(--agree); }
 .mark-disagreed { color: #a8a29e; }
