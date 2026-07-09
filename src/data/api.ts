@@ -41,6 +41,9 @@ export interface RaceSummary {
 export type RaceTier = 'federal' | 'state' | 'local';
 export type RaceScope = 'statewide' | 'district' | 'county' | 'citywide';
 
+/** Map of county GEOID → display name, returned alongside the race list. */
+export type CountyIndex = Record<string, string>;
+
 /** How a race's motif finds its boundary polygon. layer is an MTFCC or layer key.
  *  bbox and geojson are embedded by the backend when available — the motif uses
  *  them directly to avoid a secondary fetch. */
@@ -130,7 +133,9 @@ export interface RevealResult {
 // ============================================================
 
 /** List races that have enough de-identified quote data to play. */
-export async function fetchRaces(politicianIds?: string[]): Promise<RaceSummary[]> {
+export async function fetchRaces(
+  politicianIds?: string[],
+): Promise<{ races: RaceSummary[]; counties: CountyIndex }> {
   try {
     const qs = politicianIds && politicianIds.length
       ? `?politician_ids=${encodeURIComponent(politicianIds.join(','))}`
@@ -138,11 +143,14 @@ export async function fetchRaces(politicianIds?: string[]): Promise<RaceSummary[
     const res = await fetch(`${API_BASE}/readrank/races${qs}`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const data = await res.json();
-    return (data.races ?? []) as RaceSummary[];
+    return {
+      races: (data.races ?? []) as RaceSummary[],
+      counties: (data.counties ?? {}) as CountyIndex,
+    };
   } catch (err) {
     console.error('Failed to fetch races, falling back to mock', err);
     const { mockRaceSummary } = await import('./mockData');
-    return [mockRaceSummary];
+    return { races: [mockRaceSummary], counties: {} };
   }
 }
 

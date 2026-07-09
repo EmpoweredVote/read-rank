@@ -11,6 +11,11 @@ beforeEach(() => {
 
 describe('Landing', () => {
   it('renders the hero and the election picker on one surface', async () => {
+    // Seed an Indiana location so RaceHub shows the located ballot (with time tabs); the
+    // default no-location view is the LA example ballot, which the demo race isn't in.
+    useReadRankStore.getState().setLocationFilter({
+      address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+    });
     render(<Landing />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/read candidates blind/i);
     expect(screen.getByText(/choose an election/i)).toBeInTheDocument();

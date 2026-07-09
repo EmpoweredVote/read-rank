@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupRaces } from '../raceGrouping';
+import { groupRaces, racesInCounty, statesWithCounts, countiesForState } from '../raceGrouping';
 import type { RaceSummary } from '../../data/api';
 
 const TODAY = '2026-06-19';
@@ -15,6 +15,10 @@ function race(partial: Partial<RaceSummary> & { raceId: string }): RaceSummary {
     candidateCount: 2,
     topicCount: 1,
     isLocal: false,
+    tier: 'federal',
+    scope: 'district',
+    countyGeoIds: [],
+    rankableTopicCount: 1,
     ...partial,
   } as RaceSummary;
 }
@@ -30,17 +34,17 @@ describe('groupRaces — located, upcoming', () => {
     located: true, userState: 'UT', timeFilter: 'upcoming', today: TODAY,
   });
 
-  it('orders bands: your, state, other', () => {
-    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'state', 'other']);
+  it('orders bands: your, state (no other-states dump)', () => {
+    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'state']);
   });
 
   it('labels the state band with the full state name', () => {
     expect(result.sections.find((s) => s.kind === 'state')?.label).toBe('More in Utah');
   });
 
-  it('marks only "other" collapsible', () => {
-    expect(result.sections.find((s) => s.kind === 'other')?.collapsible).toBe(true);
-    expect(result.sections.find((s) => s.kind === 'your')?.collapsible).toBe(false);
+  it('emits only located relevance bands (your/county/state)', () => {
+    const allowed = new Set(['your', 'county', 'state']);
+    expect(result.sections.every((s) => allowed.has(s.kind))).toBe(true);
   });
 
   it('excludes the all-past Indiana race from upcoming', () => {
@@ -75,38 +79,25 @@ describe('groupRaces — located, no exact match (the Orem case)', () => {
 describe('groupRaces — past filter', () => {
   it('shows only past races, most-recent-first', () => {
     const older = race({ raceId: 'older', state: 'IN', electionDate: '2026-03-01' });
+    // userState matches IN here (rather than UT) so the past races still land in the
+    // "state" band — since Task 9 dropped the other-states dump, races out of the
+    // user's state are no longer shown at all in the located view.
     const result = groupRaces({
       races: [utExact, inPast, older],
-      located: true, userState: 'UT', timeFilter: 'past', today: TODAY,
+      located: true, userState: 'IN', timeFilter: 'past', today: TODAY,
     });
     const ids = result.sections.flatMap((s) => s.races.map((r) => r.raceId));
     expect(ids).toEqual(['in-past', 'older']); // 05-05 before 03-01
   });
 });
 
-describe('groupRaces — not located', () => {
-  const result = groupRaces({
-    races: [utExact, utState, caOther],
-    located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
-  });
-
-  it('uses state-named sections, no relevance bands', () => {
-    expect(result.sections.every((s) => s.kind === 'state-named')).toBe(true);
-    expect(result.sections.map((s) => s.label)).toEqual(['California', 'Utah']); // alphabetical
-  });
-
-  it('never flags noExactMatch when not located', () => {
-    expect(result.noExactMatch).toBe(false);
-  });
-});
-
 describe('groupRaces — undated and today are upcoming', () => {
   it('treats null and today-dated races as upcoming', () => {
-    const undated = race({ raceId: 'undated', state: 'UT', electionDate: null });
-    const todayRace = race({ raceId: 'today', state: 'UT', electionDate: TODAY });
+    const undated = race({ raceId: 'undated', state: 'UT', isLocal: true, electionDate: null });
+    const todayRace = race({ raceId: 'today', state: 'UT', isLocal: true, electionDate: TODAY });
     const result = groupRaces({
       races: [undated, todayRace],
-      located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
+      located: true, userState: 'UT', timeFilter: 'upcoming', today: TODAY,
     });
     const ids = result.sections.flatMap((s) => s.races.map((r) => r.raceId));
     expect(ids).toContain('undated');
@@ -115,28 +106,14 @@ describe('groupRaces — undated and today are upcoming', () => {
 });
 
 describe('groupRaces — located but unparseable state (userState null)', () => {
-  it('puts all non-local races under "other"', () => {
+  it('surfaces no bands for non-local races once state is unknown (no other-states dump)', () => {
     const a = race({ raceId: 'a', state: 'UT', isLocal: false, electionDate: '2026-06-23' });
     const b = race({ raceId: 'b', state: 'CA', isLocal: false, electionDate: '2026-06-23' });
     const result = groupRaces({
       races: [a, b],
       located: true, userState: null, timeFilter: 'upcoming', today: TODAY,
     });
-    expect(result.sections.map((s) => s.kind)).toEqual(['other']);
-    expect(result.sections[0].races.map((r) => r.raceId)).toEqual(['a', 'b']);
-  });
-});
-
-describe('groupRaces — not located, null-state races', () => {
-  it('sorts the "Other" bucket after all named states', () => {
-    const oh = race({ raceId: 'oh', state: 'OH', electionDate: '2026-06-23' });
-    const noState = race({ raceId: 'no-state', state: null, electionDate: '2026-06-23' });
-    const ut = race({ raceId: 'ut', state: 'UT', electionDate: '2026-06-23' });
-    const result = groupRaces({
-      races: [noState, ut, oh],
-      located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
-    });
-    expect(result.sections.map((s) => s.label)).toEqual(['Ohio', 'Utah', 'Other']);
+    expect(result.sections).toEqual([]);
   });
 });
 
@@ -146,13 +123,13 @@ describe('groupRaces — county tier', () => {
   const utElsewhere = race({ raceId: 'ut-elsewhere', state: 'UT', isLocal: false, countyGeoIds: ['49049'], electionDate: '2026-06-23' });
   const multiCounty = race({ raceId: 'multi', state: 'UT', isLocal: false, countyGeoIds: ['49035', '49045'], electionDate: '2026-06-23' });
 
-  it('orders bands: your, county, state, other', () => {
+  it('orders bands: your, county, state (no other-states dump)', () => {
     const result = groupRaces({
       races: [slcExact, slcCounty, utElsewhere, caOther],
       located: true, userState: 'UT', userCounty: '49035', userCountyName: 'Salt Lake County',
       timeFilter: 'upcoming', today: TODAY,
     });
-    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'county', 'state', 'other']);
+    expect(result.sections.map((s) => s.kind)).toEqual(['your', 'county', 'state']);
   });
 
   it('labels the county band with the user county name', () => {
@@ -227,5 +204,49 @@ describe('groupRaces — county tier', () => {
       userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
     });
     expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+});
+
+const laMayor = race({ raceId: 'la-mayor', state: 'CA', tier: 'local', scope: 'citywide', countyGeoIds: ['06037'], rankableTopicCount: 5 });
+const caGov = race({ raceId: 'ca-gov', state: 'CA', tier: 'state', scope: 'statewide', countyGeoIds: ['06037', '06059'], rankableTopicCount: 4 });
+const caCd = race({ raceId: 'ca-cd', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06037'], rankableTopicCount: 3 });
+const caEmpty = race({ raceId: 'ca-empty', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06037'], rankableTopicCount: 0 });
+const otherCounty = race({ raceId: 'oc', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06059'], rankableTopicCount: 2 });
+
+describe('racesInCounty', () => {
+  const list = [caCd, caGov, laMayor, caEmpty, otherCounty];
+  it('includes only races overlapping the county, hides empties', () => {
+    const ids = racesInCounty(list, '06037').map((r) => r.raceId);
+    expect(ids).not.toContain('ca-empty');
+    expect(ids).not.toContain('oc');
+    expect(ids).toEqual(expect.arrayContaining(['la-mayor', 'ca-gov', 'ca-cd']));
+  });
+  it('orders local → state → federal', () => {
+    expect(racesInCounty(list, '06037').map((r) => r.tier)).toEqual(['local', 'state', 'federal']);
+  });
+});
+
+describe('statesWithCounts', () => {
+  it('lists states (with a non-empty race) alphabetically with counts', () => {
+    const ut = race({ raceId: 'ut', state: 'UT', rankableTopicCount: 2 });
+    const caEmptyOnly = race({ raceId: 'ce', state: 'NV', rankableTopicCount: 0 });
+    const out = statesWithCounts([caGov, caCd, ut, caEmptyOnly]);
+    expect(out).toEqual([
+      { state: 'CA', name: 'California', count: 2 },
+      { state: 'UT', name: 'Utah', count: 1 },
+    ]);
+  });
+});
+
+describe('countiesForState', () => {
+  it('lists counties in the state that have a non-empty race, labelled and sorted', () => {
+    const counties = { '06037': 'Los Angeles County', '06059': 'Orange County' };
+    // caGov (statewide, both counties) + caCd + laMayor overlap 06037 => 3;
+    // caGov + otherCounty overlap 06059 => 2.
+    const out = countiesForState([caGov, caCd, laMayor, otherCounty], counties, 'CA');
+    expect(out).toEqual([
+      { geoid: '06037', name: 'Los Angeles County', count: 3 },
+      { geoid: '06059', name: 'Orange County', count: 2 },
+    ]);
   });
 });

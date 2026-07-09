@@ -7,6 +7,7 @@ import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 import { useAuthState } from '../hooks/useAuthState';
 import { evContext, useEvContextPromotion } from '@empoweredvote/ev-ui';
 import { parseStateFromAddress } from '../utils/parseStateFromAddress';
+import { resolveQueryRoute } from '../lib/localitySearch';
 import { track } from '../lib/analytics';
 
 function writeAddressToContext(addr: string, userId?: string | null) {
@@ -28,7 +29,7 @@ interface AddressFilterInputProps {
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const m = useMotion();
-  const { locationFilter, setLocationFilter, clearLocationFilter } = useReadRankStore();
+  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -71,6 +72,20 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   }, [setLocationFilter, onFilterApplied, isLoggedIn, userId]);
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
+
+  // Manual submit (Search button / Enter). Classify the free text first: place names
+  // (state/county/city) route into browse; anything else — and any failure — falls through
+  // to the address search. A picked autocomplete place is unambiguous, so it keeps calling
+  // handlePlaceSelected directly.
+  const handleSubmit = useCallback(async (value: string) => {
+    if (!value.trim()) return;
+    setSearching(true);
+    const route = await resolveQueryRoute(value, counties);
+    setSearching(false);
+    if (route.kind === 'browse-state') { setBrowseTarget({ state: route.state, geoid: null }); return; }
+    if (route.kind === 'browse-county') { setBrowseTarget({ state: route.state, geoid: route.geoid }); return; }
+    await handlePlaceSelected(value);
+  }, [handlePlaceSelected, setBrowseTarget, counties]);
 
   // 260426-mw6 — guest → authed promotion banner
   const addressPromoteWriter = useCallback(async (addressPayload: unknown) => {
@@ -183,12 +198,12 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 placeholder="If you reside in an Alpha Community, enter your street address"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handlePlaceSelected(inputValue)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit(inputValue)}
                 className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-white dark:bg-gray-900 dark:text-white dark:placeholder-gray-400 shadow-sm"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
               />
               <button
-                onClick={() => handlePlaceSelected(inputValue)}
+                onClick={() => handleSubmit(inputValue)}
                 disabled={!inputValue.trim() || searching}
                 className="px-5 py-4 text-base font-bold text-black bg-ev-yellow rounded-xl hover:bg-ev-yellow-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
