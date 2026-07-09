@@ -132,3 +132,35 @@ export function racesInCounty(races: RaceSummary[], countyGeoId: string): RaceSu
       return (a.electionDate ?? '').localeCompare(b.electionDate ?? '');
     });
 }
+
+export interface StateEntry { state: string; name: string; count: number; }
+export interface CountyEntry { geoid: string; name: string; count: number; }
+
+/** States that have at least one rankable race, alphabetical by name, with race counts. */
+export function statesWithCounts(races: RaceSummary[]): StateEntry[] {
+  const counts = new Map<string, number>();
+  for (const r of races) {
+    if ((r.rankableTopicCount ?? r.topicCount) <= 0 || !r.state) continue;
+    counts.set(r.state, (counts.get(r.state) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([state, count]) => ({ state, name: getStateName(state) ?? state, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Counties in `stateCode` that contain a rankable race, labelled via `counties`,
+ *  sorted by name. A race counts toward every county it overlaps. */
+export function countiesForState(
+  races: RaceSummary[], counties: Record<string, string>, stateCode: string,
+): CountyEntry[] {
+  const counts = new Map<string, number>();
+  for (const r of races) {
+    if (r.state !== stateCode || (r.rankableTopicCount ?? r.topicCount) <= 0) continue;
+    for (const geoid of r.countyGeoIds ?? []) {
+      counts.set(geoid, (counts.get(geoid) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([geoid, count]) => ({ geoid, name: counties[geoid] ?? geoid, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

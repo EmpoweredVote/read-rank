@@ -268,7 +268,9 @@ describe('statesWithCounts', () => {
 describe('countiesForState', () => {
   it('lists counties in the state that have a non-empty race, labelled and sorted', () => {
     const counties = { '06037': 'Los Angeles County', '06059': 'Orange County' };
-    const out = countiesForState([caGov, caCd, otherCounty], counties, 'CA');
+    // caGov (statewide, both counties) + caCd + laMayor overlap 06037 => 3;
+    // caGov + otherCounty overlap 06059 => 2.
+    const out = countiesForState([caGov, caCd, laMayor, otherCounty], counties, 'CA');
     expect(out).toEqual([
       { geoid: '06037', name: 'Los Angeles County', count: 3 },
       { geoid: '06059', name: 'Orange County', count: 2 },
