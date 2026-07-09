@@ -1855,3 +1855,169 @@ git commit -m "fix(reveal): address in-browser verification findings"
 - The three quote layers, split identity, video timestamps, and tie-breaking are **backend/API** work (spec §8). This plan degrades gracefully without them; the mock demonstrates the full experience.
 - `useMediaQuery` is imported from `@empoweredvote/ev-ui` (already a dependency).
 - Keep DRY: `AlignmentMarkView` and `markForQuotes`/`markStrength` are the single source for marks across matrix, pills, and drawer.
+
+---
+
+## Task 11.5: Per-topic marks (correction — discovered in Task 12 verification)
+
+**Why:** The reveal's `RevealQuote.rank` is a **global** rank (`getRaceVerdicts` flattens all
+agreed quotes across topics and numbers them 1..N). The approved design intends **per-topic**
+ranks: a candidate can be your #1 in several topics, and "N top picks" = the number of topics
+where they are your #1. Under global ranks only three numbered cells exist (clustered in the
+first-evaluated topic) and "top picks" maxes at 1. This task recomputes marks per-topic.
+
+**Key insight:** per-topic rank is derivable from the reveal alone — within a topic, global
+ranks preserve the per-topic order, so grouping a topic's agreed quotes and sorting by global
+rank yields per-topic ranks 1,2,3… A single `Map<quoteId, perTopicRank>` built once in
+`ResultsPhase` is threaded to the matrix, pills, drawer, and the top-picks count.
+
+**Files:**
+- Modify: `src/utils/alignmentMarks.ts` (+ test)
+- Modify: `src/utils/alignmentGrid.ts` (+ test)
+- Modify: `src/components/AlignmentPills.tsx` (+ test)
+- Modify: `src/components/AlignmentSection.tsx` (+ test)
+- Modify: `src/components/QuoteDrawer.tsx`
+- Modify: `src/components/CandidateBallotCard.tsx` (+ test)
+- Modify: `src/components/ResultsPhase.tsx`
+
+- [ ] **Step 1: `alignmentMarks.ts` — add per-topic helpers, change `markForQuotes` signature**
+
+Add `buildPerTopicRankMap` and `countTopPicks`; change `markForQuotes` to read rank from a map:
+
+```ts
+import type { RevealQuote, RevealResult } from '../data/api';
+
+export type AlignmentMark =
+  | { kind: 'rank'; rank: number }
+  | { kind: 'agreed' }
+  | { kind: 'disagreed' }
+  | null;
+
+/** quoteId → the quote's rank WITHIN its topic (1-based). Derived from the reveal:
+ *  global ranks preserve per-topic order, so per topic we sort agreed quotes by
+ *  global rank and number them 1,2,3… Disagreed/unranked quotes are omitted. */
+export function buildPerTopicRankMap(reveal: RevealResult): Map<string, number> {
+  const byTopic = new Map<string, { quoteId: string; rank: number }[]>();
+  for (const entry of reveal.ballot) {
+    for (const t of entry.perTopic) {
+      for (const q of t.quotes) {
+        if (!q.supported || q.rank == null) continue;
+        const arr = byTopic.get(t.topicKey) ?? [];
+        arr.push({ quoteId: q.quoteId, rank: q.rank });
+        byTopic.set(t.topicKey, arr);
+      }
+    }
+  }
+  const map = new Map<string, number>();
+  for (const arr of byTopic.values()) {
+    arr.sort((a, b) => a.rank - b.rank);
+    arr.forEach((q, i) => map.set(q.quoteId, i + 1));
+  }
+  return map;
+}
+
+/** Reduce a candidate's quotes on one topic to a mark, using per-topic ranks. */
+export function markForQuotes(quotes: RevealQuote[], rankMap: Map<string, number>): AlignmentMark {
+  let bestRank = Infinity;
+  let sawSupported = false;
+  let sawDisagreed = false;
+  for (const quote of quotes) {
+    if (quote.supported) {
+      sawSupported = true;
+      const r = rankMap.get(quote.quoteId);
+      if (r != null && r < bestRank) bestRank = r;
+    } else {
+      sawDisagreed = true;
+    }
+  }
+  if (sawSupported) return bestRank <= 3 ? { kind: 'rank', rank: bestRank } : { kind: 'agreed' };
+  if (sawDisagreed) return { kind: 'disagreed' };
+  return null;
+}
+
+export function markStrength(mark: AlignmentMark): number {
+  if (mark == null) return 100;
+  if (mark.kind === 'rank') return mark.rank;
+  if (mark.kind === 'agreed') return 10;
+  return 20;
+}
+
+/** Number of topics where this candidate holds the user's #1 (per-topic rank 1). */
+export function countTopPicks(quotes: RevealQuote[], rankMap: Map<string, number>): number {
+  return quotes.filter((q) => q.supported && rankMap.get(q.quoteId) === 1).length;
+}
+```
+
+Update `alignmentMarks.test.ts`: pass a `Map` to `markForQuotes` in every case (build a map like
+`new Map([['x', 2]])`); add tests for `buildPerTopicRankMap` (two candidates' quotes in one topic
+with global ranks 1 and 4 → per-topic ranks 1 and 2) and `countTopPicks`.
+
+- [ ] **Step 2: `alignmentGrid.ts` — take the rank map**
+
+```ts
+export function buildAlignmentGrid(
+  reveal: RevealResult,
+  topics: AlignmentTopic[],
+  rankMap: Map<string, number>
+): AlignmentRow[] {
+  return reveal.ballot.map((entry) => {
+    const byTopic = new Map(entry.perTopic.map((t) => [t.topicKey, t]));
+    const cells = topics.map((topic) => markForQuotes(byTopic.get(topic.key)?.quotes ?? [], rankMap));
+    return { candidateId: entry.candidateId, name: entry.name, cells };
+  });
+}
+```
+
+Update `alignmentGrid.test.ts`: build `const rankMap = buildPerTopicRankMap(reveal)` and pass it.
+New expectations for the existing fixture (topic-a has q1@global1 and q2@global4 → per-topic 1 and 2;
+topic-b has only q9 disagreed): Jane `[{kind:'rank',rank:1}, {kind:'disagreed'}]`, Sam
+`[{kind:'rank',rank:2}, null]`.
+
+- [ ] **Step 3: `AlignmentPills.tsx` — accept `rankMap` prop**
+
+Add `rankMap: Map<string, number>` to `AlignmentPillsProps`; use `markForQuotes(quotes, rankMap)`.
+Update `AlignmentPills.test.tsx` to pass `rankMap={buildPerTopicRankMap(reveal)}`. In that fixture
+each topic has exactly one agreed quote, so all are per-topic rank 1 → strongest-first sort keeps
+input topic order; assert order `['Housing','Transit','Policing']` (rank-1, rank-1, disagreed).
+
+- [ ] **Step 4: `AlignmentSection.tsx` — thread `rankMap`**
+
+Add `rankMap: Map<string, number>` to props; pass to `buildAlignmentGrid(reveal, topics, rankMap)`
+and to `<AlignmentPills rankMap={rankMap} .../>`. Update `AlignmentSection.test.tsx` to pass a
+`rankMap` (can be `new Map()` for the render-path assertions, or `buildPerTopicRankMap(reveal)`).
+
+- [ ] **Step 5: `QuoteDrawer.tsx` — accept `rankMap`, use it for marks + strongest-quote sort**
+
+Add `rankMap: Map<string, number>` to props. Compute each topic's mark via
+`markForQuotes(t.quotes, rankMap)`; for the strongest-quote-per-topic selection, sort by
+`rankMap.get(q.quoteId) ?? Infinity` for supported quotes (disagreed last). Pass the resulting
+`mark` to `QuoteBlock` (unchanged).
+
+- [ ] **Step 6: `CandidateBallotCard.tsx` — top picks from the map**
+
+Add `rankMap: Map<string, number>` to props. Replace `evidence.firstPlaceCount` in the strip with
+`const topPicks = countTopPicks(entry.perTopic.flatMap((t) => t.quotes), rankMap);` and render
+`{topPicks} top pick(s)` (omit when 0). Pass `rankMap` to `<QuoteDrawer .../>`.
+Update `CandidateBallotCard.test.tsx`: pass a `rankMap` prop. For the "3 top picks" case, seed the
+map so three of the entry's quotes are rank 1 (one per topic); for the "omits" case seed none at 1.
+
+- [ ] **Step 7: `ResultsPhase.tsx` — build the map once, thread it**
+
+```tsx
+import { buildPerTopicRankMap } from '../utils/alignmentMarks';
+// ...
+const rankMap = useMemo(() => (reveal ? buildPerTopicRankMap(reveal) : new Map<string, number>()), [reveal]);
+// pass rankMap to <AlignmentSection ... rankMap={rankMap} /> and each <CandidateBallotCard ... rankMap={rankMap} />
+```
+
+- [ ] **Step 8: Gates**
+
+`npx tsc -b --noEmit` → 0 errors. `npm test -- --run` → all green (update every test touched above).
+`npm run lint` → no new errors.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add -A
+git commit -m "fix(reveal): per-topic marks and top-pick counts (not global rank)"
+```
