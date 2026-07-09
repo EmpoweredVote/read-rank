@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { AlignmentPills } from '../AlignmentPills';
+import { buildPerTopicRankMap } from '../../utils/alignmentMarks';
 import type { RevealResult } from '../../data/api';
 
 const reveal: RevealResult = {
@@ -19,10 +20,11 @@ const topics = [{ key: 'h', title: 'Housing' }, { key: 't', title: 'Transit' }, 
 
 describe('AlignmentPills', () => {
   it('renders one block per candidate with strongest-first pills', () => {
-    render(<AlignmentPills reveal={reveal} topics={topics} />);
+    render(<AlignmentPills reveal={reveal} topics={topics} rankMap={buildPerTopicRankMap(reveal)} />);
     const block = screen.getByText('Ann Lee').closest('.pills-candidate')!;
     const labels = within(block as HTMLElement).getAllByTestId('pill-topic').map((n) => n.textContent);
-    // rank 1 (Transit) first, then agreed (Housing rank 5), then disagreed (Policing)
-    expect(labels).toEqual(['Transit', 'Housing', 'Policing']);
+    // Each topic has one supported quote, so both agreed quotes are per-topic rank 1;
+    // stable strongest-first sort keeps input topic order, disagreed (Policing) last.
+    expect(labels).toEqual(['Housing', 'Transit', 'Policing']);
   });
 });

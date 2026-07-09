@@ -8,6 +8,7 @@ import { AlignmentPills } from './AlignmentPills';
 export interface AlignmentSectionProps {
   reveal: RevealResult;
   topics: AlignmentTopic[];
+  rankMap: Map<string, number>;
   /** Passed through to the matrix for the reveal choreography. */
   animate?: boolean;
   frameDelayMs?: number;
@@ -16,10 +17,10 @@ export interface AlignmentSectionProps {
 
 /** Label + responsive matrix (desktop) / pills (mobile). */
 export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
-  reveal, topics, animate, frameDelayMs, cellBaseDelayMs,
+  reveal, topics, rankMap, animate, frameDelayMs, cellBaseDelayMs,
 }) => {
   const isDesktop = useMediaQuery('(min-width: 640px)');
-  const rows = useMemo(() => buildAlignmentGrid(reveal, topics), [reveal, topics]);
+  const rows = useMemo(() => buildAlignmentGrid(reveal, topics, rankMap), [reveal, topics, rankMap]);
   if (topics.length === 0 || rows.length === 0) return null;
   return (
     <section>
@@ -27,7 +28,7 @@ export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
       {isDesktop ? (
         <AlignmentGrid topics={topics} rows={rows} animate={animate} frameDelayMs={frameDelayMs} cellBaseDelayMs={cellBaseDelayMs} />
       ) : (
-        <AlignmentPills reveal={reveal} topics={topics} />
+        <AlignmentPills reveal={reveal} topics={topics} rankMap={rankMap} />
       )}
     </section>
   );

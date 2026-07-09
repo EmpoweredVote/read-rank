@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildAlignmentGrid } from '../alignmentGrid';
+import { buildPerTopicRankMap } from '../alignmentMarks';
 import type { RevealResult } from '../../data/api';
 
 const reveal: RevealResult = {
@@ -36,11 +37,13 @@ const topics = [
 ];
 
 describe('buildAlignmentGrid', () => {
-  it('maps each candidate-topic cell to a mark', () => {
-    const grid = buildAlignmentGrid(reveal, topics);
-    // Jane: topic a rank 1 -> rank mark; topic b disagreed -> disagreed
+  it('maps each candidate-topic cell to a per-topic mark', () => {
+    const rankMap = buildPerTopicRankMap(reveal);
+    const grid = buildAlignmentGrid(reveal, topics, rankMap);
+    // topic-a: q1@global1 and q2@global4 -> per-topic ranks 1 and 2.
+    // Jane: topic a per-topic rank 1 -> rank mark; topic b disagreed -> disagreed
     expect(grid[0].cells).toEqual([{ kind: 'rank', rank: 1 }, { kind: 'disagreed' }]);
-    // Sam: topic a rank 4 -> agreed; topic b none -> null
-    expect(grid[1].cells).toEqual([{ kind: 'agreed' }, null]);
+    // Sam: topic a per-topic rank 2 -> rank mark; topic b none -> null
+    expect(grid[1].cells).toEqual([{ kind: 'rank', rank: 2 }, null]);
   });
 });

@@ -19,11 +19,12 @@ export interface AlignmentRow {
  */
 export function buildAlignmentGrid(
   reveal: RevealResult,
-  topics: AlignmentTopic[]
+  topics: AlignmentTopic[],
+  rankMap: Map<string, number>
 ): AlignmentRow[] {
   return reveal.ballot.map((entry) => {
     const byTopic = new Map(entry.perTopic.map((t) => [t.topicKey, t]));
-    const cells = topics.map((topic) => markForQuotes(byTopic.get(topic.key)?.quotes ?? []));
+    const cells = topics.map((topic) => markForQuotes(byTopic.get(topic.key)?.quotes ?? [], rankMap));
     return { candidateId: entry.candidateId, name: entry.name, cells };
   });
 }

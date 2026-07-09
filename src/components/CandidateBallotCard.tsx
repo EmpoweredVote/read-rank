@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import type { BallotEntry } from '../data/api';
+import { countTopPicks } from '../utils/alignmentMarks';
 import { PoliticianIdentityCard } from './PoliticianIdentityCard';
 import { QuoteDrawer } from './QuoteDrawer';
 import { RankNumber } from './RankNumber';
@@ -11,6 +12,8 @@ export interface CandidateBallotCardProps {
   entry: BallotEntry;
   /** Denominator for "agreed with X of Y". */
   totalTopics: number;
+  /** quoteId → per-topic rank; drives the "N top picks" count and the drawer. */
+  rankMap: Map<string, number>;
   /** True when this entry shares its rank with another. */
   tied?: boolean;
   /** ms delay for the reveal cascade. */
@@ -54,12 +57,13 @@ const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
 /** rank number + identity card + summary strip + quote drawer (spec §4-5). The
  *  identity card is fixed height; only the drawer grows, so the photo never stretches. */
 export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
-  entry, totalTopics, tied = false, landDelayMs = 0,
+  entry, totalTopics, rankMap, tied = false, landDelayMs = 0,
 }) => {
   const [open, setOpen] = useState(false);
   const [burst, setBurst] = useState(false);
   const m = useMotion();
-  const { agreementCount, firstPlaceCount } = entry.evidence;
+  const { agreementCount } = entry.evidence;
+  const topPicks = countTopPicks(entry.perTopic.flatMap((t) => t.quotes), rankMap);
 
   // #1 celebration: fire the burst once the card has landed (wall-clock timer so it
   // survives the preview rAF throttle, matching the old ResultsPhase behaviour).
@@ -91,8 +95,8 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
         <div className="ballot-strip">
           <p className="ballot-evidence">
             Agreed with <strong>{agreementCount} of {totalTopics}</strong>
-            {firstPlaceCount > 0 && (
-              <> · <span className="ballot-topk">{firstPlaceCount} top pick{firstPlaceCount === 1 ? '' : 's'}</span></>
+            {topPicks > 0 && (
+              <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
             )}
           </p>
           {entry.perTopic.length > 0 && (
@@ -113,7 +117,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
           )}
         </div>
 
-        {open && <QuoteDrawer entry={entry} />}
+        {open && <QuoteDrawer entry={entry} rankMap={rankMap} />}
       </div>
     </motion.div>
   );

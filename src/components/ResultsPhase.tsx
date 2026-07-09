@@ -9,6 +9,7 @@ import { CandidateBallotCard } from './CandidateBallotCard';
 import { RevealBand } from './RevealBand';
 import { CompassCrossLink } from './CompassCrossLink';
 import type { AlignmentTopic } from '../utils/alignmentGrid';
+import { buildPerTopicRankMap } from '../utils/alignmentMarks';
 import { track } from '../lib/analytics';
 
 export const ResultsPhase: React.FC = () => {
@@ -36,6 +37,11 @@ export const ResultsPhase: React.FC = () => {
 
   const ballot = reveal?.ballot ?? [];
   const office = race?.positionName ?? reveal?.positionName ?? '';
+
+  const rankMap = useMemo(
+    () => (reveal ? buildPerTopicRankMap(reveal) : new Map<string, number>()),
+    [reveal]
+  );
 
   // Detect shared ranks for the tie tag.
   const tiedRanks = useMemo(() => {
@@ -99,7 +105,7 @@ export const ResultsPhase: React.FC = () => {
       <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
 
       <div className="space-y-4">
-        <AlignmentSection reveal={reveal!} topics={alignmentTopics}
+        <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
           animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.medalsStart} />
 
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
@@ -108,6 +114,7 @@ export const ResultsPhase: React.FC = () => {
 
         {ballot.map((entry, i) => (
           <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+            rankMap={rankMap}
             tied={(tiedRanks.get(entry.rank) ?? 0) > 1}
             landDelayMs={timeline.cardDelay(i)} />
         ))}
