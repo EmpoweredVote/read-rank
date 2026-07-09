@@ -78,6 +78,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
       {!m.reduced && entry.rank === 1 && <MegaParticles active={burst} />}
       <div className="ballot-rankcol">
         <RankNumber rank={entry.rank} size={28} />
+        <span className="sr-only">Ranked {entry.rank}{tied ? ', tied' : ''}</span>
         {tied && <span className="ballot-tie">Tied</span>}
       </div>
 

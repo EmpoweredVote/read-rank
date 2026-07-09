@@ -29,7 +29,15 @@ describe('CandidateBallotCard', () => {
   });
   it('shows a Tied tag when tied', () => {
     render(<CandidateBallotCard entry={entry} totalTopics={6} tied />);
-    expect(screen.getByText(/tied/i)).toBeInTheDocument();
+    expect(document.querySelector('.ballot-tie')).toHaveTextContent('Tied');
+  });
+  it('announces the rank to screen readers (the visible chip is aria-hidden)', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} />);
+    expect(screen.getByText('Ranked 1')).toHaveClass('sr-only');
+  });
+  it('includes tie state in the sr-only rank label', () => {
+    render(<CandidateBallotCard entry={{ ...entry, rank: 2 }} totalTopics={6} tied />);
+    expect(screen.getByText('Ranked 2, tied')).toHaveClass('sr-only');
   });
   it('expands the drawer on toggle', async () => {
     const user = userEvent.setup();

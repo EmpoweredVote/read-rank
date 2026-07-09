@@ -2606,4 +2606,5 @@ button.rank-num:focus-visible .rank-num-badge {
 .ballot-topk { color: var(--text-link); font-weight: 700; white-space: nowrap; }
 .ballot-toggle { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0.125rem 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); white-space: nowrap; }
 .ballot-toggle:hover { text-decoration: underline; }
+.ballot-toggle:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
 .quote-drawer { background: var(--surface-sunken); border-top: 1px solid var(--border-subtle); padding: 0.25rem 0.875rem 0.625rem; }
