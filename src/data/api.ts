@@ -67,11 +67,24 @@ export interface BoundaryResult {
 
 export interface RevealQuote {
   quoteId: string;
+  /** Edited/revealed quote — the source of truth shown by default. */
   text: string;
   supported: boolean;
+  /** Global rank (1-based) across the whole race for agreed quotes; null for
+   *  disagreed. Per-topic ranks are re-derived from this in `buildPerTopicRankMap`. */
   rank: number | null;
   sourceName?: string;
   sourceUrl?: string;
+  /** Human date string, e.g. "Oct 3, 2025". */
+  sourceDate?: string;
+  /** Full original quote. `text` is a contiguous substring of this. */
+  verbatimText?: string;
+  /** Editorial note, shown only in the verbatim/raw view. */
+  editorNote?: string;
+  /** Source video URL. */
+  videoUrl?: string;
+  /** Deep-link start time in seconds. */
+  videoTimestampSeconds?: number;
 }
 
 export interface PerTopicReveal {
@@ -86,6 +99,12 @@ export interface BallotEntry {
   candidateId: string;
   name: string;
   office: string;
+  /** Position/title, e.g. "City Council Member". Falls back to `office`. */
+  title?: string;
+  /** Governing body, e.g. "Salt Lake City Council". */
+  chamber?: string;
+  /** Seat/district, e.g. "District 4". */
+  district?: string;
   photo: string;
   essentialsUrl: string;
   evidence: {

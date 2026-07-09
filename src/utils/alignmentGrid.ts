@@ -1,5 +1,5 @@
 import type { RevealResult } from '../data/api';
-import { tierForIndex, type Tier } from './tiers';
+import { markForQuotes, type AlignmentMark } from './alignmentMarks';
 
 export interface AlignmentTopic {
   key: string;
@@ -9,43 +9,22 @@ export interface AlignmentTopic {
 export interface AlignmentRow {
   candidateId: string;
   name: string;
-  cells: (Tier | null)[];
+  cells: AlignmentMark[];
 }
 
 /**
- * The candidates × topics tier grid (REDESIGN_SPEC §1.6): each cell is the
- * tier the user's ranking gave that candidate's quote on that topic.
- * A candidate may carry several judged quotes on one topic (the type allows
- * it even though the mock has one) — the cell shows the BEST supported tier
- * (lowest agreed position); only if no supported quote ranked does a
- * disagreed quote mark the cell disagreed; nothing judged → null.
+ * Candidates × topics marks (spec §3). Each cell is the mark the user's verdict
+ * gave that candidate's quote on that topic: a rank number (1-3), an agreed
+ * check, a disagreed cross, or null when nothing was judged.
  */
 export function buildAlignmentGrid(
   reveal: RevealResult,
-  agreedIds: string[],
-  topics: AlignmentTopic[]
+  topics: AlignmentTopic[],
+  rankMap: Map<string, number>
 ): AlignmentRow[] {
   return reveal.ballot.map((entry) => {
     const byTopic = new Map(entry.perTopic.map((t) => [t.topicKey, t]));
-    const cells = topics.map((topic) => {
-      const quotes = byTopic.get(topic.key)?.quotes ?? [];
-      if (quotes.length === 0) return null;
-
-      let bestPosition = -1;
-      let sawDisagreed = false;
-      for (const quote of quotes) {
-        if (!quote.supported) {
-          sawDisagreed = true;
-          continue;
-        }
-        const position = agreedIds.indexOf(quote.quoteId);
-        if (position === -1) continue;
-        if (bestPosition === -1 || position < bestPosition) bestPosition = position;
-      }
-      if (bestPosition !== -1) return tierForIndex(bestPosition);
-      if (sawDisagreed) return 'disagreed' as Tier;
-      return null;
-    });
+    const cells = topics.map((topic) => markForQuotes(byTopic.get(topic.key)?.quotes ?? [], rankMap));
     return { candidateId: entry.candidateId, name: entry.name, cells };
   });
 }

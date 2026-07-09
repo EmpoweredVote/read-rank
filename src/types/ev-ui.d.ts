@@ -169,4 +169,7 @@ declare module '@empoweredvote/ev-ui' {
   export function useEvContextPromotion(
     args: UseEvContextPromotionArgs
   ): UseEvContextPromotionReturn;
+
+  // Responsive breakpoint hook — returns whether `query` currently matches.
+  export function useMediaQuery(query: string): boolean;
 }

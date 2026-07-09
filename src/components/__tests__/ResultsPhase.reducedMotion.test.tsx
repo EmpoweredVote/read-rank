@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 // Force reduced motion for every component in this file.
 vi.mock('framer-motion', async (importOriginal) => {
@@ -40,11 +39,9 @@ describe('ResultsPhase reduced motion', () => {
     useReadRankStore.getState().finishRace();
 
     render(<ResultsPhase />);
-    const continueBtn = await screen.findByRole('button', { name: /see who you agreed with/i }, { timeout: 3000 });
-    await userEvent.click(continueBtn);
 
     // Cards present at once, final number shown immediately (count-up bypassed under reduced motion).
-    expect((await screen.findAllByText(/mike braun/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/mike braun/i, {}, { timeout: 3000 })).length).toBeGreaterThan(0);
     // Count-up bypass under reduced motion (returns target immediately) is unit-tested in src/utils/__tests__/countUp.test.tsx.
     // Announcement present.
     const announcement = await screen.findByText(/ballot revealed\. your number one is mike braun/i);

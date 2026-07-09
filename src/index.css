@@ -2015,44 +2015,13 @@ button.rank-num:focus-visible .rank-num-badge {
   perspective: 1200px;
 }
 
-.reveal-threshold {
-  background-color: var(--color-ev-black, #1c1c1c);
-  border-radius: 0.75rem;
-  padding: 3rem 1.5rem;
-  display: flex;
-  justify-content: center;
-  text-align: center;
-}
-
-.reveal-threshold-count {
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0 0 0.625rem;
-}
-
-.reveal-threshold-headline {
-  font-family: 'Manrope', sans-serif;
-  font-weight: 800;
-  font-size: 1.5rem;
-  color: #ffffff;
-  margin: 0 0 1.5rem;
-  letter-spacing: -0.01em;
-}
-
+/* Reveal band (spec §1) — merged gate, persistent hero */
+.reveal-band { background-color: var(--color-ev-black, #1c1c1c); border-radius: 0.75rem; padding: 1.625rem 1.375rem; text-align: center; margin-bottom: 1rem; }
+.dark .reveal-band { background-color: #232c38; border: 1px solid #313d4c; }
+.reveal-band-eyebrow { font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.72); margin: 0 0 0.5rem; }
+.reveal-band-headline { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 1.375rem; color: #fff; margin: 0; letter-spacing: -0.01em; }
 /* ev-yellow accent — approved placement #5 (decorative; the text carries) */
-.reveal-threshold-who {
-  box-shadow: inset 0 -3px 0 var(--color-ev-yellow, #fed12e);
-  padding-bottom: 2px;
-}
-
-.reveal-threshold-button {
-  font-size: 0.9375rem;
-  min-height: 3rem;
-}
+.reveal-band-who { box-shadow: inset 0 -3px 0 var(--color-ev-yellow, #fed12e); padding-bottom: 2px; }
 
 .rcv-panel {
   border: 1px solid var(--border-subtle);
@@ -2132,85 +2101,45 @@ button.rank-num:focus-visible .rank-num-badge {
   box-shadow: 0 0 0 2px var(--color-ev-yellow);
 }
 
-/* ev-yellow accent — approved placement #6 */
-.insight-strip {
-  border-top: 4px solid var(--color-ev-yellow, #fed12e);
-  background-color: var(--surface-card);
-  border-radius: 0 0 0.75rem 0.75rem;
-  border-left: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 1.125rem 1.375rem;
-  font-family: 'Manrope', sans-serif;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  line-height: 1.45;
-  color: var(--text-heading);
-}
-
 /* ============================================
-   Alignment Grid (REDESIGN_SPEC §1.6)
-   Candidates × topics tier table — colorblind-safe (icon + sr-only text).
+   Alignment Grid (REDESIGN_SPEC §1.6, spec §3)
+   Candidates × topics mark table — colorblind-safe (icon + sr-only text).
+   Sticky candidate column, rotated topic headers, horizontal edge fade.
    ============================================ */
 
+.alignment-section-label { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 0.5rem; }
+
 .alignment-grid-wrap {
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--border-medium);
   border-radius: 0.75rem;
   background-color: var(--surface-card);
 }
-
-.alignment-grid {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.875rem;
+/* Full-width so row dividers span the whole card; content packs left and the
+   flexible trailing spacer soaks up the slack on the right. */
+.alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
+.alignment-grid th, .alignment-grid td { padding: 0.5rem 0.5rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
+/* Equal, tight mark columns. */
+.alignment-grid thead th.alignment-topic-col, .alignment-grid td.alignment-mark-col { min-width: 4rem; }
+.alignment-grid thead th { position: relative; vertical-align: bottom; height: 92px; padding: 0; overflow: visible; }
+.alignment-grid .alignment-col-label {
+  position: absolute; bottom: 0.5rem; left: 50%; transform-origin: left bottom; transform: rotate(-40deg);
+  font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase;
+  color: var(--text-secondary); width: 72px; line-height: 1.2; text-align: left; white-space: normal;
 }
-
-.alignment-grid th,
-.alignment-grid td {
-  padding: 0.75rem 0.875rem;
-  text-align: center;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.alignment-grid thead th {
-  font-weight: 700;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
+/* Candidate column: one line, left padding off the card edge. */
 .alignment-grid tbody th {
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--text-heading);
-  white-space: nowrap;
+  text-align: left; font-weight: 700; font-size: 0.8125rem; color: var(--text-heading); white-space: nowrap;
+  padding-left: 1.125rem; padding-right: 1.5rem; min-width: 11.5rem;
+  position: sticky; left: 0; background: var(--surface-card); box-shadow: 1px 0 0 var(--border-subtle); z-index: 1;
 }
-
-.alignment-grid tbody tr:last-child th,
-.alignment-grid tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.alignment-grid-empty {
-  color: var(--text-tertiary);
-}
-
-/* #1 spotlight — the top candidate's Diamond cell(s) pulse ev-yellow. */
-.alignment-grid td.spotlight-diamond {
-  position: relative;
-  border-radius: 0.5rem;
-  animation: diamond-glow 1.4s var(--ease-standard) 2;
-}
-
-@keyframes diamond-glow {
-  0%   { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
-  50%  { box-shadow: inset 0 0 0 3px rgba(254, 209, 46, 0.6); }
-  100% { box-shadow: inset 0 0 0 0 rgba(254, 209, 46, 0); }
-}
+.alignment-grid-corner { position: sticky; left: 0; background: var(--surface-card); z-index: 2; text-align: left; padding-left: 1.125rem; min-width: 11.5rem; font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
+/* Flexible trailing spacer: takes the remaining width (packs real columns left)
+   and gives the last angled label room so it never triggers horizontal scroll. */
+.alignment-grid .alignment-spacer { width: 100%; padding: 0; }
+.alignment-grid thead th.alignment-spacer { height: 92px; }
+.alignment-grid tbody tr:last-child th, .alignment-grid tbody tr:last-child td { border-bottom: none; }
 
 /* ============================================
    Compass cross-link card (REDESIGN_SPEC §10)
@@ -2566,3 +2495,79 @@ button.rank-num:focus-visible .rank-num-badge {
   .race-card-v2 { transition: border-color 0.15s; }
   .race-card-v2:hover { transform: none; }
 }
+
+/* ============================================
+   Reveal marks (spec §2) — numbers-led, no medals
+   ============================================ */
+.rank-number {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; background: var(--text-link); color: #fff;
+  font-family: 'Manrope', sans-serif; font-weight: 800; flex-shrink: 0; line-height: 1;
+}
+.dark .rank-number { background: #1c7a94; color: #ffffff; }
+.alignment-mark { display: inline-flex; align-items: center; justify-content: center; }
+.mark-agreed { color: var(--agree); }
+.mark-disagreed { color: #a8a29e; }
+.dark .mark-disagreed { color: #8b96a5; }
+.mark-none { color: var(--border-medium); }
+
+/* Mobile alignment pills (spec §3) */
+.pills-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+.pills-candidate { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 0.625rem; padding: 0.625rem 0.75rem; }
+.pills-name { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--text-heading); margin: 0 0 0.5rem; }
+.pills-row { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.pill { display: inline-flex; align-items: center; gap: 0.3125rem; padding: 0.1875rem 0.5rem 0.1875rem 0.25rem; border-radius: 9999px; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-strong); border: 1px solid var(--border-subtle); background: var(--surface-sunken); }
+.pill-dis { color: var(--text-tertiary); }
+
+/* Candidate identity card (spec §4) — faithful to Essentials PoliticianCard, themed */
+.pid-card { display: flex; background: var(--surface-card); }
+.pid-photo { width: 64px; flex-shrink: 0; background: var(--text-link); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pid-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.pid-initials { color: #fff; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.9375rem; }
+.pid-content { flex: 1; min-width: 0; padding: 0.5625rem 0.6875rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+.pid-name { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--text-link); margin: 0; line-height: 1.2; }
+.pid-position { font-family: 'Manrope', sans-serif; font-weight: 400; font-size: 0.75rem; color: var(--text-secondary); margin: 0.0625rem 0 0; }
+.pid-district { font-family: 'Manrope', sans-serif; font-weight: 400; font-size: 0.6875rem; color: var(--text-tertiary); margin: 0.0625rem 0 0; }
+.essentials-logo { flex-shrink: 0; display: inline-flex; align-items: flex-start; line-height: 0; }
+.essentials-logo-dark { display: none; }
+.dark .essentials-logo-light { display: none; }
+.dark .essentials-logo-dark { display: inline; }
+
+/* Quote drawer blocks (spec §5) */
+.quote-block { padding: 0.6875rem 0; border-bottom: 1px solid var(--border-faint); }
+.quote-block:last-child { border-bottom: none; }
+.quote-block-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4375rem; }
+.quote-block-topic { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.quote-edited { font-family: 'Manrope', sans-serif; font-size: 0.8125rem; line-height: 1.6; margin: 0 0 0.375rem; color: var(--text-ink); }
+.quote-verbatim { font-family: 'Manrope', sans-serif; font-size: 0.8125rem; line-height: 1.62; margin: 0 0 0.375rem; color: var(--text-strong); } /* AAA-safe surrounding tone */
+.quote-verbatim b { color: var(--text-heading); font-weight: 700; }
+.dark .quote-verbatim b { font-weight: 800; } /* weight carries emphasis in dark */
+.quote-edited.is-dis, .quote-verbatim.is-dis { color: var(--text-tertiary); }
+.quote-attrib { font-family: 'Manrope', sans-serif; font-size: 0.6875rem; color: var(--text-tertiary); margin: 0; }
+.quote-src { font-weight: 600; color: var(--text-secondary); }
+.quote-srclink { color: var(--text-link); font-weight: 600; text-decoration: none; }
+.quote-video { color: var(--color-ev-coral, #ff5740); font-weight: 600; text-decoration: none; }
+.quote-actions { display: flex; align-items: center; gap: 0.875rem; margin-top: 0.375rem; }
+.quote-toggle { background: none; border: none; padding: 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); }
+.quote-toggle:hover { text-decoration: underline; }
+.quote-toggle:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+/* Editor's note footnote + popover */
+.editor-note { position: relative; display: inline-flex; }
+.editor-note-trigger { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.6875rem; font-weight: 400; color: var(--text-tertiary); }
+.editor-note-trigger:hover { color: var(--text-secondary); text-decoration: underline; }
+.editor-note-trigger:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+.editor-note-pop { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 20; width: max-content; max-width: 280px; background: var(--surface-card); border-left: 3px solid var(--color-ev-yellow, #fed12e); border-radius: 0 6px 6px 0; box-shadow: var(--shadow-hover); padding: 0.5rem 0.6875rem; font-family: 'Manrope', sans-serif; font-size: 0.75rem; line-height: 1.5; color: var(--text-secondary); }
+
+/* Candidate ballot card (spec §4) */
+.ballot-row { position: relative; display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
+.ballot-rankcol { display: flex; flex-direction: column; align-items: center; gap: 0.1875rem; flex-shrink: 0; padding-top: 1.375rem; }
+.ballot-tie { font-family: 'Manrope', sans-serif; font-size: 0.5625rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+.ballot-outer { flex: 1; min-width: 0; border: 1px solid var(--border-subtle); border-radius: 0.75rem; overflow: hidden; background: var(--surface-card); }
+.ballot-strip { display: flex; align-items: center; justify-content: space-between; gap: 0.625rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-subtle); }
+.ballot-evidence { font-family: 'Manrope', sans-serif; font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+.ballot-evidence strong { color: var(--text-heading); }
+.ballot-topk { color: var(--text-link); font-weight: 700; white-space: nowrap; }
+.ballot-toggle { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0.125rem 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); white-space: nowrap; }
+.ballot-toggle:hover { text-decoration: underline; }
+.ballot-toggle:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+.quote-drawer { background: var(--surface-sunken); border-top: 1px solid var(--border-subtle); padding: 0.25rem 0.875rem 0.625rem; }
