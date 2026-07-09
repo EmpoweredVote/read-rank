@@ -116,3 +116,19 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
 
   return { sections, noExactMatch };
 }
+
+const TIER_ORDER: Record<string, number> = { local: 0, state: 1, federal: 2 };
+
+/** Races that genuinely overlap `countyGeoId`, with rankable topics, ordered
+ *  local → state → federal (then by soonest election date). Empties are dropped. */
+export function racesInCounty(races: RaceSummary[], countyGeoId: string): RaceSummary[] {
+  return races
+    .filter((r) => (r.rankableTopicCount ?? r.topicCount) > 0)
+    .filter((r) => (r.countyGeoIds ?? []).includes(countyGeoId))
+    .sort((a, b) => {
+      const ta = TIER_ORDER[a.tier ?? 'local'] ?? 0;
+      const tb = TIER_ORDER[b.tier ?? 'local'] ?? 0;
+      if (ta !== tb) return ta - tb;
+      return (a.electionDate ?? '').localeCompare(b.electionDate ?? '');
+    });
+}

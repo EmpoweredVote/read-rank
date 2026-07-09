@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupRaces } from '../raceGrouping';
+import { groupRaces, racesInCounty, statesWithCounts, countiesForState } from '../raceGrouping';
 import type { RaceSummary } from '../../data/api';
 
 const TODAY = '2026-06-19';
@@ -15,6 +15,10 @@ function race(partial: Partial<RaceSummary> & { raceId: string }): RaceSummary {
     candidateCount: 2,
     topicCount: 1,
     isLocal: false,
+    tier: 'federal',
+    scope: 'district',
+    countyGeoIds: [],
+    rankableTopicCount: 1,
     ...partial,
   } as RaceSummary;
 }
@@ -227,5 +231,47 @@ describe('groupRaces — county tier', () => {
       userCounty: '49035', userCountyName: 'Salt Lake County', timeFilter: 'upcoming', today: TODAY,
     });
     expect(result.sections.find((s) => s.kind === 'county')?.races.map((r) => r.raceId)).toEqual(['slc-county']);
+  });
+});
+
+const laMayor = race({ raceId: 'la-mayor', state: 'CA', tier: 'local', scope: 'citywide', countyGeoIds: ['06037'], rankableTopicCount: 5 });
+const caGov = race({ raceId: 'ca-gov', state: 'CA', tier: 'state', scope: 'statewide', countyGeoIds: ['06037', '06059'], rankableTopicCount: 4 });
+const caCd = race({ raceId: 'ca-cd', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06037'], rankableTopicCount: 3 });
+const caEmpty = race({ raceId: 'ca-empty', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06037'], rankableTopicCount: 0 });
+const otherCounty = race({ raceId: 'oc', state: 'CA', tier: 'federal', scope: 'district', countyGeoIds: ['06059'], rankableTopicCount: 2 });
+
+describe('racesInCounty', () => {
+  const list = [caCd, caGov, laMayor, caEmpty, otherCounty];
+  it('includes only races overlapping the county, hides empties', () => {
+    const ids = racesInCounty(list, '06037').map((r) => r.raceId);
+    expect(ids).not.toContain('ca-empty');
+    expect(ids).not.toContain('oc');
+    expect(ids).toEqual(expect.arrayContaining(['la-mayor', 'ca-gov', 'ca-cd']));
+  });
+  it('orders local → state → federal', () => {
+    expect(racesInCounty(list, '06037').map((r) => r.tier)).toEqual(['local', 'state', 'federal']);
+  });
+});
+
+describe('statesWithCounts', () => {
+  it('lists states (with a non-empty race) alphabetically with counts', () => {
+    const ut = race({ raceId: 'ut', state: 'UT', rankableTopicCount: 2 });
+    const caEmptyOnly = race({ raceId: 'ce', state: 'NV', rankableTopicCount: 0 });
+    const out = statesWithCounts([caGov, caCd, ut, caEmptyOnly]);
+    expect(out).toEqual([
+      { state: 'CA', name: 'California', count: 2 },
+      { state: 'UT', name: 'Utah', count: 1 },
+    ]);
+  });
+});
+
+describe('countiesForState', () => {
+  it('lists counties in the state that have a non-empty race, labelled and sorted', () => {
+    const counties = { '06037': 'Los Angeles County', '06059': 'Orange County' };
+    const out = countiesForState([caGov, caCd, otherCounty], counties, 'CA');
+    expect(out).toEqual([
+      { geoid: '06037', name: 'Los Angeles County', count: 3 },
+      { geoid: '06059', name: 'Orange County', count: 2 },
+    ]);
   });
 });
