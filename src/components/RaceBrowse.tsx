@@ -34,17 +34,17 @@ const labelStyle: React.CSSProperties = {
   margin: '1rem 0 0.5rem',
 };
 
-export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled }) => {
-  const [nav, setNav] = useState<Level>(() => initialLevel(initial));
-
-  const Breadcrumb = () => (
+function Breadcrumb({ nav, counties, onNavigate }: {
+  nav: Level; counties: CountyIndex; onNavigate: (l: Level) => void;
+}) {
+  return (
     <nav className="flex items-center gap-2 mb-2" aria-label="Browse location" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem' }}>
-      <button onClick={() => setNav({ level: 'states' })} className="font-bold" style={{ color: 'var(--text-link)', background: 'none', border: 'none', cursor: 'pointer' }}>All states</button>
+      <button onClick={() => onNavigate({ level: 'states' })} className="font-bold" style={{ color: 'var(--text-link)', background: 'none', border: 'none', cursor: 'pointer' }}>All states</button>
       {nav.level !== 'states' && (
         <>
           <span style={{ color: 'var(--text-tertiary)' }}>›</span>
           <button
-            onClick={() => setNav({ level: 'counties', state: nav.state })}
+            onClick={() => onNavigate({ level: 'counties', state: nav.state })}
             className="font-bold" style={{ color: nav.level === 'counties' ? 'var(--text-secondary)' : 'var(--text-link)', background: 'none', border: 'none', cursor: 'pointer' }}
           >{getStateName(nav.state) ?? nav.state}</button>
         </>
@@ -57,13 +57,17 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
       )}
     </nav>
   );
+}
+
+export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled }) => {
+  const [nav, setNav] = useState<Level>(() => initialLevel(initial));
 
   if (nav.level === 'states') {
     const states = statesWithCounts(races);
     return (
       <div>
         <div style={labelStyle}>Browse by state</div>
-        <ul className="acc-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {states.map((s) => (
             <li key={s.state}>
               <button className="race-browse-row" onClick={() => setNav({ level: 'counties', state: s.state })}>
@@ -81,7 +85,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
     const list = countiesForState(races, counties, nav.state);
     return (
       <div>
-        <Breadcrumb />
+        <Breadcrumb nav={nav} counties={counties} onNavigate={setNav} />
         <div style={labelStyle}>Counties in {getStateName(nav.state) ?? nav.state}</div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {list.map((c) => (
@@ -101,7 +105,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
   const list = racesInCounty(races, nav.geoid);
   return (
     <div>
-      <Breadcrumb />
+      <Breadcrumb nav={nav} counties={counties} onNavigate={setNav} />
       <div className="race-grid">
         {list.map((r, i) => {
           const { tier, scope } = deriveTierScope(r);
