@@ -32,6 +32,9 @@ declare module '@empoweredvote/ev-ui' {
     logoSrc?: string;
     logoAlt?: string;
     logoHref?: string;
+    centerLogoSrc?: string;
+    centerLogoAlt?: string;
+    centerLogoHref?: string;
     navItems?: NavItem[];
     ctaButton?: CTAButton;
     currentPath?: string;
