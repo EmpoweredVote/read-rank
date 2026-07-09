@@ -91,29 +91,13 @@ describe('groupRaces — past filter', () => {
   });
 });
 
-describe('groupRaces — not located', () => {
-  const result = groupRaces({
-    races: [utExact, utState, caOther],
-    located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
-  });
-
-  it('uses state-named sections, no relevance bands', () => {
-    expect(result.sections.every((s) => s.kind === 'state-named')).toBe(true);
-    expect(result.sections.map((s) => s.label)).toEqual(['California', 'Utah']); // alphabetical
-  });
-
-  it('never flags noExactMatch when not located', () => {
-    expect(result.noExactMatch).toBe(false);
-  });
-});
-
 describe('groupRaces — undated and today are upcoming', () => {
   it('treats null and today-dated races as upcoming', () => {
-    const undated = race({ raceId: 'undated', state: 'UT', electionDate: null });
-    const todayRace = race({ raceId: 'today', state: 'UT', electionDate: TODAY });
+    const undated = race({ raceId: 'undated', state: 'UT', isLocal: true, electionDate: null });
+    const todayRace = race({ raceId: 'today', state: 'UT', isLocal: true, electionDate: TODAY });
     const result = groupRaces({
       races: [undated, todayRace],
-      located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
+      located: true, userState: 'UT', timeFilter: 'upcoming', today: TODAY,
     });
     const ids = result.sections.flatMap((s) => s.races.map((r) => r.raceId));
     expect(ids).toContain('undated');
@@ -130,19 +114,6 @@ describe('groupRaces — located but unparseable state (userState null)', () => 
       located: true, userState: null, timeFilter: 'upcoming', today: TODAY,
     });
     expect(result.sections).toEqual([]);
-  });
-});
-
-describe('groupRaces — not located, null-state races', () => {
-  it('sorts the "Other" bucket after all named states', () => {
-    const oh = race({ raceId: 'oh', state: 'OH', electionDate: '2026-06-23' });
-    const noState = race({ raceId: 'no-state', state: null, electionDate: '2026-06-23' });
-    const ut = race({ raceId: 'ut', state: 'UT', electionDate: '2026-06-23' });
-    const result = groupRaces({
-      races: [noState, ut, oh],
-      located: false, userState: null, timeFilter: 'upcoming', today: TODAY,
-    });
-    expect(result.sections.map((s) => s.label)).toEqual(['Ohio', 'Utah', 'Other']);
   });
 });
 

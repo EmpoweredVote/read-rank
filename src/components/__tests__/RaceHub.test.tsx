@@ -85,4 +85,16 @@ describe('RaceHub browse wiring', () => {
     expect(screen.getByText(/counties in california/i)).toBeInTheDocument();
     expect(screen.getByText('Los Angeles County')).toBeInTheDocument();
   });
+
+  it('clicking "Browse all races" on the LA example ballot sets the store browseTarget', async () => {
+    stubRacesFetch(
+      [race({ raceId: 'la-mayor', office: 'Mayor', countyGeoIds: ['06037'] })],
+      { '06037': 'Los Angeles County' },
+    );
+    render(<RaceHub />);
+    const browseBtn = await screen.findByRole('button', { name: /browse all races/i }, { timeout: 3000 });
+    expect(useReadRankStore.getState().browseTarget).toBeNull();
+    await userEvent.click(browseBtn);
+    expect(useReadRankStore.getState().browseTarget).toEqual({ state: 'CA', geoid: null });
+  });
 });
