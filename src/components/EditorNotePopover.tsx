@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 export interface EditorNotePopoverProps {
   note: string;
@@ -7,14 +7,30 @@ export interface EditorNotePopoverProps {
 /**
  * Quiet footnote "(i) editor's note". It's a real <button>, so a single toggle
  * handler covers mouse click, touch tap, and keyboard (Enter/Space) — fully
- * accessible without hover. (A hover-open nicety can be layered in CSS later; we
- * deliberately keep state on click only so focus-then-click can't cancel itself.)
+ * accessible without hover. While open it dismisses on Escape or a click/tap
+ * outside, so it never gets stranded when the user moves on.
  */
 export const EditorNotePopover: React.FC<EditorNotePopoverProps> = ({ note }) => {
   const [open, setOpen] = useState(false);
   const id = useId();
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onPointer = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [open]);
+
   return (
-    <span className="editor-note">
+    <span className="editor-note" ref={ref}>
       <button type="button" className="editor-note-trigger"
         aria-expanded={open} aria-controls={id}
         onClick={() => setOpen((o) => !o)}>

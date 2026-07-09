@@ -106,7 +106,7 @@ export const ResultsPhase: React.FC = () => {
 
       <div className="space-y-4">
         <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
-          animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.medalsStart} />
+          animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.cellsStart} />
 
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
           How the candidates stack up

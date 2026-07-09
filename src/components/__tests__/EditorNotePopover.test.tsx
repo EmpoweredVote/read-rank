@@ -11,4 +11,13 @@ describe('EditorNotePopover', () => {
     await user.click(screen.getByRole('button', { name: /editor's note/i }));
     expect(screen.getByText('Trimmed for length.')).toBeInTheDocument();
   });
+
+  it('dismisses on Escape', async () => {
+    const user = userEvent.setup();
+    render(<EditorNotePopover note="Trimmed for length." />);
+    await user.click(screen.getByRole('button', { name: /editor's note/i }));
+    expect(screen.getByText('Trimmed for length.')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('Trimmed for length.')).not.toBeInTheDocument();
+  });
 });
