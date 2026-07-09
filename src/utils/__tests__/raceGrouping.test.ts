@@ -42,8 +42,9 @@ describe('groupRaces — located, upcoming', () => {
     expect(result.sections.find((s) => s.kind === 'state')?.label).toBe('More in Utah');
   });
 
-  it('never emits an other-states band', () => {
-    expect(result.sections.some((s) => s.kind === 'other')).toBe(false);
+  it('emits only located relevance bands (your/county/state)', () => {
+    const allowed = new Set(['your', 'county', 'state']);
+    expect(result.sections.every((s) => allowed.has(s.kind))).toBe(true);
   });
 
   it('excludes the all-past Indiana race from upcoming', () => {

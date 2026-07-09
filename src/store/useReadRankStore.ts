@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { CountyIndex } from '../data/api';
 
 // ============================================
 // Types — race -> topics -> blind quotes
@@ -129,6 +130,15 @@ interface ReadRankState {
   setLocationFilter: (filter: LocationFilter | null) => void;
   clearLocationFilter: () => void;
 
+  // Race hub browse state (shared between the hero AddressFilterInput and RaceHub).
+  // Ephemeral/derived — not persisted.
+  /** County GEOID → name index, powering browse drill-down and smart-search routing. */
+  counties: CountyIndex;
+  setCounties: (counties: CountyIndex) => void;
+  /** Explicit browse view (State → County → races); null = default ballot view. */
+  browseTarget: { state: string; geoid: string | null } | null;
+  setBrowseTarget: (target: { state: string; geoid: string | null } | null) => void;
+
   // Race actions
   setPhase: (phase: Phase) => void;
   selectRace: (payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }) => void;
@@ -205,6 +215,8 @@ const initialState = {
   coachMarksCompleted: false,
   firstAgreeCoached: false,
   locationFilter: null as LocationFilter | null,
+  counties: {} as CountyIndex,
+  browseTarget: null as { state: string; geoid: string | null } | null,
 };
 
 // Immutably update the current race's progress.
@@ -453,8 +465,13 @@ export const useReadRankStore = create<ReadRankState>()(
       completeCoachMarks: () => set({ coachMarksCompleted: true }),
       completeFirstAgreeCoach: () => set({ firstAgreeCoached: true }),
 
-      setLocationFilter: (filter) => set({ locationFilter: filter }),
-      clearLocationFilter: () => set({ locationFilter: null }),
+      // Locating means "show my ballot" — leave any browse view when a filter is set.
+      setLocationFilter: (filter) =>
+        set(filter ? { locationFilter: filter, browseTarget: null } : { locationFilter: filter }),
+      clearLocationFilter: () => set({ locationFilter: null, browseTarget: null }),
+
+      setCounties: (counties) => set({ counties }),
+      setBrowseTarget: (browseTarget) => set({ browseTarget }),
 
       // ---- Helpers ----
 

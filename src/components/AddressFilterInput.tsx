@@ -25,16 +25,11 @@ function writeAddressToContext(addr: string, userId?: string | null) {
 
 interface AddressFilterInputProps {
   onFilterApplied?: (politicianIds: string[]) => void;
-  /** When provided, place-name queries (state/county/city) route into browse instead
-   *  of the address search. Addresses still fall through to the located-ballot path. */
-  onBrowse?: (target: { state: string; geoid: string | null }) => void;
-  /** County GEOID → name index, used to resolve a place name to a browse target. */
-  counties?: Record<string, string>;
 }
 
-export function AddressFilterInput({ onFilterApplied, onBrowse, counties }: AddressFilterInputProps) {
+export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const m = useMotion();
-  const { locationFilter, setLocationFilter, clearLocationFilter } = useReadRankStore();
+  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -78,21 +73,19 @@ export function AddressFilterInput({ onFilterApplied, onBrowse, counties }: Addr
 
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
 
-  // Manual submit (Search button / Enter). When browse is available, classify the free
-  // text first: place names (state/county/city) route into browse; anything else — and any
-  // failure — falls through to the address search. A picked autocomplete place is
-  // unambiguous, so it keeps calling handlePlaceSelected directly.
+  // Manual submit (Search button / Enter). Classify the free text first: place names
+  // (state/county/city) route into browse; anything else — and any failure — falls through
+  // to the address search. A picked autocomplete place is unambiguous, so it keeps calling
+  // handlePlaceSelected directly.
   const handleSubmit = useCallback(async (value: string) => {
     if (!value.trim()) return;
-    if (onBrowse) {
-      setSearching(true);
-      const route = await resolveQueryRoute(value, counties ?? {});
-      setSearching(false);
-      if (route.kind === 'browse-state') { onBrowse({ state: route.state, geoid: null }); return; }
-      if (route.kind === 'browse-county') { onBrowse({ state: route.state, geoid: route.geoid }); return; }
-    }
+    setSearching(true);
+    const route = await resolveQueryRoute(value, counties);
+    setSearching(false);
+    if (route.kind === 'browse-state') { setBrowseTarget({ state: route.state, geoid: null }); return; }
+    if (route.kind === 'browse-county') { setBrowseTarget({ state: route.state, geoid: route.geoid }); return; }
     await handlePlaceSelected(value);
-  }, [handlePlaceSelected, onBrowse, counties]);
+  }, [handlePlaceSelected, setBrowseTarget, counties]);
 
   // 260426-mw6 — guest → authed promotion banner
   const addressPromoteWriter = useCallback(async (addressPayload: unknown) => {

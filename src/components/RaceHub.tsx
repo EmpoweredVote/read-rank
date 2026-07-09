@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
-import { fetchRaces, fetchRaceQuotes, type RaceSummary, type CountyIndex } from '../data/api';
+import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
 import { RaceBrowse } from './RaceBrowse';
@@ -28,15 +28,14 @@ function todayISO(): string {
 }
 
 export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
-  const { raceProgress, selectRace, locationFilter, clearLocationFilter } = useReadRankStore();
+  const {
+    raceProgress, selectRace, locationFilter, clearLocationFilter,
+    counties, setCounties, browseTarget, setBrowseTarget,
+  } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
-  // County GEOID → name index, powering the browse drill-down and smart-search routing.
-  const [counties, setCounties] = useState<CountyIndex>({});
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
-  // Explicit browse view (State → County → races); null = default ballot view.
-  const [browsing, setBrowsing] = useState<null | { state: string; geoid: string | null }>(null);
 
   const m = useMotion();
   const politicianIds = locationFilter?.politicianIds;
@@ -46,7 +45,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     fetchRaces(politicianIds)
       .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
       .finally(() => setLoading(false));
-  }, [politicianIds]);
+  }, [politicianIds, setCounties]);
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
@@ -146,18 +145,19 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         )}
       </motion.div>
     );
-  } else if (browsing) {
+  } else if (browseTarget) {
     // View 1 — explicit browse (Browse button, or a place-name smart search).
     content = (
       <div className="w-full">
-        <button className="ev-button-secondary" style={{ marginTop: '0.5rem' }} onClick={() => setBrowsing(null)}>
+        <button className="ev-button-secondary" style={{ marginTop: '0.5rem' }} onClick={() => setBrowseTarget(null)}>
           ‹ Back to my ballot
         </button>
         <RaceBrowse
+          key={`${browseTarget.state}:${browseTarget.geoid ?? 'all'}`}
           races={races}
           counties={counties}
           onSelect={handleSelect}
-          initial={browsing}
+          initial={browseTarget}
           disabled={starting !== null}
         />
       </div>
@@ -227,7 +227,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         <button
           className="ev-button-secondary"
           style={{ marginTop: '1.25rem' }}
-          onClick={() => setBrowsing({ state: userState ?? 'CA', geoid: null })}
+          onClick={() => setBrowseTarget({ state: userState ?? 'CA', geoid: null })}
         >
           Browse other races ›
         </button>
@@ -246,7 +246,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         <button
           className="ev-button-secondary"
           style={{ marginTop: '1.25rem' }}
-          onClick={() => setBrowsing({ state: 'CA', geoid: null })}
+          onClick={() => setBrowseTarget({ state: 'CA', geoid: null })}
         >
           Browse all races ›
         </button>
@@ -279,7 +279,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       )}
 
       <div className="max-w-2xl mx-auto">
-        {!hideFilter && <AddressFilterInput onBrowse={setBrowsing} counties={counties} />}
+        {!hideFilter && <AddressFilterInput />}
       </div>
 
       {content}

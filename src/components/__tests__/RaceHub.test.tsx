@@ -1,13 +1,36 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RaceHub } from '../RaceHub';
 import { useReadRankStore } from '../../store/useReadRankStore';
+import type { RaceSummary, CountyIndex } from '../../data/api';
 
 beforeEach(() => {
   window.localStorage?.clear();
   useReadRankStore.getState().reset();
 });
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+/** Minimal RaceSummary — only the fields the hub/grouping read. */
+function race(p: Partial<RaceSummary> & { raceId: string }): RaceSummary {
+  return {
+    office: 'Office', electionName: 'E', electionDate: null, seat: null, state: 'CA',
+    jurisdictionLevel: null, candidateCount: 3, topicCount: 5, quoteCount: 10,
+    rankableTopicCount: 5, isLocal: false, tier: 'local', scope: 'citywide',
+    boundaryRef: null, frameRef: null, countyGeoIds: ['06037'], ...p,
+  } as RaceSummary;
+}
+
+/** Stub fetchRaces' underlying fetch so the hub gets a controlled race list. */
+function stubRacesFetch(races: RaceSummary[], counties: CountyIndex) {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ races, counties }),
+  }));
+}
 
 describe('RaceHub arena cards', () => {
   it('shows the wordmark with its Inform underline', async () => {
@@ -35,5 +58,31 @@ describe('RaceHub arena cards', () => {
     expect(screen.getByText('Candidates').parentElement).toHaveTextContent('4');
     expect(screen.getByText('Topics').parentElement).toHaveTextContent('3');
     expect(screen.queryByText(/ranked choice/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('RaceHub browse wiring', () => {
+  it('renders the LA example ballot when no location is set', async () => {
+    // No locationFilter -> the default view is the Los Angeles (06037) example ballot.
+    stubRacesFetch(
+      [race({ raceId: 'la-mayor', office: 'Mayor', countyGeoIds: ['06037'] })],
+      { '06037': 'Los Angeles County' },
+    );
+    render(<RaceHub />);
+    expect(await screen.findByText(/los angeles ballot/i, undefined, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+  });
+
+  it('renders the browse UI when browseTarget is set in the store', async () => {
+    stubRacesFetch(
+      [race({ raceId: 'la-mayor', office: 'Mayor', countyGeoIds: ['06037'] })],
+      { '06037': 'Los Angeles County' },
+    );
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    // Browse view: "Back to my ballot" affordance + the county drill-down for the state.
+    expect(await screen.findByRole('button', { name: /back to my ballot/i }, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.getByText(/counties in california/i)).toBeInTheDocument();
+    expect(screen.getByText('Los Angeles County')).toBeInTheDocument();
   });
 });

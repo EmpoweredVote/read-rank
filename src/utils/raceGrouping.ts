@@ -3,12 +3,11 @@ import { getStateName } from './stateNames';
 
 export type TimeFilter = 'upcoming' | 'past';
 
-export type SectionKind = 'your' | 'county' | 'state' | 'other' | 'state-named';
+export type SectionKind = 'your' | 'county' | 'state' | 'state-named';
 
 export interface RaceSection {
   kind: SectionKind;
   label: string;
-  collapsible: boolean;
   races: RaceSummary[];
 }
 
@@ -82,7 +81,7 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
         if (b[0] === 'Other') return -1;
         return a[0].localeCompare(b[0]);
       })
-      .map(([label, list]) => ({ kind: 'state-named', label, collapsible: false, races: list }));
+      .map(([label, list]) => ({ kind: 'state-named', label, races: list }));
     return { sections, noExactMatch: false };
   }
 
@@ -101,14 +100,14 @@ export function groupRaces(args: GroupRacesArgs): GroupRacesResult {
 
   const sections: RaceSection[] = [];
   if (your.length) {
-    sections.push({ kind: 'your', label: 'Your races', collapsible: false, races: your });
+    sections.push({ kind: 'your', label: 'Your races', races: your });
   }
   if (inCounty.length) {
-    sections.push({ kind: 'county', label: `In ${userCountyName ?? 'your county'}`, collapsible: false, races: inCounty });
+    sections.push({ kind: 'county', label: `In ${userCountyName ?? 'your county'}`, races: inCounty });
   }
   if (sameState.length) {
     const stateName = getStateName(userState) ?? 'your state';
-    sections.push({ kind: 'state', label: `More in ${stateName}`, collapsible: false, races: sameState });
+    sections.push({ kind: 'state', label: `More in ${stateName}`, races: sameState });
   }
 
   return { sections, noExactMatch };
