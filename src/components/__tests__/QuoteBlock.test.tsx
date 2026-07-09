@@ -39,4 +39,28 @@ describe('QuoteBlock', () => {
     render(<QuoteBlock topicTitle="Housing" quote={{ ...base, verbatimText: undefined }} mark={{ kind: 'rank', rank: 1 }} />);
     expect(screen.queryByRole('button', { name: /show full quote/i })).not.toBeInTheDocument();
   });
+  it('appends t= without corrupting a video URL that already has a query string', () => {
+    render(<QuoteBlock topicTitle="Housing"
+      quote={{ ...base, videoUrl: 'https://www.youtube.com/watch?v=example', videoTimestampSeconds: 512 }}
+      mark={{ kind: 'agreed' }} />);
+    expect(screen.getByRole('link', { name: /watch at 8:32/i }))
+      .toHaveAttribute('href', 'https://www.youtube.com/watch?v=example&t=512');
+  });
+  it('shows a View source link (and no Watch link) when only a source URL is present', () => {
+    render(<QuoteBlock topicTitle="Housing"
+      quote={{ ...base, videoUrl: undefined, videoTimestampSeconds: undefined }}
+      mark={{ kind: 'rank', rank: 1 }} />);
+    expect(screen.getByRole('link', { name: /view source/i })).toHaveAttribute('href', 'https://ksl/x');
+    expect(screen.queryByRole('link', { name: /watch at/i })).not.toBeInTheDocument();
+  });
+  it('renders plain verbatim (no bold, no crash) when edited text is not a substring', async () => {
+    const user = userEvent.setup();
+    render(<QuoteBlock topicTitle="Housing"
+      quote={{ ...base, text: 'totally different edit', verbatimText: 'The full original quote as spoken.' }}
+      mark={{ kind: 'rank', rank: 1 }} />);
+    await user.click(screen.getByRole('button', { name: /show full quote/i }));
+    const verbatim = document.querySelector('.quote-verbatim')!;
+    expect(verbatim.textContent).toContain('The full original quote as spoken.');
+    expect(verbatim.querySelector('b')).toBeNull();
+  });
 });

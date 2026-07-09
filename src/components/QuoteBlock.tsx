@@ -16,6 +16,17 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/** Add/replace the `t=` start-time param without corrupting an existing query string. */
+function videoDeepLink(url: string, seconds: number): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set('t', String(seconds));
+    return u.toString();
+  } catch {
+    return `${url}${url.includes('?') ? '&' : '?'}t=${seconds}`;
+  }
+}
+
 /** Render verbatim text with the edited span (a substring) in bold. Falls back to
  *  plain verbatim if the edited text isn't found inside it. */
 function renderVerbatim(verbatim: string, edited: string): React.ReactNode {
@@ -38,7 +49,7 @@ export const QuoteBlock: React.FC<QuoteBlockProps> = ({ topicTitle, quote, mark 
   const disagreed = mark?.kind === 'disagreed';
 
   const videoHref = quote.videoUrl && quote.videoTimestampSeconds != null
-    ? `${quote.videoUrl}?t=${quote.videoTimestampSeconds}`
+    ? videoDeepLink(quote.videoUrl, quote.videoTimestampSeconds)
     : null;
 
   return (
@@ -59,7 +70,7 @@ export const QuoteBlock: React.FC<QuoteBlockProps> = ({ topicTitle, quote, mark 
       <p className="quote-attrib">
         {quote.sourceName && <span className="quote-src">{quote.sourceName}</span>}
         {quote.sourceDate && <> · {quote.sourceDate}</>}
-        {(quote.sourceUrl || videoHref) && <> · </>}
+        {(quote.sourceName || quote.sourceDate) && (quote.sourceUrl || videoHref) && <> · </>}
         {videoHref ? (
           <a className="quote-video" href={videoHref} target="_blank" rel="noopener noreferrer">
             ▶ Watch at {formatTimestamp(quote.videoTimestampSeconds!)}
