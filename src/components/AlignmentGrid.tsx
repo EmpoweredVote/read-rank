@@ -39,8 +39,9 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({
           <tr>
             <th scope="col" className="alignment-grid-corner">Candidate</th>
             {topics.map((t) => (
-              <th scope="col" key={t.key}><span className="alignment-col-label">{t.title}</span></th>
+              <th scope="col" key={t.key} className="alignment-topic-col"><span className="alignment-col-label">{t.title}</span></th>
             ))}
+            <th aria-hidden="true" className="alignment-spacer" />
           </tr>
         </thead>
         <tbody>
@@ -51,7 +52,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({
                 const order = cellIndex++;
                 const delay = cellBaseDelayMs + order * STAGGER.gridCell;
                 return (
-                  <td key={topics[ci].key}>
+                  <td key={topics[ci].key} className="alignment-mark-col">
                     <motion.span style={{ display: 'inline-flex' }}
                       initial={play ? { scale: 0.4, opacity: 0 } : false}
                       animate={{ scale: 1, opacity: 1 }}
@@ -61,6 +62,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({
                   </td>
                 );
               })}
+              <td aria-hidden="true" className="alignment-spacer" />
             </tr>
           ))}
         </tbody>
