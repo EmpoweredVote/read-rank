@@ -2594,3 +2594,16 @@ button.rank-num:focus-visible .rank-num-badge {
 .editor-note-trigger:hover { color: var(--text-secondary); text-decoration: underline; }
 .editor-note-trigger:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
 .editor-note-pop { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 20; width: max-content; max-width: 280px; background: var(--surface-card); border-left: 3px solid var(--color-ev-yellow, #fed12e); border-radius: 0 6px 6px 0; box-shadow: var(--shadow-hover); padding: 0.5rem 0.6875rem; font-family: 'Manrope', sans-serif; font-size: 0.75rem; line-height: 1.5; color: var(--text-secondary); }
+
+/* Candidate ballot card (spec §4) */
+.ballot-row { position: relative; display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
+.ballot-rankcol { display: flex; flex-direction: column; align-items: center; gap: 0.1875rem; flex-shrink: 0; padding-top: 1.375rem; }
+.ballot-tie { font-family: 'Manrope', sans-serif; font-size: 0.5625rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+.ballot-outer { flex: 1; min-width: 0; border: 1px solid var(--border-subtle); border-radius: 0.75rem; overflow: hidden; background: var(--surface-card); }
+.ballot-strip { display: flex; align-items: center; justify-content: space-between; gap: 0.625rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-subtle); }
+.ballot-evidence { font-family: 'Manrope', sans-serif; font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+.ballot-evidence strong { color: var(--text-heading); }
+.ballot-topk { color: var(--text-link); font-weight: 700; white-space: nowrap; }
+.ballot-toggle { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0.125rem 0; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); white-space: nowrap; }
+.ballot-toggle:hover { text-decoration: underline; }
+.quote-drawer { background: var(--surface-sunken); border-top: 1px solid var(--border-subtle); padding: 0.25rem 0.875rem 0.625rem; }
