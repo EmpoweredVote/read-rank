@@ -37,11 +37,17 @@
 
 ## Phase 0 — Backend pre-flight (gate)
 
-### Task 0: Verify congressional-district geometry exists
+### Task 0: Verify congressional-district geometry exists ✅ DONE (2026-07-09)
+
+**Outcome — GATE PASSED.** `essentials.geofence_boundaries` holds **436 `G5200` rows across all 50
+states**, and **435/435 distinct congressional district refs used by races resolve to geometry**
+(stored as `mtfcc='G5200'`, geoid = state FIPS + district, matching how races reference them). No
+shapefile loading required — Phase 1 is a pure code change. (The empty `countyGeoIds` seen on the
+live API was solely because `G5200` was excluded from `COUNTY_OVERLAP_LAYERS`, not missing geometry.)
 
 **Files:** none (investigation).
 
-- [ ] **Step 1: Query the DB for G5200 rows**
+- [x] **Step 1: Query the DB for G5200 rows**
 
 Run (against the read-rank/essentials database):
 
@@ -55,13 +61,8 @@ ORDER BY state;
 
 Expected for this task to proceed cleanly: rows for the states we serve.
 
-- [ ] **Step 2: Decide**
-
-- If G5200 rows exist for the served states → proceed to Phase 1.
-- If **empty or partial** → STOP and load TIGER congressional-district shapefiles into
-  `essentials.geofence_boundaries` (mtfcc `G5200`, `geo_id` = state FIPS + district) as a
-  prerequisite. Without geometry, `getCountyUnionFrames` yields empty county sets for House races
-  and the whole feature degrades silently. Record the outcome in the PR description.
+- [x] **Step 2: Decide** → Geometry present and complete; proceed to Phase 1. (Fallback path —
+  loading TIGER CD shapefiles — was not needed.)
 
 ---
 
