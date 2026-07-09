@@ -70,7 +70,8 @@ export interface RevealQuote {
   /** Edited/revealed quote — the source of truth shown by default. */
   text: string;
   supported: boolean;
-  /** Per-topic rank (1-based) for agreed quotes; null for disagreed. */
+  /** Global rank (1-based) across the whole race for agreed quotes; null for
+   *  disagreed. Per-topic ranks are re-derived from this in `buildPerTopicRankMap`. */
   rank: number | null;
   sourceName?: string;
   sourceUrl?: string;
