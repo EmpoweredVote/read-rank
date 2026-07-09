@@ -1,4 +1,5 @@
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { getStateFips } from '../utils/stateNames';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
@@ -77,8 +78,7 @@ function normalize(s: string): string {
   return s
     .toLowerCase()
     .replace(/\b(county|parish|borough)\b/g, '')
-    .replace(/[^a-z]/g, '')
-    .trim();
+    .replace(/[^a-z]/g, '');
 }
 
 /** Map a classification to a navigation intent using the county-name index for GEOID lookup.
@@ -93,7 +93,12 @@ export function routeFromClassification(
   if (c.kind === 'state') return { kind: 'browse-state', state: c.stateAbbrev };
   if ((c.kind === 'county' || c.kind === 'city') && c.countyName) {
     const target = normalize(c.countyName);
-    const hit = Object.entries(counties).find(([, name]) => normalize(name) === target);
+    const stateFips = getStateFips(c.stateAbbrev);
+    const hit = stateFips
+      ? Object.entries(counties).find(
+          ([geoid, name]) => geoid.startsWith(stateFips) && normalize(name) === target,
+        )
+      : undefined;
     if (hit) return { kind: 'browse-county', geoid: hit[0], state: c.stateAbbrev };
     return { kind: 'browse-state', state: c.stateAbbrev };
   }

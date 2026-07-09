@@ -26,4 +26,20 @@ describe('routeFromClassification', () => {
     expect(routeFromClassification({ kind: 'unknown' }, counties, 'zzz'))
       .toEqual({ kind: 'address' });
   });
+  it('county name not in the index but state known → browse that state', () => {
+    expect(routeFromClassification(
+      { kind: 'county', stateAbbrev: 'CA', countyName: 'Nowhere County' }, counties, 'Nowhere',
+    )).toEqual({ kind: 'browse-state', state: 'CA' });
+  });
+  it('scopes county match to the resolved state when the name repeats across states', () => {
+    const multiState = {
+      '53061': 'Snohomish County',
+      '06037': 'Los Angeles County',
+      '17999': 'Washington County',
+      '49053': 'Washington County',
+    };
+    expect(routeFromClassification(
+      { kind: 'county', stateAbbrev: 'UT', countyName: 'Washington County' }, multiState, 'Washington County',
+    )).toEqual({ kind: 'browse-county', geoid: '49053', state: 'UT' });
+  });
 });
