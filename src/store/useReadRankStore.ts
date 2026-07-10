@@ -513,7 +513,7 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 9,
+      version: 10,
       migrate: (persistedState, version) => {
         // v9: per-topic agreed arrays. Cannot map old race.agreed (no topicKey
         // partition guaranteed). Reset race progress; preserve onboarding flags.
