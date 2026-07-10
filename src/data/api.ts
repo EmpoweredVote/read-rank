@@ -132,14 +132,39 @@ export interface RevealResult {
 // Race endpoints (with offline mock fallback)
 // ============================================================
 
+/**
+ * Resolved district GEOIDs for the user's address, keyed by district type.
+ * Mirrors the backend `JurisdictionGeoIds` shape (ev-accounts). Each field is a
+ * GEOID string or null when that district type wasn't resolved (e.g. no county,
+ * or a statewide-only address).
+ */
+export interface JurisdictionGeoIds {
+  congressional: string | null;
+  state_senate: string | null;
+  state_house: string | null;
+  county: string | null;
+  school_district: string | null;
+}
+
 /** List races that have enough de-identified quote data to play. */
 export async function fetchRaces(
   politicianIds?: string[],
+  jurisdiction?: JurisdictionGeoIds | null,
 ): Promise<{ races: RaceSummary[]; counties: CountyIndex }> {
   try {
-    const qs = politicianIds && politicianIds.length
-      ? `?politician_ids=${encodeURIComponent(politicianIds.join(','))}`
-      : '';
+    const params = new URLSearchParams();
+    if (politicianIds && politicianIds.length) {
+      params.set('politician_ids', politicianIds.join(','));
+    }
+    if (jurisdiction) {
+      if (jurisdiction.congressional) params.set('cd', jurisdiction.congressional);
+      if (jurisdiction.state_senate) params.set('sldu', jurisdiction.state_senate);
+      if (jurisdiction.state_house) params.set('sldl', jurisdiction.state_house);
+      if (jurisdiction.county) params.set('county', jurisdiction.county);
+      if (jurisdiction.school_district) params.set('school', jurisdiction.school_district);
+    }
+    const qsString = params.toString();
+    const qs = qsString ? `?${qsString}` : '';
     const res = await fetch(`${API_BASE}/readrank/races${qs}`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const data = await res.json();
@@ -250,7 +275,24 @@ export interface SearchPoliticiansResult {
   data: SearchPolitician[];
   formattedAddress: string;
   county: { geoid: string; name: string } | null;
+  /** Resolved district GEOIDs for the address; null on older backends that don't return it. */
+  jurisdiction: JurisdictionGeoIds | null;
   error?: string;
+}
+
+/** Parses the `jurisdiction` object from a search response body. Null when absent
+ *  (older backend) or malformed, so callers can fall back to roster-only matching. */
+function parseJurisdiction(raw: unknown): JurisdictionGeoIds | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const j = raw as Record<string, unknown>;
+  const field = (key: string): string | null => (typeof j[key] === 'string' ? (j[key] as string) : null);
+  return {
+    congressional: field('congressional'),
+    state_senate: field('state_senate'),
+    state_house: field('state_house'),
+    county: field('county'),
+    school_district: field('school_district'),
+  };
 }
 
 export async function searchPoliticians(query: string): Promise<SearchPoliticiansResult> {
@@ -260,12 +302,12 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
       body: JSON.stringify({ query }),
     });
     if (!res) {
-      return { status: 'error', data: [], error: 'Unauthorized', formattedAddress: '', county: null };
+      return { status: 'error', data: [], error: 'Unauthorized', formattedAddress: '', county: null, jurisdiction: null };
     }
     const status = res.headers.get('X-Data-Status') || res.headers.get('x-data-status') || '';
     const formattedAddress = res.headers.get('X-Formatted-Address') || res.headers.get('x-formatted-address') || '';
     if (!res.ok) {
-      return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '', county: null };
+      return { status: 'error', data: [], error: `${res.status} ${res.statusText}`, formattedAddress: '', county: null, jurisdiction: null };
     }
     const raw = await res.json();
     const data: SearchPolitician[] = Array.isArray(raw) ? raw : (raw?.politicians ?? []);
@@ -273,8 +315,9 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
     const county = rawCounty && typeof rawCounty.geoid === 'string' && rawCounty.geoid
       ? { geoid: rawCounty.geoid as string, name: typeof rawCounty.name === 'string' ? rawCounty.name : '' }
       : null;
-    return { status: status || 'fresh', data, formattedAddress, county };
+    const jurisdiction = (raw && !Array.isArray(raw)) ? parseJurisdiction(raw.jurisdiction) : null;
+    return { status: status || 'fresh', data, formattedAddress, county, jurisdiction };
   } catch (error) {
-    return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '', county: null };
+    return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '', county: null, jurisdiction: null };
   }
 }

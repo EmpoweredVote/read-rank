@@ -60,6 +60,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         state: parseStateFromAddress(formattedAddress),
         county: result.county?.geoid ?? null,
         countyName: result.county?.name ?? null,
+        jurisdiction: result.jurisdiction ?? null,
       });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
     } else {

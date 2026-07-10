@@ -15,6 +15,7 @@ describe('Landing', () => {
     // default no-location view is the LA example ballot, which the demo race isn't in.
     useReadRankStore.getState().setLocationFilter({
       address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+      jurisdiction: null,
     });
     render(<Landing />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/read candidates blind/i);

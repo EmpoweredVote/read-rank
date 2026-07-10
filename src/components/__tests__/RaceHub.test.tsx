@@ -45,6 +45,7 @@ describe('RaceHub arena cards', () => {
     // tabs) surfaces the mock race.
     useReadRankStore.getState().setLocationFilter({
       address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+      jurisdiction: null,
     });
     render(<RaceHub />);
     // jsdom fetch fails -> mock fallback supplies the Indiana demo race (2024-11-05 = past).
@@ -69,8 +70,27 @@ describe('RaceHub browse wiring', () => {
       { '06037': 'Los Angeles County' },
     );
     render(<RaceHub />);
-    expect(await screen.findByText(/los angeles ballot/i, undefined, { timeout: 3000 })).toBeInTheDocument();
+    // The example view shows the address nudge and the LA-county race(s).
+    expect(await screen.findByText(/enter your address above/i, undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+  });
+
+  it('passes the resolved jurisdiction geoids to the races fetch', async () => {
+    stubRacesFetch(
+      [race({ raceId: 'in-9', office: 'US Representative', state: 'IN', countyGeoIds: ['18105'], isLocal: true })],
+      { '18105': 'Monroe County' },
+    );
+    useReadRankStore.getState().setLocationFilter({
+      address: 'Bloomington, IN', politicianIds: [], state: 'IN', county: '18105', countyName: 'Monroe County',
+      jurisdiction: { congressional: '1809', state_senate: null, state_house: null, county: '18105', school_district: null },
+    });
+    render(<RaceHub />);
+    await screen.findByRole('button', { name: /open us representative race/i }, { timeout: 3000 });
+    const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.map((c) => String(c[0]));
+    const racesUrl = calls.find((u) => u.includes('/readrank/races'));
+    expect(racesUrl).toContain('cd=1809');
+    expect(racesUrl).toContain('county=18105');
+    expect(racesUrl).not.toContain('sldu=');
   });
 
   it('renders the browse UI when browseTarget is set in the store', async () => {
