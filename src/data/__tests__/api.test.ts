@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fetchRaceQuotes, fetchRaces, searchPoliticians } from '../api';
 
+// These tests assert the permanent blindness/thin-topic invariants, independent of
+// the temporary content lockdown. Neutralize the allowlist here; its filtering is
+// covered directly in contentLockdown.test.ts.
+vi.mock('../../config/liveContent', () => ({
+  isRaceAllowed: () => true,
+  isTopicAllowed: () => true,
+}));
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });

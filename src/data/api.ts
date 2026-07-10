@@ -1,4 +1,5 @@
 import { apiFetch } from '../lib/auth';
+import { isRaceAllowed, isTopicAllowed } from '../config/liveContent';
 import type { BlindQuote, RacePayload, VerdictRecord } from '../store/useReadRankStore';
 
 const API_BASE = import.meta.env.VITE_API_URL
@@ -169,7 +170,8 @@ export async function fetchRaces(
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const data = await res.json();
     return {
-      races: (data.races ?? []) as RaceSummary[],
+      // Content lockdown: restrict live races to the allowlist (src/config/liveContent.ts).
+      races: ((data.races ?? []) as RaceSummary[]).filter((r) => isRaceAllowed(r.raceId)),
       counties: (data.counties ?? {}) as CountyIndex,
     };
   } catch (err) {
@@ -229,7 +231,9 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
   try {
     const res = await fetch(`${API_BASE}/readrank/races/${encodeURIComponent(raceId)}/quotes`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return sanitizeRacePayload((await res.json()) as RacePayload);
+    const payload = sanitizeRacePayload((await res.json()) as RacePayload);
+    // Content lockdown: restrict live topics to the allowlist (src/config/liveContent.ts).
+    return { ...payload, topics: payload.topics.filter((t) => isTopicAllowed(t.topicKey)) };
   } catch (err) {
     console.error('Failed to fetch race quotes, falling back to mock', err);
     const { buildMockRacePayload } = await import('./mockData');
