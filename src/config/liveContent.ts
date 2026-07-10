@@ -23,6 +23,13 @@ export const ALLOWED_TOPIC_KEYS: readonly string[] | null = [
   'homelessness',
 ];
 
+/** True while any content lockdown is in effect (races and/or topics restricted).
+ *  Drives the audit banner — it disappears automatically once the allowlists are
+ *  set back to null after the audit. */
+export function isContentLockdownActive(): boolean {
+  return ALLOWED_RACE_IDS != null || ALLOWED_TOPIC_KEYS != null;
+}
+
 export function isRaceAllowed(raceId: string): boolean {
   return ALLOWED_RACE_IDS == null || ALLOWED_RACE_IDS.includes(raceId);
 }

@@ -622,6 +622,53 @@ dialog::backdrop {
   color: var(--banner-heading);
 }
 
+/* Audit / maintenance notice — full-width strip under the header */
+.rr-audit-banner {
+  background: linear-gradient(135deg, var(--banner-from) 0%, var(--banner-to) 100%);
+  border-bottom: 1px solid var(--banner-border);
+}
+.rr-audit-banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.625rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.rr-audit-banner-text {
+  flex: 1;
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.rr-audit-banner-label {
+  font-weight: 800;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--banner-heading);
+  margin-right: 0.45rem;
+}
+.rr-audit-banner-text strong { color: var(--text-heading); font-weight: 700; }
+.rr-audit-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.125rem;
+  line-height: 0;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease;
+}
+.rr-audit-banner-close:hover { color: var(--text-heading); }
+.rr-audit-banner-close:focus-visible {
+  outline: 2px solid var(--color-ev-muted-blue);
+  outline-offset: 2px;
+}
+
 /* ============================================
    Issue Eyebrow + Topic Picker
    ============================================ */
