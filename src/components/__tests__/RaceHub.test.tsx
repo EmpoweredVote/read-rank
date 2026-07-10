@@ -5,6 +5,19 @@ import { RaceHub } from '../RaceHub';
 import { useReadRankStore } from '../../store/useReadRankStore';
 import type { RaceSummary, CountyIndex } from '../../data/api';
 
+// The temporary content lockdown (src/config/liveContent.ts) filters races/topics
+// inside fetchRaces/fetchRaceQuotes. RaceHub's job is routing/rendering, not the
+// lockdown — the allowlist is exercised directly in data/api's contentLockdown test.
+// Neutralize it here so these tests use their own fixtures, but keep a known
+// DEFAULT_RACE_ID to assert the no-location default-race behavior.
+vi.mock('../../config/liveContent', () => ({
+  DEFAULT_RACE_ID: 'ca-governor',
+  ALLOWED_RACE_IDS: null,
+  ALLOWED_TOPIC_KEYS: null,
+  isRaceAllowed: () => true,
+  isTopicAllowed: () => true,
+}));
+
 beforeEach(() => {
   window.localStorage?.clear();
   useReadRankStore.getState().reset();
@@ -63,16 +76,20 @@ describe('RaceHub arena cards', () => {
 });
 
 describe('RaceHub browse wiring', () => {
-  it('renders the LA example ballot when no location is set', async () => {
-    // No locationFilter -> the default view is the Los Angeles (06037) example ballot.
+  it('renders only the featured default race (CA Governor) when no location is set', async () => {
+    // No locationFilter -> the default view shows only the DEFAULT_RACE_ID race,
+    // not other races that happen to be served.
     stubRacesFetch(
-      [race({ raceId: 'la-mayor', office: 'Mayor', countyGeoIds: ['06037'] })],
+      [
+        race({ raceId: 'ca-governor', office: 'Governor', scope: 'statewide', tier: 'state', countyGeoIds: [] }),
+        race({ raceId: 'la-mayor', office: 'Mayor', countyGeoIds: ['06037'] }),
+      ],
       { '06037': 'Los Angeles County' },
     );
     render(<RaceHub />);
-    // The example view shows the address nudge and the LA-county race(s).
     expect(await screen.findByText(/enter your address above/i, undefined, { timeout: 3000 })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open mayor race/i })).not.toBeInTheDocument();
   });
 
   it('passes the resolved jurisdiction geoids to the races fetch', async () => {

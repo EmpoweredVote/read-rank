@@ -10,12 +10,10 @@ import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
 import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
-import { groupRaces, racesInCounty, type TimeFilter } from '../utils/raceGrouping';
+import { groupRaces, type TimeFilter } from '../utils/raceGrouping';
 import { getStateName } from '../utils/stateNames';
 import { track } from '../lib/analytics';
-
-/** Default showcase location when nothing is known about the user (Los Angeles County). */
-const LA_COUNTY_GEOID = '06037';
+import { DEFAULT_RACE_ID } from '../config/liveContent';
 
 interface RaceHubProps {
   hideHeader?: boolean;
@@ -255,13 +253,17 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       </div>
     );
   } else {
-    // View 3 — no location: example Los Angeles ballot.
-    const laRaces = racesInCounty(races, LA_COUNTY_GEOID);
+    // View 3 — no location: the featured default race (CA Governor during lockdown).
+    // Fall back to any rankable race so this view is never empty if the default isn't served.
+    const featured = races.find((r) => r.raceId === DEFAULT_RACE_ID);
+    const defaultRaces = featured
+      ? [featured]
+      : races.filter((r) => (r.rankableTopicCount ?? r.topicCount) > 0);
     content = (
       <div className="w-full">
         <p className="rr-example-note">Enter your address above to see your own races.</p>
         <div className="race-grid">
-          {laRaces.map((r, i) => renderCard(r, i))}
+          {defaultRaces.map((r, i) => renderCard(r, i))}
         </div>
         <button
           className="ev-button-secondary"

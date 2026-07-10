@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Header, getFeedbackUrl } from '@empoweredvote/ev-ui';
 import { track, identify, resetIdentity } from './lib/analytics';
 import { PhaseContainer } from './components/PhaseContainer';
+import { AuditBanner } from './components/AuditBanner';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
 import { useAuthState } from './hooks/useAuthState';
@@ -135,6 +136,7 @@ function MainApp() {
         secondaryAction={<ThemeToggle />}
         onNavigate={(href) => { window.location.href = href; }}
       />
+      <AuditBanner />
       <DevHelper />
       <main className={phase === 'hub' ? undefined : 'container mx-auto px-4 py-8 max-w-4xl xl:max-w-6xl 2xl:max-w-[1400px]'}>
         <PhaseContainer />
