@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
@@ -39,13 +39,34 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const m = useMotion();
   const politicianIds = locationFilter?.politicianIds;
+  const jurisdiction = locationFilter?.jurisdiction ?? null;
+  // fetchRaces takes `jurisdiction` as an object, but a new address search (or a
+  // store rehydrate) creates a new object identity every time even when the
+  // underlying geoids are unchanged. Deriving a flat string key lets the effect
+  // below depend on the *content* of the jurisdiction rather than its identity,
+  // so we refetch exactly when the geoids actually change instead of on every
+  // render (which would otherwise loop: fetch -> setRaces -> render -> new
+  // jurisdiction object -> fetch -> ...).
+  const jurisdictionKey = useMemo(
+    () => jurisdiction
+      ? [
+          jurisdiction.congressional,
+          jurisdiction.state_senate,
+          jurisdiction.state_house,
+          jurisdiction.county,
+          jurisdiction.school_district,
+        ].join('|')
+      : '',
+    [jurisdiction],
+  );
 
   useEffect(() => {
     setLoading(true);
-    fetchRaces(politicianIds)
+    fetchRaces(politicianIds, jurisdiction)
       .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
       .finally(() => setLoading(false));
-  }, [politicianIds, setCounties]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [politicianIds, setCounties, jurisdictionKey]);
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);

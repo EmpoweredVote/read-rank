@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CountyIndex } from '../data/api';
+import type { CountyIndex, JurisdictionGeoIds } from '../data/api';
 
 // ============================================
 // Types — race -> topics -> blind quotes
@@ -94,6 +94,10 @@ export interface LocationFilter {
   county: string | null;
   /** Display name for the county; null when unknown. */
   countyName: string | null;
+  /** Resolved district GEOIDs from the address search, used to geo-match `isLocal`
+   *  races on the hub. Null when unresolved or on an older backend that doesn't
+   *  return it yet. */
+  jurisdiction: JurisdictionGeoIds | null;
 }
 
 export type Phase = 'hub' | 'practice' | 'evaluation' | 'results' | 'issue-selection';
@@ -526,6 +530,8 @@ export const useReadRankStore = create<ReadRankState>()(
                 state: prev.locationFilter.state ?? null,
                 county: prev.locationFilter.county ?? null,
                 countyName: prev.locationFilter.countyName ?? null,
+                // Old persisted filters predate `jurisdiction` — tolerate its absence.
+                jurisdiction: prev.locationFilter.jurisdiction ?? null,
               }
             : null,
         };

@@ -45,6 +45,7 @@ describe('RaceHub arena cards', () => {
     // tabs) surfaces the mock race.
     useReadRankStore.getState().setLocationFilter({
       address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+      jurisdiction: null,
     });
     render(<RaceHub />);
     // jsdom fetch fails -> mock fallback supplies the Indiana demo race (2024-11-05 = past).
@@ -69,7 +70,8 @@ describe('RaceHub browse wiring', () => {
       { '06037': 'Los Angeles County' },
     );
     render(<RaceHub />);
-    expect(await screen.findByText(/los angeles ballot/i, undefined, { timeout: 3000 })).toBeInTheDocument();
+    // The example view shows the address nudge and the LA-county race(s).
+    expect(await screen.findByText(/enter your address above/i, undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
   });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchRaceQuotes } from '../api';
+import { fetchRaceQuotes, fetchRaces, searchPoliticians } from '../api';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -105,5 +105,88 @@ describe('fetchRaceQuotes structural blindness', () => {
       candidateToken: 'tok-a',
       topicKey: 'economy',
     });
+  });
+});
+
+describe('searchPoliticians jurisdiction parsing', () => {
+  it('parses jurisdiction geoids from the search response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          politicians: [{ id: 'p1', name: 'Jane Doe' }],
+          county: { geoid: '06037', name: 'Los Angeles County' },
+          jurisdiction: {
+            congressional: '0634',
+            state_senate: '06SU-1',
+            state_house: null,
+            county: '06037',
+            school_district: null,
+          },
+        }),
+      })
+    );
+    const result = await searchPoliticians('123 Main St, Los Angeles, CA');
+    expect(result.jurisdiction).toEqual({
+      congressional: '0634',
+      state_senate: '06SU-1',
+      state_house: null,
+      county: '06037',
+      school_district: null,
+    });
+  });
+
+  it('returns jurisdiction: null when the backend omits it (older backend)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          politicians: [{ id: 'p1', name: 'Jane Doe' }],
+          county: null,
+        }),
+      })
+    );
+    const result = await searchPoliticians('123 Main St, Los Angeles, CA');
+    expect(result.jurisdiction).toBeNull();
+  });
+});
+
+describe('fetchRaces query string', () => {
+  it('stays backward-compatible with no jurisdiction (politician_ids only)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces(['p1', 'p2']);
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/readrank/races?politician_ids=p1%2Cp2'));
+  });
+
+  it('appends jurisdiction geoids as cd/sldu/sldl/county/school query params', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces(['p1'], {
+      congressional: '0634',
+      state_senate: '06SU-1',
+      state_house: null,
+      county: '06037',
+      school_district: null,
+    });
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const qs = new URLSearchParams(calledUrl.split('?')[1]);
+    expect(qs.get('politician_ids')).toBe('p1');
+    expect(qs.get('cd')).toBe('0634');
+    expect(qs.get('sldu')).toBe('06SU-1');
+    expect(qs.get('county')).toBe('06037');
+    expect(qs.has('sldl')).toBe(false);
+    expect(qs.has('school')).toBe(false);
+  });
+
+  it('omits the query string entirely when neither politician ids nor jurisdiction are given', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces();
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/readrank\/races$/));
   });
 });

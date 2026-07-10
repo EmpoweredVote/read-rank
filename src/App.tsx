@@ -81,6 +81,7 @@ function MainApp() {
           state: parseStateFromAddress(decoded),
           county: result.county?.geoid ?? null,
           countyName: result.county?.name ?? null,
+          jurisdiction: result.jurisdiction ?? null,
         });
       }
     });
