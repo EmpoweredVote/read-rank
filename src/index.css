@@ -2498,6 +2498,16 @@ button.rank-num:focus-visible .rank-num-badge {
   color: var(--text-link);
   overflow: hidden;
 }
+/* Neutral loading placeholder for a map motif while its geometry loads (replaces the
+   dot-field so there's no dots→map switch; the dot-field is kept only for a genuine
+   no-boundary result). */
+.rr-motif-skeleton {
+  display: block; width: 100%; height: 100%;
+  background: var(--surface-raised);
+  animation: rr-motif-pulse 1.4s ease-in-out infinite;
+}
+@keyframes rr-motif-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+@media (prefers-reduced-motion: reduce) { .rr-motif-skeleton { animation: none; opacity: 0.6; } }
 .race-card-v2__body {
   flex: 1; min-width: 0;
 }

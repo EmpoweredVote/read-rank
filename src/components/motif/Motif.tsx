@@ -1,5 +1,5 @@
 // src/components/motif/Motif.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMotion, DUR, EASE } from '../../motion';
 import { resolveMotif, fallbackArrangement } from './resolveMotif';
@@ -69,14 +69,33 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
   childRef: BoundaryRef; frameRef: BoundaryRef | null; fallback: 'full' | 'cluster' | 'point';
 }) {
   const m = useMotion();
+  const containerRef = useRef<HTMLSpanElement>(null);
   const [paths, setPaths] = useState<Paths | null>(() => syncPaths(childRef, frameRef));
+  const [failed, setFailed] = useState(false);
 
   const cl = childRef.layer, cg = childRef.geoid;
   const fl = frameRef?.layer ?? null, fg = frameRef?.geoid ?? null;
   const hasInlineGeom = Boolean(childRef.geojson);
+  const needsFetch = !paths && !hasInlineGeom;
+
+  // Scroll-ahead: only fetch geometry once the card is near the viewport, so a long
+  // Browse list doesn't fire hundreds of requests at once and cards load just before
+  // they're seen. In-view cards (landing / ballot) intersect immediately. No
+  // IntersectionObserver (jsdom/tests) → fetch right away.
+  const [nearView, setNearView] = useState(false);
+  useEffect(() => {
+    if (!needsFetch) return;
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setNearView(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setNearView(true); io.disconnect(); }
+    }, { rootMargin: '300px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [needsFetch]);
 
   useEffect(() => {
-    if (hasInlineGeom) return; // already resolved from props — no fetch needed
+    if (hasInlineGeom || !nearView) return;
     let alive = true;
     (async () => {
       // Child + frame in parallel (both cached/deduped) so first load is one round-trip.
@@ -85,18 +104,20 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
         fl && fg ? fetchBoundary({ layer: fl, geoid: fg }) : Promise.resolve<BoundaryResult | null>(null),
       ]);
       if (!alive) return;
-      setPaths(child ? pathsFromResults(child, frame) : null);
-    })().catch(() => { if (alive) setPaths(null); });
+      if (child) setPaths(pathsFromResults(child, frame));
+      else setFailed(true); // no boundary available → fall back to the dot-field
+    })().catch(() => { if (alive) setFailed(true); });
     return () => { alive = false; };
-  }, [cl, cg, fl, fg, hasInlineGeom]);
+  }, [nearView, cl, cg, fl, fg, hasInlineGeom]);
 
   return (
-    <span style={{ position: 'relative', display: 'block', width: '100%', height: '100%' }}>
+    <span ref={containerRef} style={{ position: 'relative', display: 'block', width: '100%', height: '100%' }}>
       <AnimatePresence initial={false}>
         {!paths ? (
           <motion.span key="ph" style={{ position: 'absolute', inset: 0 }}
             exit={{ opacity: 0 }} transition={m.transition(DUR.fast, EASE.standard)}>
-            <DotField arrangement={fallback} />
+            {/* Neutral skeleton while loading; the dot-field only for a genuine no-boundary result. */}
+            {failed ? <DotField arrangement={fallback} /> : <span className="rr-motif-skeleton" />}
           </motion.span>
         ) : (
           <motion.svg key="map" style={{ position: 'absolute', inset: 0 }}
