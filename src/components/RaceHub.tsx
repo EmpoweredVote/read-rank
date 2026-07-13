@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
-import { fetchRaces, fetchRaceQuotes, type RaceSummary } from '../data/api';
+import { fetchRaces, fetchRaceQuotes, prefetchBoundaries, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
 import { RaceBrowse } from './RaceBrowse';
@@ -65,6 +65,26 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [politicianIds, setCounties, jurisdictionKey]);
+
+  // Warm boundary geometry for the cards this view will show, so their map motifs
+  // resolve without the dot-field placeholder flashing. Browse renders its own (large)
+  // list, so skip it here — the cards fetch on mount and dedupe against the cache.
+  useEffect(() => {
+    if (loading || browseTarget) return;
+    let toShow: RaceSummary[];
+    if (locationFilter != null) {
+      const { sections } = groupRaces({
+        races, located: true, userState: locationFilter.state ?? null,
+        userCounty: locationFilter.county ?? null, userCountyName: locationFilter.countyName ?? null,
+        timeFilter, today: todayISO(),
+      });
+      toShow = sections.flatMap((s) => s.races);
+    } else {
+      const featured = races.find((r) => r.raceId === DEFAULT_RACE_ID);
+      toShow = featured ? [featured] : races.filter((r) => (r.rankableTopicCount ?? r.topicCount) > 0);
+    }
+    prefetchBoundaries(toShow.flatMap((r) => [r.boundaryRef, r.frameRef]));
+  }, [loading, browseTarget, races, timeFilter, locationFilter]);
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);

@@ -181,21 +181,53 @@ export async function fetchRaces(
   }
 }
 
+// Boundary geometry is lazy-loaded per rendered card. Cache it for the process
+// lifetime, keyed by `layer:geoid`, to (a) dedupe the many cards that share the same
+// state/US frame into one request, (b) make navigation and re-mounts instant, and
+// (c) let a motif render synchronously from cache with no placeholder flash.
+// Boundaries are static, so caching misses (null) is fine.
+const boundaryPromises = new Map<string, Promise<BoundaryResult | null>>();
+const boundaryResolved = new Map<string, BoundaryResult | null>();
+
+/** Synchronously read an already-resolved boundary, or `undefined` if not fetched yet. */
+export function getCachedBoundary(ref: BoundaryRef): BoundaryResult | null | undefined {
+  return boundaryResolved.get(`${ref.layer}:${ref.geoid}`);
+}
+
+/** Clear the boundary cache. For tests and HMR — production never needs it (static data). */
+export function resetBoundaryCache(): void {
+  boundaryPromises.clear();
+  boundaryResolved.clear();
+}
+
 /**
- * Simplified boundary geometry for a motif. Returns null on any failure or
- * when the backend has no boundary, so callers fall back to the dot-field.
+ * Simplified boundary geometry for a motif. Returns null on any failure or when the
+ * backend has no boundary, so callers fall back to the dot-field. Cached + deduped.
  */
-export async function fetchBoundary(ref: BoundaryRef): Promise<BoundaryResult | null> {
-  try {
-    const qs = `layer=${encodeURIComponent(ref.layer)}&geoid=${encodeURIComponent(ref.geoid)}`;
-    const res = await fetch(`${API_BASE}/inform/boundary?${qs}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data || data.hasBoundary === false || !data.geojson) return null;
-    return data as BoundaryResult;
-  } catch {
-    return null;
-  }
+export function fetchBoundary(ref: BoundaryRef): Promise<BoundaryResult | null> {
+  const key = `${ref.layer}:${ref.geoid}`;
+  const hit = boundaryPromises.get(key);
+  if (hit) return hit;
+  const p = (async (): Promise<BoundaryResult | null> => {
+    try {
+      const qs = `layer=${encodeURIComponent(ref.layer)}&geoid=${encodeURIComponent(ref.geoid)}`;
+      const res = await fetch(`${API_BASE}/inform/boundary?${qs}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data || data.hasBoundary === false || !data.geojson) return null;
+      return data as BoundaryResult;
+    } catch {
+      return null;
+    }
+  })().then((result) => { boundaryResolved.set(key, result); return result; });
+  boundaryPromises.set(key, p);
+  return p;
+}
+
+/** Warm the cache for boundaries about to render, so their motifs resolve without the
+ *  dot-field placeholder flashing. Fire-and-forget; deduped by fetchBoundary. */
+export function prefetchBoundaries(refs: Array<BoundaryRef | null | undefined>): void {
+  for (const ref of refs) if (ref) void fetchBoundary(ref);
 }
 
 /**
