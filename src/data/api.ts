@@ -151,6 +151,7 @@ export interface JurisdictionGeoIds {
 export async function fetchRaces(
   politicianIds?: string[],
   jurisdiction?: JurisdictionGeoIds | null,
+  embedRaceIds?: string[],
 ): Promise<{ races: RaceSummary[]; counties: CountyIndex }> {
   try {
     const params = new URLSearchParams();
@@ -164,6 +165,9 @@ export async function fetchRaces(
       if (jurisdiction.county) params.set('county', jurisdiction.county);
       if (jurisdiction.school_district) params.set('school', jurisdiction.school_district);
     }
+    // Ask the backend to inline boundary geometry for these races (cards rendered
+    // immediately, e.g. the featured landing card) so their motif skips the lazy fetch.
+    if (embedRaceIds && embedRaceIds.length) params.set('embed', embedRaceIds.join(','));
     const qsString = params.toString();
     const qs = qsString ? `?${qsString}` : '';
     const res = await fetch(`${API_BASE}/readrank/races${qs}`);

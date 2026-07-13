@@ -60,7 +60,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   useEffect(() => {
     setLoading(true);
-    fetchRaces(politicianIds, jurisdiction)
+    // On the no-location landing, the featured default race renders immediately —
+    // ask the backend to inline its geometry so its motif doesn't flash dots → map.
+    const embed = locationFilter == null ? [DEFAULT_RACE_ID] : undefined;
+    fetchRaces(politicianIds, jurisdiction, embed)
       .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
