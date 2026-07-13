@@ -288,7 +288,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         <button
           className="ev-button-secondary"
           style={{ marginTop: '1.25rem' }}
-          onClick={() => setBrowseTarget({ state: 'CA', geoid: null })}
+          onClick={() => setBrowseTarget({ state: '', geoid: null })}
         >
           Browse all races ›
         </button>

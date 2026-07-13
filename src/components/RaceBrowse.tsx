@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useDeferredValue, useMemo, useState } from 'react';
 import type { RaceSummary, CountyIndex } from '../data/api';
-import { statesWithCounts, countiesForState, racesInCounty } from '../utils/raceGrouping';
 import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
@@ -12,115 +11,146 @@ interface RaceBrowseProps {
   races: RaceSummary[];
   counties: CountyIndex;
   onSelect: (race: RaceSummary) => void;
-  /** Jump straight to a county (from smart search) or a state list; null = state list. */
+  /** Preset the state filter (from a place-name smart search or the located ballot). */
   initial: BrowseTarget | { state: string; geoid: null } | null;
   disabled?: boolean;
 }
 
-type Level =
-  | { level: 'states' }
-  | { level: 'counties'; state: string }
-  | { level: 'races'; state: string; geoid: string };
+// ── Categorisation (tier sections, matching essentials' tier grouping) ───────
+type Category = 'Statewide' | 'U.S. House' | 'State Legislature' | 'Local';
+const CATEGORY_ORDER: Category[] = ['Statewide', 'U.S. House', 'State Legislature', 'Local'];
 
-function initialLevel(initial: RaceBrowseProps['initial']): Level {
-  if (initial && 'geoid' in initial && initial.geoid) return { level: 'races', state: initial.state, geoid: initial.geoid };
-  if (initial && initial.state) return { level: 'counties', state: initial.state };
-  return { level: 'states' };
+function categoryOf(r: RaceSummary): Category {
+  const { tier, scope } = deriveTierScope(r);
+  const office = r.office.toLowerCase();
+  if (scope === 'statewide') return 'Statewide';
+  if (tier === 'federal' || /u\.?s\.?\s*(house|rep|congress)/.test(office)) return 'U.S. House';
+  if (tier === 'state' || /state (rep|sen|assembly|house|senate)|assembly/.test(office)) return 'State Legislature';
+  return 'Local';
 }
 
-const labelStyle: React.CSSProperties = {
-  fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '0.75rem',
-  letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-link)',
-  margin: '1rem 0 0.5rem',
-};
+// Search synonyms so "house" finds U.S./State Representatives, "senate" finds Senators, etc.
+function synonymsFor(cat: Category): string {
+  switch (cat) {
+    case 'U.S. House': return 'house representative congress congressional';
+    case 'State Legislature': return 'legislature assembly house senate representative senator';
+    default: return '';
+  }
+}
 
-function Breadcrumb({ nav, counties, onNavigate }: {
-  nav: Level; counties: CountyIndex; onNavigate: (l: Level) => void;
-}) {
-  return (
-    <nav className="flex items-center gap-2 mb-2" aria-label="Browse location" style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem' }}>
-      <button onClick={() => onNavigate({ level: 'states' })} className="font-bold" style={{ color: 'var(--text-link)', background: 'none', border: 'none', cursor: 'pointer' }}>All states</button>
-      {nav.level !== 'states' && (
-        <>
-          <span style={{ color: 'var(--text-tertiary)' }}>›</span>
-          <button
-            onClick={() => onNavigate({ level: 'counties', state: nav.state })}
-            className="font-bold" style={{ color: nav.level === 'counties' ? 'var(--text-secondary)' : 'var(--text-link)', background: 'none', border: 'none', cursor: 'pointer' }}
-          >{getStateName(nav.state) ?? nav.state}</button>
-        </>
-      )}
-      {nav.level === 'races' && (
-        <>
-          <span style={{ color: 'var(--text-tertiary)' }}>›</span>
-          <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{counties[nav.geoid] ?? nav.geoid}</span>
-        </>
-      )}
-    </nav>
-  );
+// ── Office-type filter (pills, like FilterBar's Type dropdown) ────────────────
+const OFFICE_FILTERS: { key: string; label: string; match: (r: RaceSummary, c: Category) => boolean }[] = [
+  { key: 'gov', label: 'Governor', match: (r) => /governor/i.test(r.office) },
+  { key: 'ussen', label: 'U.S. Senate', match: (r) => /u\.?s\.?\s*sen/i.test(r.office) },
+  { key: 'ushouse', label: 'U.S. House', match: (_r, c) => c === 'U.S. House' },
+  { key: 'stateleg', label: 'State Legislature', match: (_r, c) => c === 'State Legislature' },
+  { key: 'local', label: 'Local', match: (_r, c) => c === 'Local' },
+];
+
+function haystack(r: RaceSummary, counties: CountyIndex, cat: Category): string {
+  return [
+    r.office, r.seat, r.state, getStateName(r.state), r.electionName, synonymsFor(cat),
+    ...(r.countyGeoIds ?? []).map((g) => counties[g]),
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function matchesQuery(hay: string, q: string): boolean {
+  if (!q.trim()) return true;
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every((t) => hay.includes(t));
 }
 
 export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled }) => {
-  const [nav, setNav] = useState<Level>(() => initialLevel(initial));
+  const [query, setQuery] = useState('');
+  const [office, setOffice] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<string>(initial?.state ?? '');
+  const deferredQuery = useDeferredValue(query);
 
-  if (nav.level === 'states') {
-    const states = statesWithCounts(races);
-    return (
-      <div>
-        <div style={labelStyle}>Browse by state</div>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {states.map((s) => (
-            <li key={s.state}>
-              <button className="race-browse-row" onClick={() => setNav({ level: 'counties', state: s.state })}>
-                <span className="race-browse-row__name">{s.name}</span>
-                <span className="race-browse-row__count">{s.count} race{s.count !== 1 ? 's' : ''} ›</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+  // Precompute each race's category + search haystack once.
+  const indexed = useMemo(
+    () => races.map((r) => { const cat = categoryOf(r); return { r, cat, hay: haystack(r, counties, cat) }; }),
+    [races, counties],
+  );
+
+  const stateOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const { r } of indexed) if (r.state) seen.set(r.state, getStateName(r.state) ?? r.state);
+    return [...seen.entries()].map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [indexed]);
+
+  const sections = useMemo(() => {
+    const of = OFFICE_FILTERS.find((o) => o.key === office);
+    const filtered = indexed.filter(({ r, cat, hay }) =>
+      matchesQuery(hay, deferredQuery)
+      && (!of || of.match(r, cat))
+      && (!stateFilter || r.state === stateFilter),
     );
-  }
+    return CATEGORY_ORDER
+      .map((cat) => ({ cat, races: filtered.filter((x) => x.cat === cat).map((x) => x.r) }))
+      .filter((s) => s.races.length);
+  }, [indexed, deferredQuery, office, stateFilter]);
 
-  if (nav.level === 'counties') {
-    const list = countiesForState(races, counties, nav.state);
-    return (
-      <div>
-        <Breadcrumb nav={nav} counties={counties} onNavigate={setNav} />
-        <div style={labelStyle}>Counties in {getStateName(nav.state) ?? nav.state}</div>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {list.map((c) => (
-            <li key={c.geoid}>
-              <button className="race-browse-row" onClick={() => setNav({ level: 'races', state: nav.state, geoid: c.geoid })}>
-                <span className="race-browse-row__name">{c.name}</span>
-                <span className="race-browse-row__count">{c.count} race{c.count !== 1 ? 's' : ''} ›</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
+  const total = sections.reduce((n, s) => n + s.races.length, 0);
 
-  // level: races
-  const list = racesInCounty(races, nav.geoid);
+  const pill = (active: boolean) => `rr-browse-pill${active ? ' is-active' : ''}`;
+
   return (
-    <div>
-      <Breadcrumb nav={nav} counties={counties} onNavigate={setNav} />
-      <div className="race-grid">
-        {list.map((r, i) => {
-          const { tier, scope } = deriveTierScope(r);
-          return (
-            <RaceCard
-              key={r.raceId}
-              office={r.office} tier={tier} scope={scope} state={r.state} seat={r.seat ?? null}
-              electionDate={r.electionDate} boundaryRef={r.boundaryRef ?? null} frameRef={r.frameRef ?? null}
-              candidateCount={r.candidateCount} topicCount={r.rankableTopicCount ?? r.topicCount}
-              estMinutes={estimateMinutes({ quoteCount: r.quoteCount, candidateCount: r.candidateCount, topicCount: r.topicCount })}
-              disabled={disabled} onSelect={() => onSelect(r)} enterIndex={i}
-            />
-          );
-        })}
+    <div className="rr-browse">
+      <div className="rr-browse-search">
+        <svg className="rr-browse-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" strokeLinecap="round" />
+        </svg>
+        <input
+          className="rr-browse-search__input"
+          type="search"
+          placeholder="Search races — office, state, or place…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search races"
+        />
       </div>
+
+      <div className="rr-browse-filters" role="group" aria-label="Filter races">
+        <button className={pill(!office)} onClick={() => setOffice(null)} aria-pressed={!office}>All offices</button>
+        {OFFICE_FILTERS.map((o) => (
+          <button key={o.key} className={pill(office === o.key)} aria-pressed={office === o.key}
+            onClick={() => setOffice(office === o.key ? null : o.key)}>{o.label}</button>
+        ))}
+        <select className="rr-browse-select" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} aria-label="Filter by state">
+          <option value="">All states</option>
+          {stateOptions.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+        </select>
+      </div>
+
+      <p className="rr-browse-count">{total} race{total !== 1 ? 's' : ''}</p>
+
+      {sections.map((section) => (
+        <section key={section.cat} className="rr-browse-section">
+          <div className={`rr-browse-banner rr-browse-banner--${section.cat.replace(/[^a-z]/gi, '').toLowerCase()}`}>
+            {section.cat}<span className="rr-browse-banner__count">· {section.races.length}</span>
+          </div>
+          <div className="race-grid">
+            {section.races.map((r, i) => {
+              const { tier, scope } = deriveTierScope(r);
+              return (
+                <RaceCard
+                  key={r.raceId}
+                  office={r.office} tier={tier} scope={scope} state={r.state} seat={r.seat ?? null}
+                  electionDate={r.electionDate} boundaryRef={r.boundaryRef ?? null} frameRef={r.frameRef ?? null}
+                  candidateCount={r.candidateCount} topicCount={r.rankableTopicCount ?? r.topicCount}
+                  estMinutes={estimateMinutes({ quoteCount: r.quoteCount, candidateCount: r.candidateCount, topicCount: r.topicCount })}
+                  disabled={disabled} onSelect={() => onSelect(r)} enterIndex={i}
+                />
+              );
+            })}
+          </div>
+        </section>
+      ))}
+
+      {total === 0 && (
+        <p className="rr-browse-empty">
+          No races match{deferredQuery.trim() ? ` “${deferredQuery}”` : ''}. Try a broader search or clear the filters.
+        </p>
+      )}
     </div>
   );
 };
