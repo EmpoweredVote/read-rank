@@ -197,4 +197,12 @@ describe('fetchRaces query string', () => {
     await fetchRaces();
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/readrank\/races$/));
   });
+
+  it('appends embed race ids as the embed query param', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces(undefined, null, ['race-1', 'race-2']);
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(new URLSearchParams(url.split('?')[1]).get('embed')).toBe('race-1,race-2');
+  });
 });
