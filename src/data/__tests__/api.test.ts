@@ -205,4 +205,12 @@ describe('fetchRaces query string', () => {
     const url = fetchMock.mock.calls[0][0] as string;
     expect(new URLSearchParams(url.split('?')[1]).get('embed')).toBe('race-1,race-2');
   });
+
+  it('sets embed_local=1 when embedLocal is requested', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces(['p1'], null, undefined, true);
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(new URLSearchParams(url.split('?')[1]).get('embed_local')).toBe('1');
+  });
 });

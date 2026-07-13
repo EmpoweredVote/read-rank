@@ -152,6 +152,7 @@ export async function fetchRaces(
   politicianIds?: string[],
   jurisdiction?: JurisdictionGeoIds | null,
   embedRaceIds?: string[],
+  embedLocal?: boolean,
 ): Promise<{ races: RaceSummary[]; counties: CountyIndex }> {
   try {
     const params = new URLSearchParams();
@@ -168,6 +169,9 @@ export async function fetchRaces(
     // Ask the backend to inline boundary geometry for these races (cards rendered
     // immediately, e.g. the featured landing card) so their motif skips the lazy fetch.
     if (embedRaceIds && embedRaceIds.length) params.set('embed', embedRaceIds.join(','));
+    // On a located fetch, inline geometry for the user's own ("Your races") isLocal
+    // races so the top of the ballot paints its motif with no lazy-load flash.
+    if (embedLocal) params.set('embed_local', '1');
     const qsString = params.toString();
     const qs = qsString ? `?${qsString}` : '';
     const res = await fetch(`${API_BASE}/readrank/races${qs}`);
