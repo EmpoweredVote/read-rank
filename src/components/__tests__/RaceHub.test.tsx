@@ -117,10 +117,10 @@ describe('RaceHub browse wiring', () => {
     );
     useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
     render(<RaceHub />);
-    // Browse view: "Back to my ballot" affordance + the county drill-down for the state.
+    // Browse view: "Back to my ballot" affordance + the search-first browse (search box + cards).
     expect(await screen.findByRole('button', { name: /back to my ballot/i }, { timeout: 3000 })).toBeInTheDocument();
-    expect(screen.getByText(/counties in california/i)).toBeInTheDocument();
-    expect(screen.getByText('Los Angeles County')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search races')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
   });
 
   it('clicking "Browse all races" on the LA example ballot sets the store browseTarget', async () => {
@@ -132,6 +132,6 @@ describe('RaceHub browse wiring', () => {
     const browseBtn = await screen.findByRole('button', { name: /browse all races/i }, { timeout: 3000 });
     expect(useReadRankStore.getState().browseTarget).toBeNull();
     await userEvent.click(browseBtn);
-    expect(useReadRankStore.getState().browseTarget).toEqual({ state: 'CA', geoid: null });
+    expect(useReadRankStore.getState().browseTarget).toEqual({ state: '', geoid: null });
   });
 });

@@ -8,33 +8,62 @@ function race(p: Partial<RaceSummary> & { raceId: string }): RaceSummary {
     office: 'US Representative', electionName: 'E', electionDate: null, seat: null,
     state: 'CA', jurisdictionLevel: null, candidateCount: 2, topicCount: 3, quoteCount: 6,
     rankableTopicCount: 3, isLocal: false, tier: 'federal', scope: 'district',
-    boundaryRef: null, frameRef: null, countyGeoIds: ['06037'], ...p,
+    boundaryRef: null, frameRef: null, countyGeoIds: [], ...p,
   } as RaceSummary;
 }
 
 const races = [
-  race({ raceId: 'ca-cd', seat: 'District 30', countyGeoIds: ['06037'] }),
-  race({ raceId: 'ut-cd', state: 'UT', seat: 'District 1', countyGeoIds: ['49035'] }),
+  race({ raceId: 'ca-gov', office: 'Governor', state: 'CA', tier: 'state', scope: 'statewide' }),
+  race({ raceId: 'ca-cd', office: 'U.S. Representative', state: 'CA', tier: 'federal', scope: 'district', seat: 'District 30' }),
+  race({ raceId: 'ut-sen', office: 'State Senator', state: 'UT', tier: 'state', scope: 'district', seat: 'District 1' }),
+  race({ raceId: 'la-mayor', office: 'Los Angeles Mayor', state: 'CA', tier: 'local', scope: 'citywide' }),
 ];
-const counties = { '06037': 'Los Angeles County', '49035': 'Salt Lake County' };
 
-describe('RaceBrowse', () => {
-  it('drills state → county → races and only renders the active level', () => {
-    render(<RaceBrowse races={races} counties={counties} onSelect={vi.fn()} initial={null} />);
-    // Level: states
-    expect(screen.getByText('California')).toBeInTheDocument();
-    expect(screen.queryByText('Los Angeles County')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('California'));
-    // Level: counties
-    expect(screen.getByText('Los Angeles County')).toBeInTheDocument();
-    expect(screen.queryByText(/District 30/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Los Angeles County'));
-    // Level: races
-    expect(screen.getByText(/District 30/)).toBeInTheDocument();
+const setup = (initial: Parameters<typeof RaceBrowse>[0]['initial'] = null) =>
+  render(<RaceBrowse races={races} counties={{}} onSelect={vi.fn()} initial={initial} />);
+
+describe('RaceBrowse — search-first', () => {
+  it('groups races into tier sections with a total count', () => {
+    const { container } = setup();
+    expect(screen.getByText('4 races')).toBeInTheDocument();
+    const banners = [...container.querySelectorAll('.rr-browse-banner')].map((b) => b.textContent ?? '');
+    expect(banners.some((t) => /Statewide/.test(t))).toBe(true);
+    expect(banners.some((t) => /U\.S\. House/.test(t))).toBe(true);
+    expect(banners.some((t) => /State Legislature/.test(t))).toBe(true);
+    expect(banners.some((t) => /Local/.test(t))).toBe(true);
+    expect(screen.getByRole('button', { name: /open governor race/i })).toBeInTheDocument();
   });
 
-  it('starts at a county when given an initial geoid', () => {
-    render(<RaceBrowse races={races} counties={counties} onSelect={vi.fn()} initial={{ state: 'CA', geoid: '06037' }} />);
-    expect(screen.getByText(/District 30/)).toBeInTheDocument();
+  it('live-filters by the search box', async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText('Search races'), { target: { value: 'governor' } });
+    expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open state senator race/i })).not.toBeInTheDocument();
+  });
+
+  it('search synonyms: "house" matches U.S. Representative', async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText('Search races'), { target: { value: 'house' } });
+    expect(await screen.findByRole('button', { name: /open u\.s\. representative race/i })).toBeInTheDocument();
+  });
+
+  it('filters by an office-type pill', async () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Governor' }));
+    expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open state senator race/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open u\.s\. representative race/i })).not.toBeInTheDocument();
+  });
+
+  it('presets the state filter from `initial`', () => {
+    setup({ state: 'UT', geoid: null });
+    expect(screen.getByRole('button', { name: /open state senator race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open governor race/i })).not.toBeInTheDocument();
+  });
+
+  it('shows an empty state when nothing matches', async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText('Search races'), { target: { value: 'zzz-nothing' } });
+    expect(await screen.findByText(/no races match/i)).toBeInTheDocument();
   });
 });
