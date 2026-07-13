@@ -65,9 +65,13 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
   const [stateFilter, setStateFilter] = useState<string>(initial?.state ?? '');
   const deferredQuery = useDeferredValue(query);
 
-  // Precompute each race's category + search haystack once.
+  // Precompute each race's category + search haystack once. Drop races with no
+  // rankable topics — you can't actually rank them, so they shouldn't surface here
+  // (matches the located ballot and the old county browse).
   const indexed = useMemo(
-    () => races.map((r) => { const cat = categoryOf(r); return { r, cat, hay: haystack(r, counties, cat) }; }),
+    () => races
+      .filter((r) => (r.rankableTopicCount ?? r.topicCount) > 0)
+      .map((r) => { const cat = categoryOf(r); return { r, cat, hay: haystack(r, counties, cat) }; }),
     [races, counties],
   );
 

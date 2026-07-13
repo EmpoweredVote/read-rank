@@ -61,6 +61,21 @@ describe('RaceBrowse — search-first', () => {
     expect(screen.queryByRole('button', { name: /open governor race/i })).not.toBeInTheDocument();
   });
 
+  it('excludes races with no rankable topics', () => {
+    render(
+      <RaceBrowse
+        races={[
+          race({ raceId: 'ca-gov', office: 'Governor', state: 'CA', tier: 'state', scope: 'statewide', rankableTopicCount: 5 }),
+          race({ raceId: 'empty', office: 'U.S. Senate', state: 'CA', tier: 'federal', scope: 'statewide', rankableTopicCount: 0 }),
+        ]}
+        counties={{}} onSelect={vi.fn()} initial={null}
+      />,
+    );
+    expect(screen.getByText('1 race')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open u\.s\. senate race/i })).not.toBeInTheDocument();
+  });
+
   it('shows an empty state when nothing matches', async () => {
     setup();
     fireEvent.change(screen.getByLabelText('Search races'), { target: { value: 'zzz-nothing' } });
