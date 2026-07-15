@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RankRail } from '../RankRail';
+import { RaceRankSourceProvider } from '../RankSource';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
 const payload: RacePayload = {
@@ -26,7 +27,7 @@ describe('RankRail disagreed recover', () => {
     useReadRankStore.getState().selectRace(payload);
     useReadRankStore.getState().disagree(payload.topics[0].quotes[0]);
 
-    render(<RankRail variant="sidebar" />);
+    render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
     await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
 

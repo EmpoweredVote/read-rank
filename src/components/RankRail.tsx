@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
+import type { BlindQuote } from '../store/useReadRankStore';
 import { useMotion, EASE, DUR } from '../motion';
 import { RankList } from './RankList';
+import { useRankSource } from './RankSource';
 
 export interface RankRailProps {
   variant: 'sidebar' | 'sheet';
@@ -11,12 +12,7 @@ export interface RankRailProps {
 }
 
 export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
-  const { getCurrentTopicProgress, reorderAgreed, reAgree } = useReadRankStore();
-  const topic = getCurrentTopicProgress();
-  const agreed = topic?.agreed ?? [];
-  // Per-topic, like `agreed`: each topic owns its own ranking. Disagreed quotes
-  // must not bleed across topics — the next topic starts with an empty pile.
-  const disagreed = topic?.disagreed ?? [];
+  const { agreed, disagreed, reorder: reorderAgreed, reAgree } = useRankSource();
   const [showDisagreed, setShowDisagreed] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const isSheet = variant === 'sheet';

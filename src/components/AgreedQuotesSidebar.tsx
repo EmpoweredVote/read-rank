@@ -1,8 +1,8 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { useAnimate, useReducedMotion } from 'framer-motion';
-import { useReadRankStore } from '../store/useReadRankStore';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail } from './RankRail';
+import { useRankSource } from './RankSource';
 
 /**
  * Desktop rank surface — the race-wide agreed pile as a draggable podium.
@@ -14,9 +14,7 @@ interface RankedListSidebarProps {
 }
 
 export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSidebarProps>(({ landingId }, ref) => {
-  const { getCurrentTopicProgress } = useReadRankStore();
-  const topic = getCurrentTopicProgress();
-  const agreed = topic?.agreed ?? [];
+  const { agreed } = useRankSource();
 
   const prefersReducedMotion = useReducedMotion();
   const prevCount = useRef(agreed.length);
@@ -60,5 +58,3 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
   );
 });
 RankedListSidebar.displayName = 'RankedListSidebar';
-
-export const AgreedQuotesSidebar = RankedListSidebar;

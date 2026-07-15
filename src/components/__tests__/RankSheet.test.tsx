@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RankSheet } from '../RankSheet';
+import { RaceRankSourceProvider } from '../RankSource';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
 const payload: RacePayload = {
@@ -31,13 +32,13 @@ beforeEach(() => {
 
 describe('RankSheet', () => {
   it('renders nothing while closed', () => {
-    render(<RankSheet open={false} allDone={false} onClose={vi.fn()} onSeeResults={vi.fn()} />);
+    render(<RaceRankSourceProvider><RankSheet open={false} allDone={false} onClose={vi.fn()} onSeeResults={vi.fn()} /></RaceRankSourceProvider>);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('shows the agreed ranking and closes via Done', async () => {
     const onClose = vi.fn();
-    render(<RankSheet open allDone={false} onClose={onClose} onSeeResults={vi.fn()} />);
+    render(<RaceRankSourceProvider><RankSheet open allDone={false} onClose={onClose} onSeeResults={vi.fn()} /></RaceRankSourceProvider>);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('First agreed quote.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /see results/i })).toBeInTheDocument();
@@ -46,7 +47,7 @@ describe('RankSheet', () => {
   });
 
   it('recovers a disagreed quote into the ranking', async () => {
-    render(<RankSheet open allDone={false} onClose={vi.fn()} onSeeResults={vi.fn()} />);
+    render(<RaceRankSourceProvider><RankSheet open allDone={false} onClose={vi.fn()} onSeeResults={vi.fn()} /></RaceRankSourceProvider>);
     await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
     const race = useReadRankStore.getState().getCurrentRaceProgress()!;
@@ -58,7 +59,7 @@ describe('RankSheet', () => {
 
   it('pins See Results in the completion state', async () => {
     const onSeeResults = vi.fn();
-    render(<RankSheet open allDone onClose={vi.fn()} onSeeResults={onSeeResults} />);
+    render(<RaceRankSourceProvider><RankSheet open allDone onClose={vi.fn()} onSeeResults={onSeeResults} /></RaceRankSourceProvider>);
     expect(screen.getByText(/all quotes read/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /see results/i }));
     expect(onSeeResults).toHaveBeenCalled();
