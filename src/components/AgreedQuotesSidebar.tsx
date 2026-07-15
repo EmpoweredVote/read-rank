@@ -58,5 +58,3 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
   );
 });
 RankedListSidebar.displayName = 'RankedListSidebar';
-
-export const AgreedQuotesSidebar = RankedListSidebar;

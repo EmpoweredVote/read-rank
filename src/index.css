@@ -1238,29 +1238,6 @@ dialog.topic-picker-sheet[open] {
 
 .rank-dock-chevron { color: var(--text-tertiary); flex-shrink: 0; }
 
-/* ============================================
-   Counter Pill
-   ============================================ */
-
-.rank-counter-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
-  background-color: var(--agree-bg);
-  border: 1px solid var(--agree-border);
-  border-radius: 9999px;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--agree);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.rank-counter-pill:hover {
-  background-color: var(--agree-bg-strong);
-}
-
 .rank-move-button {
   background: none;
   border: 1px solid var(--border-subtle);
