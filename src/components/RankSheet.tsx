@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useReadRankStore } from '../store/useReadRankStore';
 import { useMotion } from '../motion';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail } from './RankRail';
+import { useRankSource } from './RankSource';
 
 export interface RankSheetProps {
   open: boolean;
@@ -11,6 +11,8 @@ export interface RankSheetProps {
   allDone: boolean;
   onClose: () => void;
   onSeeResults: () => void;
+  /** Label for the footer results button (default "See Results"). */
+  resultsLabel?: string;
 }
 
 /** Mobile bottom-sheet ranking surface (REDESIGN_SPEC §1.3). Mounts only while open. */
@@ -19,13 +21,11 @@ export const RankSheet: React.FC<RankSheetProps> = (props) => {
   return <RankSheetDialog {...props} />;
 };
 
-const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults }) => {
+const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults, resultsLabel = 'See Results' }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const bodyRef = useScrollFade<HTMLDivElement>();
   const m = useMotion();
-  const { getCurrentTopicProgress } = useReadRankStore();
-  const topic = getCurrentTopicProgress();
-  const agreed = topic?.agreed ?? [];
+  const { agreed } = useRankSource();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -76,7 +76,7 @@ const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResu
       {agreed.length > 0 && (
         <div className="rank-sheet-footer">
           <button type="button" className="ev-button-primary rank-sheet-results" onClick={onSeeResults}>
-            See Results
+            {resultsLabel}
           </button>
         </div>
       )}

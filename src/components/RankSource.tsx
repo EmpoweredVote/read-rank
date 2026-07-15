@@ -29,6 +29,8 @@ export function useRaceRankSource(): RankSource {
   return useMemo(
     () => ({
       agreed: topic?.agreed ?? [],
+      // Per-topic, like `agreed`: each topic owns its own ranking. Disagreed quotes
+      // must not bleed across topics — the next topic starts with an empty pile.
       disagreed: topic?.disagreed ?? [],
       reorder: reorderAgreed,
       reAgree,
