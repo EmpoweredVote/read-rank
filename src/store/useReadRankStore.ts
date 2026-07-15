@@ -157,6 +157,10 @@ interface ReadRankState {
   setSelectedTopics: (keys: string[]) => void;
   confirmIssueSelection: () => void;
   goToHub: () => void;
+  /** Restore an in-progress race from the URL (page refresh / Back-Forward nav)
+   *  without a network fetch. Returns false when the race has no local progress
+   *  on this device, so the caller can fetch-and-start instead. */
+  resumeRaceFromUrl: (raceId: string, phase: Phase) => boolean;
   reset: () => void;
   resetRace: (raceId: string) => void;
 
@@ -420,6 +424,16 @@ export const useReadRankStore = create<ReadRankState>()(
       },
 
       goToHub: () => set({ phase: 'hub', currentRaceId: null }),
+
+      resumeRaceFromUrl: (raceId, phase) => {
+        const race = get().raceProgress[raceId];
+        if (!race) return false;
+        const inRace = phase === 'issue-selection' || phase === 'evaluation' || phase === 'results';
+        // Trust the URL's step when valid; otherwise fall back to the race's own
+        // saved phase (e.g. a bare /race/:id link with no step segment).
+        set({ currentRaceId: raceId, phase: inRace ? phase : race.phase });
+        return true;
+      },
 
       reset: () => set(initialState),
 
