@@ -619,7 +619,30 @@ dialog::backdrop {
 
 .question-banner h2 {
   margin: 0;
-  color: var(--banner-heading);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 1.375rem; /* 22px — the question is the hero of the card */
+  line-height: 1.32;
+  text-align: center;
+  color: var(--banner-heading); /* fallback only; the text lives in .question-banner-hl */
+}
+
+/* Yellow through-line: the question is "yellow" in both themes.
+   Light = black-on-yellow highlighter (the one approved yellow surface, §5 #7).
+   Dark  = yellow text on the dark banner. */
+.question-banner-hl {
+  background-color: var(--color-ev-yellow);
+  color: var(--color-ev-black, #1c1c1c);
+  padding: 0.06em 0.3em;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.dark .question-banner-hl {
+  background-color: transparent;
+  color: var(--color-ev-yellow);
+  padding: 0;
 }
 
 /* Audit / maintenance notice — full-width strip under the header */
