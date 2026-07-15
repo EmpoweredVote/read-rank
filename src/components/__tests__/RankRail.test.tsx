@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RankRail } from '../RankRail';
+import { RaceRankSourceProvider } from '../RankSource';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
 const payload: RacePayload = {
@@ -28,7 +29,7 @@ beforeEach(() => {
 
 describe('RankRail', () => {
   it('shows a nothing-ranked hint and no ghost slots before anything is ranked', () => {
-    render(<RankRail variant="sidebar" />);
+    render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(0);
     expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
   });
@@ -37,7 +38,7 @@ describe('RankRail', () => {
     const [q1, q2] = payload.topics[0].quotes;
     useReadRankStore.getState().agree(q1);
     useReadRankStore.getState().disagree(q2);
-    render(<RankRail variant="sheet" />);
+    render(<RaceRankSourceProvider><RankRail variant="sheet" /></RaceRankSourceProvider>);
     expect(screen.queryByText(/below this line/i)).not.toBeInTheDocument();
     // Quote stays hidden until the line is tapped.
     expect(screen.queryByText('Rail disagreed quote.')).not.toBeInTheDocument();
@@ -49,7 +50,7 @@ describe('RankRail', () => {
   it('shows the disagreed line even when nothing is agreed yet', () => {
     const [, q2] = payload.topics[0].quotes;
     useReadRankStore.getState().disagree(q2);
-    render(<RankRail variant="sheet" />);
+    render(<RaceRankSourceProvider><RankRail variant="sheet" /></RaceRankSourceProvider>);
     expect(screen.queryByText(/below this line/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /1 disagreed.*review or recover/i })).toBeInTheDocument();
   });
@@ -58,7 +59,7 @@ describe('RankRail', () => {
     const [q1, q2] = payload.topics[0].quotes;
     useReadRankStore.getState().agree(q1);
     useReadRankStore.getState().disagree(q2);
-    render(<RankRail variant="sheet" />);
+    render(<RaceRankSourceProvider><RankRail variant="sheet" /></RaceRankSourceProvider>);
     await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
     await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
@@ -105,7 +106,7 @@ describe('RankRail — per-topic isolation', () => {
     useReadRankStore.getState().nextTopic();
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.currentTopicKey).toBe('schools');
 
-    render(<RankRail variant="sheet" />);
+    render(<RaceRankSourceProvider><RankRail variant="sheet" /></RaceRankSourceProvider>);
     // The new topic starts with an empty disagreed section — no housing leak.
     expect(screen.queryByRole('button', { name: /disagreed.*review or recover/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Housing disagreed quote.')).not.toBeInTheDocument();
