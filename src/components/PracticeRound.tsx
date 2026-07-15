@@ -1,15 +1,12 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useMotion } from '../motion';
-import { useReadRankStore } from '../store/useReadRankStore';
-import { PRACTICE_QUOTES } from '../data/practiceData';
-import { QuoteCard } from './QuoteCard';
-import { ActionButtons } from './ActionButtons';
-import { RankList } from './RankList';
-import { useDeviceType } from '../hooks/useDeviceType';
+import { useReadRankStore, type BlindQuote } from '../store/useReadRankStore';
+import { PRACTICE_QUOTES, PRACTICE_ISSUE } from '../data/practiceData';
+import { EvaluationSurface } from './EvaluationSurface';
+import { QuestionBanner } from './QuestionBanner';
 import { PracticeResultsScreen } from './PracticeResultsScreen';
-
-function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
+import type { RankSource } from './RankSource';
 
 export const PracticeRound: React.FC = () => {
   const m = useMotion();
@@ -18,20 +15,18 @@ export const PracticeRound: React.FC = () => {
     agreePractice,
     disagreePractice,
     reorderPracticeAgreed,
+    reAgreePractice,
     skipPractice,
     startPractice,
+    coachMarksCompleted,
+    completeCoachMarks,
   } = useReadRankStore();
 
   useEffect(() => {
     if (practiceProgress === null) startPractice(PRACTICE_QUOTES);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const deviceType = useDeviceType();
-  const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
-
   const [showSplash, setShowSplash] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showFullRankList, setShowFullRankList] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
   const currentIndex = practiceProgress?.currentIndex ?? 0;
@@ -39,30 +34,21 @@ export const PracticeRound: React.FC = () => {
   const disagreed = practiceProgress?.disagreed ?? [];
   const currentQuote = PRACTICE_QUOTES[currentIndex];
   const isComplete = currentIndex >= PRACTICE_QUOTES.length;
-  const progressPercent = Math.round((Math.min(currentIndex, PRACTICE_QUOTES.length) / PRACTICE_QUOTES.length) * 100);
 
-  const handleButtonSwipe = useCallback(async (direction: 'agree' | 'disagree') => {
-    if (isAnimating || !currentQuote) return;
-    setIsAnimating(true);
-    await delay(120);
-    if (direction === 'agree') agreePractice(currentQuote);
-    else disagreePractice(currentQuote);
-    await delay(250);
-    setIsAnimating(false);
-  }, [isAnimating, currentQuote, agreePractice, disagreePractice]);
+  const source: RankSource = useMemo(
+    () => ({
+      agreed: practiceProgress?.agreed ?? [],
+      disagreed: practiceProgress?.disagreed ?? [],
+      reorder: reorderPracticeAgreed,
+      reAgree: reAgreePractice,
+    }),
+    [practiceProgress?.agreed, practiceProgress?.disagreed, reorderPracticeAgreed, reAgreePractice]
+  );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
-      if (isAnimating || !currentQuote) return;
-      switch (event.key) {
-        case 'ArrowLeft': case 'a': case 'A': event.preventDefault(); handleButtonSwipe('disagree'); break;
-        case 'ArrowRight': case 'd': case 'D': event.preventDefault(); handleButtonSwipe('agree'); break;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleButtonSwipe, isAnimating, currentQuote]);
+  const onVerdict = (direction: 'agree' | 'disagree', quote: BlindQuote) => {
+    if (direction === 'agree') agreePractice(quote);
+    else disagreePractice(quote);
+  };
 
   if (showSplash) {
     return (
@@ -103,7 +89,7 @@ export const PracticeRound: React.FC = () => {
             But first, a quick practice round
           </p>
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: '#a16207', lineHeight: 1.5, margin: 0 }}>
-            We&rsquo;ll use pizza opinions so you can get the hang of tapping and dragging to rank.
+            We&rsquo;ll use a pizza debate so you can get the hang of tapping and dragging to rank.
           </p>
         </div>
 
@@ -120,87 +106,15 @@ export const PracticeRound: React.FC = () => {
 
   if (showResults) return <PracticeResultsScreen />;
 
-  const swipeContent = (
-    <>
-      <div className="text-center">
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.375rem' }}>
-          Quote {Math.min(currentIndex + 1, PRACTICE_QUOTES.length)} of {PRACTICE_QUOTES.length}
-        </p>
-        <div className="w-full h-1 rounded-full" style={{ backgroundColor: 'var(--border-subtle)' }}>
-          <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-ev-muted-blue)' }} />
-        </div>
+  const header = (
+    <div>
+      <div className="issue-eyebrow" style={{ cursor: 'default' }} aria-label={`Practice · ${PRACTICE_ISSUE.title}`}>
+        <span className="issue-eyebrow-kicker">Practice</span>
+        <span className="issue-eyebrow-sep" aria-hidden="true">·</span>
+        <span className="issue-eyebrow-topic">{PRACTICE_ISSUE.title}</span>
       </div>
-
-      {currentQuote ? (
-        <div className="swipe-card-container">
-          <div className="flex justify-center relative z-10">
-            <AnimatePresence mode="wait">
-              <QuoteCard
-                key={currentQuote.id}
-                quote={currentQuote}
-                showTrustFooter={false}
-              />
-            </AnimatePresence>
-          </div>
-        </div>
-      ) : (
-        <div className="evaluation-complete-card">
-          <div className="text-center py-8">
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-link)', marginBottom: '0.5rem' }}>Done</div>
-            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-              {agreed.length} agreed · {disagreed.length} disagreed
-            </p>
-          </div>
-        </div>
-      )}
-
-      {currentQuote && (
-        <ActionButtons
-          onAgree={() => handleButtonSwipe('agree')}
-          onDisagree={() => handleButtonSwipe('disagree')}
-          disabled={isAnimating}
-          fixed={!isMouseDevice}
-        />
-      )}
-    </>
-  );
-
-  const evaluationContent = (
-    <div className="space-y-5">
-      <div style={{ textAlign: 'center', padding: '0.5rem 1rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem', border: '1px solid #fde68a' }}>
-        <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 600, fontSize: '0.8125rem', color: '#92400e' }}>
-          Practice Round — The Great Pizza Debate
-        </span>
-      </div>
-
-      {swipeContent}
-
-      {!isMouseDevice && agreed.length > 0 && (
-        <div className="flex justify-center mt-1">
-          <button onClick={() => setShowFullRankList((p) => !p)} className="rank-counter-pill">
-            {agreed.length} agreed · rank them
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transform: showFullRankList ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}>
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        </div>
-      )}
-      {showFullRankList && !isMouseDevice && (
-        <div className="inline-rank-panel">
-          <RankList items={agreed} onReorder={reorderPracticeAgreed} />
-        </div>
-      )}
-
-      {isComplete && (
-        <div className="flex justify-center pt-2">
-          <button onClick={() => setShowResults(true)} className="ev-button-primary animate-gentle-pulse" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>
-            See your pizza rankings
-          </button>
-        </div>
-      )}
-
-      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+      <QuestionBanner question={PRACTICE_ISSUE.question} />
+      <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
         <button onClick={skipPractice} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-tertiary)', textDecoration: 'underline', padding: '0.5rem' }}>
           Skip practice
         </button>
@@ -208,23 +122,30 @@ export const PracticeRound: React.FC = () => {
     </div>
   );
 
-  if (isMouseDevice) {
-    return (
-      <div className="evaluation-split-layout">
-        <div className="evaluation-main-panel">{evaluationContent}</div>
-        <div className="evaluation-sidebar-panel">
-          <div className="agreed-quotes-sidebar">
-            <div className="sidebar-header">
-              <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '0.75rem', color: 'var(--text-heading)' }}>Your ranking</span>
-            </div>
-            <div style={{ padding: '0.75rem' }}>
-              <RankList items={agreed} onReorder={reorderPracticeAgreed} emptyHint="Agree with a pizza take, then drag to rank. Top 3 are your podium." />
-            </div>
-          </div>
-        </div>
+  const completeState = (
+    <div className="evaluation-complete-card">
+      <div className="text-center py-8">
+        <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-link)', marginBottom: '0.5rem' }}>Done</div>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
+          {agreed.length} agreed · {disagreed.length} disagreed
+        </p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  return <div className={currentQuote ? 'has-fixed-paddles' : ''}>{evaluationContent}</div>;
+  return (
+    <EvaluationSurface
+      currentQuote={currentQuote}
+      progress={{ current: Math.min(currentIndex + 1, PRACTICE_QUOTES.length), total: PRACTICE_QUOTES.length }}
+      allDone={isComplete}
+      onVerdict={onVerdict}
+      showTrustFooter={false}
+      source={source}
+      header={header}
+      completeState={completeState}
+      reveal={{ label: 'See your pizza rankings', onReveal: () => setShowResults(true), enabled: agreed.length >= 1 }}
+      showCoachMarks={!coachMarksCompleted}
+      onCoachComplete={completeCoachMarks}
+    />
+  );
 };
