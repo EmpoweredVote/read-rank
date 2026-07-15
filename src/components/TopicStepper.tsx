@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useReadRankStore, getActiveTopicKeys } from '../store/useReadRankStore';
 import { TopicPickerSheet } from './TopicPickerSheet';
+import { QuestionBanner } from './QuestionBanner';
 
 /**
  * The issue header for the current race. A single compact eyebrow (issue
@@ -36,13 +37,7 @@ export const TopicStepper: React.FC = () => {
         </svg>
       </button>
 
-      {topic && (
-        <div className="question-banner">
-          <h2>
-            <span className="question-banner-hl">{topic.question}</span>
-          </h2>
-        </div>
-      )}
+      {topic && <QuestionBanner question={topic.question} />}
 
       <TopicPickerSheet open={pickerOpen} onClose={() => setPickerOpen(false)} />
     </div>
