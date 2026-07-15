@@ -38,8 +38,8 @@ export const TopicStepper: React.FC = () => {
 
       {topic && (
         <div className="question-banner">
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.9375rem', textAlign: 'center' }}>
-            {topic.question}
+          <h2>
+            <span className="question-banner-hl">{topic.question}</span>
           </h2>
         </div>
       )}
