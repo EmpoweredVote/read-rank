@@ -169,6 +169,8 @@ interface ReadRankState {
   agreePractice: (quote: BlindQuote) => void;
   disagreePractice: (quote: BlindQuote) => void;
   reorderPracticeAgreed: (orderedIds: string[]) => void;
+  /** Recover a disagreed practice quote: remove from disagreed, append to agreed. */
+  reAgreePractice: (quote: BlindQuote) => void;
   completePractice: () => void;
   skipPractice: () => void;
 
@@ -490,6 +492,20 @@ export const useReadRankStore = create<ReadRankState>()(
         const next = orderedIds.map((id) => byId.get(id)).filter(Boolean) as AgreedQuote[];
         for (const q of p.agreed) if (!orderedIds.includes(q.id)) next.push(q);
         set({ practiceProgress: { ...p, agreed: next } });
+      },
+
+      reAgreePractice: (quote) => {
+        const p = get().practiceProgress;
+        if (!p) return;
+        if (p.agreed.some((q) => q.id === quote.id)) return;
+        if (!p.disagreed.some((q) => q.id === quote.id)) return;
+        set({
+          practiceProgress: {
+            ...p,
+            agreed: [...p.agreed, { ...quote, addedAt: Date.now() }],
+            disagreed: p.disagreed.filter((q) => q.id !== quote.id),
+          },
+        });
       },
 
       completePractice: () => set({ phase: 'hub', practiceCompleted: true, practiceProgress: null }),
