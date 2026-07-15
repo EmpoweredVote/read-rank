@@ -536,9 +536,11 @@ export const useReadRankStore = create<ReadRankState>()(
             : null,
         };
       },
+      // `phase` and `currentRaceId` are intentionally NOT persisted: returning to
+      // Read & Rank should always land on the hub, never resume mid-race. Per-race
+      // progress lives in `raceProgress`, so re-entering a race via `selectRace`
+      // still resumes exactly where the user left off.
       partialize: (state) => ({
-        phase: state.phase,
-        currentRaceId: state.currentRaceId,
         raceProgress: state.raceProgress,
         practiceCompleted: state.practiceCompleted,
         practiceProgress: state.practiceProgress,
@@ -546,6 +548,14 @@ export const useReadRankStore = create<ReadRankState>()(
         firstAgreeCoached: state.firstAgreeCoached,
         locationFilter: state.locationFilter,
       }),
+      // Guarantee the hub-landing for users whose localStorage predates the
+      // partialize change above and still carries a mid-race phase/currentRaceId.
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.phase = 'hub';
+          state.currentRaceId = null;
+        }
+      },
     }
   )
 );
