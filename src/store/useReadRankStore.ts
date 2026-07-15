@@ -210,6 +210,19 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
   };
 }
 
+// Refresh display-only content (topic title + question) from a freshly-fetched payload
+// without disturbing the user's verdicts, ranking, phase, or selection. Content edits — e.g.
+// a sharpened per-race ranking question — must reach returning users whose progress is
+// persisted in localStorage (selectRace otherwise reuses the stale cached copy).
+function refreshRaceContent(race: RaceProgress, payload: RacePayload): RaceProgress {
+  const topics = { ...race.topics };
+  for (const t of payload.topics) {
+    const prev = topics[t.topicKey];
+    if (prev) topics[t.topicKey] = { ...prev, title: t.title, question: t.question };
+  }
+  return { ...race, topics };
+}
+
 const initialState = {
   phase: 'hub' as Phase,
   currentRaceId: null as string | null,
@@ -266,7 +279,9 @@ export const useReadRankStore = create<ReadRankState>()(
       selectRace: (payload, meta) => {
         const state = get();
         const existing = state.raceProgress[payload.raceId];
-        const race = existing ? { ...existing, ...(meta ?? {}) } : buildRaceProgress(payload, meta);
+        const race = existing
+          ? refreshRaceContent({ ...existing, ...(meta ?? {}) }, payload)
+          : buildRaceProgress(payload, meta);
         const nextPhase: Phase = existing ? race.phase : 'issue-selection';
         const selectedTopicKeys = race.selectedTopicKeys ?? race.topicOrder;
         set({
