@@ -7,6 +7,7 @@ import { AuditBanner } from './components/AuditBanner';
 import { DevHelper } from './components/DevHelper';
 import { CandidateAlignmentPage } from './components/CandidateAlignmentPage';
 import { useAuthState } from './hooks/useAuthState';
+import { useRaceRouteSync } from './hooks/useRaceRouteSync';
 import { useReadRankStore } from './store/useReadRankStore';
 import { searchPoliticians } from './data/api';
 import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
@@ -53,6 +54,10 @@ function MainApp() {
   const { isLoggedIn, userName, userId, loading, logout } = useAuthState();
   const { reset, setLocationFilter, phase } = useReadRankStore();
   const { isDark } = useTheme();
+
+  // Keep the URL and the phase-machine store in sync (refresh-restore, Back to
+  // hub, shareable race links). See useRaceRouteSync for the full contract.
+  useRaceRouteSync();
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -151,8 +156,13 @@ function App() {
       <BrowserRouter basename="/">
         <PostHogPageview />
         <Routes>
-          <Route path="/" element={<MainApp />} />
           <Route path="/candidate/:candidateId/alignment" element={<CandidateAlignmentPage />} />
+          {/* Single app-shell route: `/`, `/race/:id/:step`, and any other in-app
+              path all render the SAME MainApp instance, so navigating between the
+              hub and a race never remounts it (which would interrupt the phase
+              transition). useRaceRouteSync maps the path ↔ store phase, so a
+              refresh restores the exact screen. */}
+          <Route path="/*" element={<MainApp />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
