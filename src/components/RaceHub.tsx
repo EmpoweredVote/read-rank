@@ -93,6 +93,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
+    // Capture resume state BEFORE selectRace mutates the store. Read fresh state
+    // (not the render-closure `raceProgress`) since this callback isn't recreated
+    // when progress changes. Drives the `resumed` funnel property below.
+    const existingProgress = useReadRankStore.getState().raceProgress[race.raceId];
+    const resumed = existingProgress != null;
     try {
       const payload = await fetchRaceQuotes(race.raceId);
       const shuffled = {
@@ -108,6 +113,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         candidate_count: race.candidateCount,
         topic_count: race.topicCount,
         located: locationFilter != null,
+        // Did this race already have local progress? true = returning to resume,
+        // false = starting fresh. Lets us measure the refresh/resume feature.
+        resumed,
+        resumed_completed: resumed ? existingProgress.completed === true : false,
       });
     } finally {
       setStarting(null);
