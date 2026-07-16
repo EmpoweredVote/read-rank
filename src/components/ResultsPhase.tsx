@@ -19,7 +19,7 @@ export const ResultsPhase: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const m = useMotion();
   const race = getCurrentRaceProgress();
-  const complete = race ? isRaceComplete(race) : false;
+  const complete = race ? isRaceComplete(race, race.rankableTopicCount) : false;
 
   useEffect(() => {
     if (!currentRaceId) { setLoading(false); return; }

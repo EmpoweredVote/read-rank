@@ -43,9 +43,15 @@ export interface RaceProgress {
   topicOrder: string[];
   currentTopicKey: string | null;
   phase: 'evaluation' | 'results';
+  /** @deprecated completion is derived from topics; retained only for persisted-shape compatibility. */
   completed: boolean;
   /** Keys of topics the user chose to evaluate. Undefined for races started before this field existed. */
   selectedTopicKeys?: string[];
+  /** Backend rankable-topic count captured at selection (RaceSummary.rankableTopicCount).
+   *  The single completion basis shared by the hub, browse, reveal, and evaluation surfaces.
+   *  Undefined for races started before this field or when the backend omits it — callers then
+   *  fall back to the scorable topics present in the payload. */
+  rankableTopicCount?: number;
 }
 
 /** All agreed quotes across all topics in topic order (for results/verdicts). */
@@ -189,7 +195,7 @@ interface ReadRankState {
 // Helpers
 // ============================================
 
-function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }): RaceProgress {
+function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null; rankableTopicCount?: number }): RaceProgress {
   const topics: Record<string, TopicProgress> = {};
   const topicOrder: string[] = [];
   for (const t of payload.topics) {
@@ -216,6 +222,7 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
     phase: 'evaluation',
     completed: false,
     selectedTopicKeys: topicOrder,
+    rankableTopicCount: meta?.rankableTopicCount,
   };
 }
 
@@ -287,7 +294,13 @@ export const useReadRankStore = create<ReadRankState>()(
         const state = get();
         const existing = state.raceProgress[payload.raceId];
         const race = existing
-          ? refreshRaceContent({ ...existing, ...(meta ? { office: meta.office, seat: meta.seat, state: meta.state } : {}) }, payload)
+          ? refreshRaceContent(
+              { ...existing,
+                ...(meta ? { office: meta.office, seat: meta.seat, state: meta.state } : {}),
+                ...(meta?.rankableTopicCount !== undefined ? { rankableTopicCount: meta.rankableTopicCount } : {}),
+              },
+              payload,
+            )
           : buildRaceProgress(payload, meta);
 
         let nextPhase: Phase;

@@ -38,7 +38,7 @@ export const EvaluationPhase: React.FC = () => {
     : false;
 
   const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
-  const revealLabel = isRaceComplete(race ?? undefined) ? 'See your full ballot' : 'Reveal ballot';
+  const revealLabel = isRaceComplete(race ?? undefined, race?.rankableTopicCount) ? 'See your full ballot' : 'Reveal ballot';
 
   const onVerdict = (direction: 'agree' | 'disagree', quote: BlindQuote) => {
     track('readrank_verdict', {

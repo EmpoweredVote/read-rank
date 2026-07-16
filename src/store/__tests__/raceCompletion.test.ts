@@ -71,3 +71,13 @@ describe('selectRace re-entry routing', () => {
     expect(s().phase).toBe('evaluation');
   });
 });
+
+describe('rankableTopicCount persistence', () => {
+  it('stores rankableTopicCount from meta on the race and refreshes it on re-entry', () => {
+    s().selectRace(payload, { office: 'Governor', seat: null, state: 'CA', rankableTopicCount: 5 });
+    expect(s().getCurrentRaceProgress()!.rankableTopicCount).toBe(5);
+    s().goToHub();
+    s().selectRace(payload, { office: 'Governor', seat: null, state: 'CA', rankableTopicCount: 6 });
+    expect(s().getCurrentRaceProgress()!.rankableTopicCount).toBe(6);
+  });
+});

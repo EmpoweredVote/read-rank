@@ -139,7 +139,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
           <div className="race-grid">
             {section.races.map((r, i) => {
               const { tier, scope } = deriveTierScope(r);
-              const { progress, label } = raceCardProgress(raceProgress?.[r.raceId], r.rankableTopicCount ?? r.topicCount);
+              const { progress, label } = raceCardProgress(raceProgress?.[r.raceId], r.rankableTopicCount);
               return (
                 <RaceCard
                   key={r.raceId}
