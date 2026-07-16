@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RaceBrowse } from '../RaceBrowse';
 import type { RaceSummary } from '../../data/api';
+import type { RaceProgress } from '../../store/useReadRankStore';
 
 function race(p: Partial<RaceSummary> & { raceId: string }): RaceSummary {
   return {
@@ -80,5 +81,40 @@ describe('RaceBrowse — search-first', () => {
     setup();
     fireEvent.change(screen.getByLabelText('Search races'), { target: { value: 'zzz-nothing' } });
     expect(await screen.findByText(/no races match/i)).toBeInTheDocument();
+  });
+});
+
+describe('RaceBrowse — progress badges', () => {
+  it('renders a progress label for a started race', () => {
+    const raceProgress: Record<string, RaceProgress> = {
+      'ca-gov': {
+        raceId: 'ca-gov', positionName: 'Governor',
+        topics: {
+          t: {
+            topicKey: 't', title: 'T', question: 'Q',
+            quotesToEvaluate: [
+              { id: '1', text: 'x', candidateToken: 'a', topicKey: 't' },
+              { id: '2', text: 'y', candidateToken: 'b', topicKey: 't' },
+            ],
+            currentIndex: 2,
+            disagreed: [
+              { id: '1', text: 'x', candidateToken: 'a', topicKey: 't' },
+              { id: '2', text: 'y', candidateToken: 'b', topicKey: 't' },
+            ],
+            agreed: [],
+          },
+        },
+        topicOrder: ['t'], currentTopicKey: 't', phase: 'results', completed: false,
+        selectedTopicKeys: ['t'],
+      },
+    };
+    render(<RaceBrowse races={races} counties={{}} onSelect={vi.fn()} initial={null} raceProgress={raceProgress} />);
+    // ca-gov summary has rankableTopicCount: 3; 1 scorable topic done -> "Continue · 1 of 3 topics".
+    expect(screen.getByText(/continue · 1 of 3 topics/i)).toBeInTheDocument();
+  });
+
+  it('renders no badge for races with no progress', () => {
+    render(<RaceBrowse races={races} counties={{}} onSelect={vi.fn()} initial={null} raceProgress={{}} />);
+    expect(screen.queryByTestId('race-card-status')).toBeNull();
   });
 });

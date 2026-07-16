@@ -9,7 +9,7 @@ import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
-import { deriveProgressState, progressLabel, isRaceComplete, type ProgressState } from '../utils/raceProgressState';
+import { raceCardProgress, isRaceComplete } from '../utils/raceProgressState';
 import { groupRaces, type TimeFilter } from '../utils/raceGrouping';
 import { getStateName } from '../utils/stateNames';
 import { track } from '../lib/analytics';
@@ -124,10 +124,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   }, [selectRace]);
 
   const renderCard = useCallback((race: RaceSummary, enterIndex?: number) => {
-    const progressState = raceProgress[race.raceId];
-    const info = deriveProgressState(progressState, race.rankableTopicCount);
-    const progress: ProgressState = info.state;
-    const statusLabel = progressLabel(info);
+    const { progress, label } = raceCardProgress(raceProgress[race.raceId], race.rankableTopicCount);
     const { tier, scope } = deriveTierScope(race);
     const estMinutes = estimateMinutes({
       quoteCount: race.quoteCount,
@@ -149,7 +146,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         topicCount={race.rankableTopicCount ?? race.topicCount}
         estMinutes={estMinutes}
         progress={progress}
-        progressLabel={statusLabel}
+        progressLabel={label}
         disabled={starting !== null}
         onSelect={() => handleSelect(race)}
         enterIndex={enterIndex}
@@ -212,6 +209,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
           onSelect={handleSelect}
           initial={browseTarget}
           disabled={starting !== null}
+          raceProgress={raceProgress}
         />
       </div>
     );

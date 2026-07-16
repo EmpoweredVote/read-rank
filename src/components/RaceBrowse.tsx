@@ -4,6 +4,8 @@ import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
 import { getStateName } from '../utils/stateNames';
+import type { RaceProgress } from '../store/useReadRankStore';
+import { raceCardProgress } from '../utils/raceProgressState';
 
 export interface BrowseTarget { state: string; geoid: string; }
 
@@ -14,6 +16,8 @@ interface RaceBrowseProps {
   /** Preset the state filter (from a place-name smart search or the located ballot). */
   initial: BrowseTarget | { state: string; geoid: null } | null;
   disabled?: boolean;
+  /** Per-race progress for the status badge (parity with the hub cards). */
+  raceProgress?: Record<string, RaceProgress>;
 }
 
 // ── Categorisation (tier sections, matching essentials' tier grouping) ───────
@@ -59,7 +63,7 @@ function matchesQuery(hay: string, q: string): boolean {
   return q.toLowerCase().split(/\s+/).filter(Boolean).every((t) => hay.includes(t));
 }
 
-export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled }) => {
+export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled, raceProgress }) => {
   const [query, setQuery] = useState('');
   const [office, setOffice] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<string>(initial?.state ?? '');
@@ -135,6 +139,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
           <div className="race-grid">
             {section.races.map((r, i) => {
               const { tier, scope } = deriveTierScope(r);
+              const { progress, label } = raceCardProgress(raceProgress?.[r.raceId], r.rankableTopicCount ?? r.topicCount);
               return (
                 <RaceCard
                   key={r.raceId}
@@ -142,6 +147,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
                   electionDate={r.electionDate} boundaryRef={r.boundaryRef ?? null} frameRef={r.frameRef ?? null}
                   candidateCount={r.candidateCount} topicCount={r.rankableTopicCount ?? r.topicCount}
                   estMinutes={estimateMinutes({ quoteCount: r.quoteCount, candidateCount: r.candidateCount, topicCount: r.topicCount })}
+                  progress={progress} progressLabel={label}
                   disabled={disabled} onSelect={() => onSelect(r)} enterIndex={i}
                 />
               );
