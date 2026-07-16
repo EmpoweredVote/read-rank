@@ -224,15 +224,35 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
 
   const triageContent = (
     <>
-      {/* Per-topic quote progress */}
-      <div className="text-center">
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.375rem' }}>
+      {/* Per-topic quote progress — the "N of M" count lives inside the bar. */}
+      <div
+        className="relative w-full rounded-full overflow-hidden"
+        style={{ height: '1.375rem', backgroundColor: 'var(--border-subtle)' }}
+      >
+        {/* Fill sweep */}
+        <div
+          className="absolute inset-y-0 left-0 transition-all duration-300"
+          style={{ width: `${progressPercent}%`, backgroundColor: 'var(--progress-fill)' }}
+        />
+        {/* Label over the unfilled track */}
+        <span
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--progress-track-ink)' }}
+        >
           {`${shownCount} of ${progress.total}`}
-        </p>
-        <div className="w-full h-1 rounded-full" style={{ backgroundColor: 'var(--border-subtle)' }}>
-          <div className="h-1 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercent}%`, backgroundColor: 'var(--progress-fill)' }} />
-        </div>
+        </span>
+        {/* Same label clipped to the filled region, in the fill-contrast ink */}
+        <span
+          className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300"
+          style={{
+            fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.02em',
+            color: 'var(--progress-fill-ink)',
+            clipPath: `inset(0 ${100 - progressPercent}% 0 0)`,
+          }}
+          aria-hidden="true"
+        >
+          {`${shownCount} of ${progress.total}`}
+        </span>
       </div>
 
       <div ref={swipeAreaRef}>
@@ -313,7 +333,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
   );
 
   const mainColumn = (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {header}
       {triageContent}
       {isMouseDevice && revealCta}

@@ -97,6 +97,8 @@
   --action-primary-ink: #ffffff;
 
   --progress-fill: var(--color-ev-muted-blue);
+  --progress-fill-ink: #ffffff;       /* label over the filled (dark teal) region */
+  --progress-track-ink: var(--text-secondary); /* label over the unfilled (cream) track */
 
   /* Motion tokens (mirror of src/motion.ts — keep in sync) */
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
@@ -169,6 +171,8 @@
   --action-primary-ink: #06303a;
 
   --progress-fill: var(--color-ev-yellow);
+  --progress-fill-ink: #1a1f27;       /* label over the filled (bright yellow) region */
+  --progress-track-ink: var(--text-secondary); /* label over the unfilled (dark) track */
 }
 
 /* ============================================
@@ -388,7 +392,6 @@ dialog::backdrop {
 .swipe-card-container {
   position: relative;
   width: 100%;
-  padding-top: 2.5rem;
 }
 
 .swipe-background-wrapper {
