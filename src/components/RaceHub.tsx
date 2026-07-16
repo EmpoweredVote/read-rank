@@ -9,7 +9,7 @@ import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
-import { deriveProgressState, progressLabel, type ProgressState } from '../utils/raceProgressState';
+import { deriveProgressState, progressLabel, isRaceComplete, type ProgressState } from '../utils/raceProgressState';
 import { groupRaces, type TimeFilter } from '../utils/raceGrouping';
 import { getStateName } from '../utils/stateNames';
 import { track } from '../lib/analytics';
@@ -104,7 +104,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         ...payload,
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
-      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state });
+      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state, rankableTopicCount: race.rankableTopicCount ?? race.topicCount });
       track('readrank_race_started', {
         race_id: race.raceId,
         office: race.office,
@@ -116,7 +116,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         // Did this race already have local progress? true = returning to resume,
         // false = starting fresh. Lets us measure the refresh/resume feature.
         resumed,
-        resumed_completed: resumed ? existingProgress.completed === true : false,
+        resumed_completed: resumed ? isRaceComplete(existingProgress, race.rankableTopicCount ?? race.topicCount) : false,
       });
     } finally {
       setStarting(null);

@@ -36,7 +36,7 @@ describe('ResultsPhase reduced motion', () => {
     useReadRankStore.getState().reset();
     useReadRankStore.getState().selectRace(flowPayload);
     useReadRankStore.getState().agree(flowPayload.topics[0].quotes[0]);
-    useReadRankStore.getState().finishRace();
+    useReadRankStore.getState().revealBallot();
 
     render(<ResultsPhase />);
 

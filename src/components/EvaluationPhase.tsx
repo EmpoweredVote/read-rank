@@ -9,7 +9,7 @@ export const EvaluationPhase: React.FC = () => {
   const {
     agree,
     disagree,
-    finishRace,
+    revealBallot,
     nextTopic,
     getCurrentRaceProgress,
     getCurrentTopicProgress,
@@ -76,7 +76,7 @@ export const EvaluationPhase: React.FC = () => {
       source={source}
       header={<TopicStepper />}
       completeState={completeState}
-      reveal={{ label: 'Reveal my ballot', onReveal: finishRace, enabled: agreed.length >= 1 }}
+      reveal={{ label: 'Reveal my ballot', onReveal: revealBallot, enabled: agreed.length >= 1 }}
       showCoachMarks={!coachMarksCompleted}
       onCoachComplete={completeCoachMarks}
     />

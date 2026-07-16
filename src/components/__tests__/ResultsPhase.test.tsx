@@ -36,7 +36,7 @@ describe('ResultsPhase flow', () => {
     useReadRankStore.getState().selectRace(flowPayload);
     const q = flowPayload.topics[0].quotes[0];
     useReadRankStore.getState().agree(q);
-    useReadRankStore.getState().finishRace();
+    useReadRankStore.getState().revealBallot();
 
     render(<ResultsPhase />);
 
@@ -56,7 +56,7 @@ describe('ResultsPhase flow', () => {
     useReadRankStore.getState().selectRace(flowPayload);
     const q = flowPayload.topics[0].quotes[0];
     useReadRankStore.getState().agree(q);
-    useReadRankStore.getState().finishRace();
+    useReadRankStore.getState().revealBallot();
 
     render(<ResultsPhase />);
 
