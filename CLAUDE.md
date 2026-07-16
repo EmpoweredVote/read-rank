@@ -19,7 +19,11 @@ quotes, follow:
 
 - **Blindness is structural.** The evaluation payload carries only blind quote fields
   (`id`, `text`, `candidateToken`, `topicKey`) — no source, party, or candidate name. See the
-  rebuild guard in `src/data/api.ts` (`fetchRaceQuotes`).
+  rebuild guard in `src/data/api.ts` (`fetchRaceQuotes`). Provenance debuts **per topic** as the
+  user reveals — the combined ballot grows to include each topic once it's ranked, rather than a
+  single whole-race reveal. Ranking stays blind because the blind card never shows attribution and
+  `candidateToken` is never surfaced in the UI, so a name learned at one topic's reveal can't be
+  carried into an unranked topic's blind cards.
 - **Two text layers.** The blind card shows the de-identified text; the **revealed quote is the
   single source of truth**, identical across reveal / Compass / Essentials. The eventual
   expand-to-full-context ("show-your-work") view is a **post-reveal** feature only — never on the
