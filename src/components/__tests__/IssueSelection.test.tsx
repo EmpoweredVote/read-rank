@@ -102,3 +102,45 @@ describe('IssueSelection', () => {
     expect(() => rerender(<IssueSelection />)).not.toThrow();
   });
 });
+
+describe('IssueSelection re-entry hub', () => {
+  const p: RacePayload = {
+    raceId: 'race-hub-ui', positionName: 'Governor',
+    topics: [
+      { topicKey: 'k1', title: 'Fossil Fuels', question: 'Q1', quotes: [
+        { id: 'a1', text: 'x', candidateToken: 'tokA', topicKey: 'k1' },
+        { id: 'a2', text: 'y', candidateToken: 'tokB', topicKey: 'k1' },
+      ] },
+      { topicKey: 'k2', title: 'Housing', question: 'Q2', quotes: [
+        { id: 'b1', text: 'x', candidateToken: 'tokA', topicKey: 'k2' },
+        { id: 'b2', text: 'y', candidateToken: 'tokB', topicKey: 'k2' },
+      ] },
+    ],
+  };
+  const s = () => useReadRankStore.getState();
+
+  function seedReentry() {
+    s().reset();
+    s().selectRace(p);
+    s().confirmIssueSelection();
+    for (const quote of s().getCurrentRaceProgress()!.topics.k1.quotesToEvaluate) s().disagree(quote);
+    s().revealBallot();
+    s().goToHub();
+    s().selectRace(p, { office: 'Governor', seat: null, state: 'CA', rankableTopicCount: 2 });
+  }
+
+  it('marks an already-ranked topic as done (locked, not a toggle)', () => {
+    seedReentry();
+    render(<IssueSelection />);
+    expect(screen.getByTestId('issue-done-k1')).toBeInTheDocument();
+    // The done topic is not an aria-pressed toggle button.
+    expect(screen.queryByRole('button', { name: /fossil fuels/i })).toBeNull();
+  });
+
+  it('offers "See your ballot" when no remaining topic is selected', async () => {
+    seedReentry();
+    s().setSelectedTopics([]);  // deselect the remaining (undone) topic
+    render(<IssueSelection />);
+    expect(screen.getByRole('button', { name: /see your ballot/i })).toBeInTheDocument();
+  });
+});

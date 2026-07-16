@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CountyIndex, JurisdictionGeoIds } from '../data/api';
-import { isRaceComplete } from '../utils/raceProgressState';
+import { isRaceComplete, isTopicDone, isTopicScorable } from '../utils/raceProgressState';
 
 // ============================================
 // Types — race -> topics -> blind quotes
@@ -418,14 +418,19 @@ export const useReadRankStore = create<ReadRankState>()(
       confirmIssueSelection: () => {
         const state = get();
         const patch = withCurrentRace(state, (race) => {
-          // Start on the first selected topic — the first catalog topic may have
-          // been deselected.
-          const active = getActiveTopicKeys(race);
-          const currentTopicKey =
-            race.currentTopicKey && active.includes(race.currentTopicKey)
-              ? race.currentTopicKey
-              : active[0] ?? race.currentTopicKey;
-          return { ...race, phase: 'evaluation' as const, currentTopicKey };
+          // Always keep already-done scorable topics in the selection — their
+          // verdicts belong in the combined ballot even if the user only toggled
+          // new topics this round.
+          const chosen = new Set(race.selectedTopicKeys ?? race.topicOrder);
+          for (const key of race.topicOrder) {
+            const t = race.topics[key];
+            if (t && isTopicScorable(t) && isTopicDone(t)) chosen.add(key);
+          }
+          const selectedTopicKeys = race.topicOrder.filter((k) => chosen.has(k));
+          // Start on the first selected topic that still needs ranking.
+          const firstUndone = selectedTopicKeys.find((k) => race.topics[k] && !isTopicDone(race.topics[k]));
+          const currentTopicKey = firstUndone ?? selectedTopicKeys[0] ?? race.currentTopicKey;
+          return { ...race, phase: 'evaluation' as const, selectedTopicKeys, currentTopicKey };
         });
         if (patch) set({ phase: 'evaluation', ...patch });
         else set({ phase: 'evaluation' });

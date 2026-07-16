@@ -2345,6 +2345,9 @@ button.rank-num:focus-visible .rank-num-badge {
   opacity: 0.5;
 }
 
+.issue-row-done { opacity: 0.72; cursor: default; }
+.issue-row-done .issue-not-scored-label { color: var(--text-link); }
+
 .issue-check-tile {
   width: 28px;
   height: 28px;

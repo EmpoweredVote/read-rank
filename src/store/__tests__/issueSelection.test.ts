@@ -49,4 +49,35 @@ describe('issue selection store', () => {
     useReadRankStore.getState().selectRace(payload);
     expect(useReadRankStore.getState().phase).toBe('evaluation');
   });
+
+  it('confirmIssueSelection keeps done topics selected and starts on the first undone topic', () => {
+    const p: RacePayload = {
+      raceId: 'race-hub', positionName: 'Governor',
+      topics: [
+        { topicKey: 'k1', title: 'T1', question: 'Q1', quotes: [
+          { id: 'a1', text: 'x', candidateToken: 'tokA', topicKey: 'k1' },
+          { id: 'a2', text: 'y', candidateToken: 'tokB', topicKey: 'k1' },
+        ] },
+        { topicKey: 'k2', title: 'T2', question: 'Q2', quotes: [
+          { id: 'b1', text: 'x', candidateToken: 'tokA', topicKey: 'k2' },
+          { id: 'b2', text: 'y', candidateToken: 'tokB', topicKey: 'k2' },
+        ] },
+      ],
+    };
+    const st = useReadRankStore.getState();
+    st.selectRace(p);
+    st.confirmIssueSelection();
+    // Finish k1.
+    for (const quote of st.getCurrentRaceProgress()!.topics.k1.quotesToEvaluate) st.disagree(quote);
+    st.revealBallot();
+    st.goToHub();
+    // Re-enter -> hub. Select just k2 (done k1 stays implied).
+    st.selectRace(p, { office: 'Governor', seat: null, state: 'CA', rankableTopicCount: 2 });
+    st.setSelectedTopics(['k2']);
+    st.confirmIssueSelection();
+    const race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.selectedTopicKeys).toContain('k1');   // done topic retained for the ballot
+    expect(race.selectedTopicKeys).toContain('k2');
+    expect(race.currentTopicKey).toBe('k2');           // starts on the undone topic
+  });
 });
