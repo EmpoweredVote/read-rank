@@ -36,7 +36,7 @@ describe('ResultsPhase flow', () => {
     useReadRankStore.getState().selectRace(flowPayload);
     const q = flowPayload.topics[0].quotes[0];
     useReadRankStore.getState().agree(q);
-    useReadRankStore.getState().finishRace();
+    useReadRankStore.getState().revealBallot();
 
     render(<ResultsPhase />);
 
@@ -56,7 +56,7 @@ describe('ResultsPhase flow', () => {
     useReadRankStore.getState().selectRace(flowPayload);
     const q = flowPayload.topics[0].quotes[0];
     useReadRankStore.getState().agree(q);
-    useReadRankStore.getState().finishRace();
+    useReadRankStore.getState().revealBallot();
 
     render(<ResultsPhase />);
 
@@ -66,5 +66,80 @@ describe('ResultsPhase flow', () => {
       { timeout: 3000 }
     );
     expect(announcement).toHaveAttribute('aria-live', 'polite');
+  });
+});
+
+describe('ResultsPhase exits', () => {
+  const s = () => useReadRankStore.getState();
+
+  it('offers "Back to your topics" when the race is not complete', async () => {
+    window.localStorage?.clear();
+    s().reset();
+    s().selectRace(flowPayload);            // 1 topic, 1 quote -> not scorable -> not complete
+    s().agree(flowPayload.topics[0].quotes[0]);
+    s().revealBallot();
+    render(<ResultsPhase />);
+    expect(await screen.findByRole('button', { name: /back to your topics/i }, { timeout: 3000 })).toBeInTheDocument();
+  });
+
+  it('clicking "Back to your topics" routes to the issue-selection hub', async () => {
+    window.localStorage?.clear();
+    s().reset();
+    s().selectRace(flowPayload);
+    s().agree(flowPayload.topics[0].quotes[0]);
+    s().revealBallot();
+    render(<ResultsPhase />);
+    const btn = await screen.findByRole('button', { name: /back to your topics/i }, { timeout: 3000 });
+    btn.click();
+    expect(s().phase).toBe('issue-selection');
+  });
+
+  it('shows "Review a topic" and no "Back to your topics" when the race is complete', async () => {
+    window.localStorage?.clear();
+    s().reset();
+    const completePayload: RacePayload = {
+      raceId: 'mock-in-gov-2024', positionName: 'Governor',
+      topics: [{
+        topicKey: 'cannabis-legalization', title: 'Cannabis Legalization', question: 'Q',
+        quotes: [
+          { id: 'q-103', text: 'Marijuana use is cascading.', candidateToken: 'tok-9d4b', topicKey: 'cannabis-legalization' },
+          { id: 'q-101', text: 'We can make cannabis legal.', candidateToken: 'tok-a3f8', topicKey: 'cannabis-legalization' },
+        ],
+      }],
+    };
+    s().selectRace(completePayload);
+    s().confirmIssueSelection();
+    s().agree(completePayload.topics[0].quotes[0]);
+    s().disagree(completePayload.topics[0].quotes[1]); // topic fully judged -> done -> race complete (1 of 1 scorable)
+    s().revealBallot();
+    render(<ResultsPhase />);
+    expect(await screen.findByRole('button', { name: /review a topic/i }, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /back to your topics/i })).toBeNull();
+  });
+
+  it('treats the race as complete when every scorable topic is done, ignoring non-scorable topics', async () => {
+    window.localStorage?.clear();
+    s().reset();
+    const mixed: RacePayload = {
+      raceId: 'mock-in-gov-2024', positionName: 'Governor',
+      topics: [
+        { topicKey: 'cannabis-legalization', title: 'Cannabis', question: 'Q', quotes: [
+          { id: 'q-103', text: 'Marijuana use is cascading.', candidateToken: 'tok-9d4b', topicKey: 'cannabis-legalization' },
+          { id: 'q-101', text: 'We can make cannabis legal.', candidateToken: 'tok-a3f8', topicKey: 'cannabis-legalization' },
+        ] },
+        // Non-scorable: a single candidate/token -> can never be ranked.
+        { topicKey: 'education-funding', title: 'Education', question: 'Q', quotes: [
+          { id: 'q-105', text: 'Universal school choice.', candidateToken: 'tok-a3f8', topicKey: 'education-funding' },
+        ] },
+      ],
+    };
+    s().selectRace(mixed);
+    s().confirmIssueSelection();
+    s().agree(mixed.topics[0].quotes[0]);
+    s().disagree(mixed.topics[0].quotes[1]); // cannabis fully judged -> only scorable topic is done
+    s().revealBallot();
+    render(<ResultsPhase />);
+    expect(await screen.findByRole('button', { name: /review a topic/i }, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /back to your topics/i })).toBeNull();
   });
 });

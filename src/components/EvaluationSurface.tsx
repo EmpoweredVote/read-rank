@@ -427,6 +427,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
         <RankSheet
           open={sheetOpen}
           allDone={allDone}
+          canReveal={reveal.enabled}
           resultsLabel={reveal.label}
           onClose={() => {
             setSheetOpen(false);

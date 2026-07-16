@@ -49,8 +49,8 @@ export const PhaseContainer: React.FC = () => {
     if (phase !== 'results') hasSynced.current = false;
   }, [phase, isLoggedIn, userId, currentRaceId, getRaceVerdicts]);
 
-  // Ballot reveal — single reliable capture point for "race completed", regardless
-  // of which control triggered finishRace (desktop reveal vs mobile sheet).
+  // Ballot reveal — single reliable capture point for the reveal event, regardless
+  // of which control triggered revealBallot (desktop reveal vs mobile sheet).
   const revealedRef = useRef<string | null>(null);
   useEffect(() => {
     if (phase === 'results' && currentRaceId && revealedRef.current !== currentRaceId) {

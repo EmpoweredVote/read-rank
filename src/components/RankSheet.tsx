@@ -13,6 +13,9 @@ export interface RankSheetProps {
   onSeeResults: () => void;
   /** Label for the footer results button (default "See Results"). */
   resultsLabel?: string;
+  /** When set, gates the footer results button (race-wide reveal signal).
+   *  Falls back to "any agreed in this pile" for direct callers that omit it. */
+  canReveal?: boolean;
 }
 
 /** Mobile bottom-sheet ranking surface (REDESIGN_SPEC §1.3). Mounts only while open. */
@@ -21,7 +24,7 @@ export const RankSheet: React.FC<RankSheetProps> = (props) => {
   return <RankSheetDialog {...props} />;
 };
 
-const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults, resultsLabel = 'See Results' }) => {
+const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResults, resultsLabel = 'See Results', canReveal }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const bodyRef = useScrollFade<HTMLDivElement>();
   const m = useMotion();
@@ -73,7 +76,7 @@ const RankSheetDialog: React.FC<RankSheetProps> = ({ allDone, onClose, onSeeResu
         <RankRail variant="sheet" />
       </div>
 
-      {agreed.length > 0 && (
+      {(canReveal ?? agreed.length > 0) && (
         <div className="rank-sheet-footer">
           <button type="button" className="ev-button-primary rank-sheet-results" onClick={onSeeResults}>
             {resultsLabel}

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CountyIndex, JurisdictionGeoIds } from '../data/api';
+import { isRaceComplete, isTopicDone, isTopicScorable } from '../utils/raceProgressState';
 
 // ============================================
 // Types — race -> topics -> blind quotes
@@ -42,9 +43,15 @@ export interface RaceProgress {
   topicOrder: string[];
   currentTopicKey: string | null;
   phase: 'evaluation' | 'results';
+  /** @deprecated completion is derived from topics; retained only for persisted-shape compatibility. */
   completed: boolean;
   /** Keys of topics the user chose to evaluate. Undefined for races started before this field existed. */
   selectedTopicKeys?: string[];
+  /** Backend rankable-topic count captured at selection (RaceSummary.rankableTopicCount).
+   *  The single completion basis shared by the hub, browse, reveal, and evaluation surfaces.
+   *  Undefined for races started before this field or when the backend omits it — callers then
+   *  fall back to the scorable topics present in the payload. */
+  rankableTopicCount?: number;
 }
 
 /** All agreed quotes across all topics in topic order (for results/verdicts). */
@@ -145,7 +152,7 @@ interface ReadRankState {
 
   // Race actions
   setPhase: (phase: Phase) => void;
-  selectRace: (payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }) => void;
+  selectRace: (payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null; rankableTopicCount?: number }) => void;
   setCurrentTopic: (topicKey: string) => void;
   nextTopic: () => void;
   agree: (quote: BlindQuote) => void;
@@ -153,7 +160,9 @@ interface ReadRankState {
   reorderAgreed: (orderedIds: string[]) => void;
   /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
   reAgree: (quote: BlindQuote) => void;
-  finishRace: () => void;
+  /** Reveal the (partial or full) ballot for topics evaluated so far. Does not
+   *  mark the race complete — completion is derived from topic done-state. */
+  revealBallot: () => void;
   setSelectedTopics: (keys: string[]) => void;
   confirmIssueSelection: () => void;
   goToHub: () => void;
@@ -186,7 +195,7 @@ interface ReadRankState {
 // Helpers
 // ============================================
 
-function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null }): RaceProgress {
+function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null; rankableTopicCount?: number }): RaceProgress {
   const topics: Record<string, TopicProgress> = {};
   const topicOrder: string[] = [];
   for (const t of payload.topics) {
@@ -213,6 +222,7 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
     phase: 'evaluation',
     completed: false,
     selectedTopicKeys: topicOrder,
+    rankableTopicCount: meta?.rankableTopicCount,
   };
 }
 
@@ -269,11 +279,9 @@ export const useReadRankStore = create<ReadRankState>()(
       setPhase: (phase) => {
         const state = get();
         if (phase === 'evaluation' || phase === 'results') {
-          const patch = withCurrentRace(state, (race) => ({
-            ...race,
-            phase,
-            completed: phase === 'results' ? true : race.completed,
-          }));
+          // Mirror the phase onto the current race; completion is derived, so we
+          // never flip a `completed` flag here.
+          const patch = withCurrentRace(state, (race) => ({ ...race, phase }));
           if (patch) {
             set({ phase, ...patch });
             return;
@@ -286,10 +294,32 @@ export const useReadRankStore = create<ReadRankState>()(
         const state = get();
         const existing = state.raceProgress[payload.raceId];
         const race = existing
-          ? refreshRaceContent({ ...existing, ...(meta ?? {}) }, payload)
+          ? refreshRaceContent(
+              { ...existing,
+                ...(meta ? { office: meta.office, seat: meta.seat, state: meta.state } : {}),
+                ...(meta?.rankableTopicCount !== undefined ? { rankableTopicCount: meta.rankableTopicCount } : {}),
+              },
+              payload,
+            )
           : buildRaceProgress(payload, meta);
-        const nextPhase: Phase = existing ? race.phase : 'issue-selection';
-        const selectedTopicKeys = race.selectedTopicKeys ?? race.topicOrder;
+
+        let nextPhase: Phase;
+        if (!existing) {
+          nextPhase = 'issue-selection';
+        } else if (isRaceComplete(race, meta?.rankableTopicCount)) {
+          nextPhase = 'results';                 // all rankable topics done -> combined ballot
+        } else if (race.phase === 'results') {
+          nextPhase = 'issue-selection';         // revealed a partial ballot -> hub to continue
+        } else {
+          nextPhase = 'evaluation';              // mid-round, never revealed -> resume
+        }
+
+        // Landing on the hub (fresh or returning) offers every rankable topic;
+        // reset the selection to the full order so undone topics are pre-selected.
+        const selectedTopicKeys = nextPhase === 'issue-selection'
+          ? race.topicOrder
+          : (race.selectedTopicKeys ?? race.topicOrder);
+
         set({
           currentRaceId: payload.raceId,
           phase: nextPhase,
@@ -401,26 +431,27 @@ export const useReadRankStore = create<ReadRankState>()(
       confirmIssueSelection: () => {
         const state = get();
         const patch = withCurrentRace(state, (race) => {
-          // Start on the first selected topic — the first catalog topic may have
-          // been deselected.
-          const active = getActiveTopicKeys(race);
-          const currentTopicKey =
-            race.currentTopicKey && active.includes(race.currentTopicKey)
-              ? race.currentTopicKey
-              : active[0] ?? race.currentTopicKey;
-          return { ...race, phase: 'evaluation' as const, currentTopicKey };
+          // Always keep already-done scorable topics in the selection — their
+          // verdicts belong in the combined ballot even if the user only toggled
+          // new topics this round.
+          const chosen = new Set(race.selectedTopicKeys ?? race.topicOrder);
+          for (const key of race.topicOrder) {
+            const t = race.topics[key];
+            if (t && isTopicScorable(t) && isTopicDone(t)) chosen.add(key);
+          }
+          const selectedTopicKeys = race.topicOrder.filter((k) => chosen.has(k));
+          // Start on the first selected topic that still needs ranking.
+          const firstUndone = selectedTopicKeys.find((k) => race.topics[k] && !isTopicDone(race.topics[k]));
+          const currentTopicKey = firstUndone ?? selectedTopicKeys[0] ?? race.currentTopicKey;
+          return { ...race, phase: 'evaluation' as const, selectedTopicKeys, currentTopicKey };
         });
         if (patch) set({ phase: 'evaluation', ...patch });
         else set({ phase: 'evaluation' });
       },
 
-      finishRace: () => {
+      revealBallot: () => {
         const state = get();
-        const patch = withCurrentRace(state, (race) => ({
-          ...race,
-          phase: 'results',
-          completed: true,
-        }));
+        const patch = withCurrentRace(state, (race) => ({ ...race, phase: 'results' }));
         if (patch) set({ phase: 'results', ...patch });
         else set({ phase: 'results' });
       },
