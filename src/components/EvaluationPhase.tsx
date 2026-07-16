@@ -1,9 +1,10 @@
 import React from 'react';
-import { useReadRankStore, getActiveTopicKeys, type BlindQuote } from '../store/useReadRankStore';
+import { useReadRankStore, getActiveTopicKeys, getAllAgreedQuotes, type BlindQuote } from '../store/useReadRankStore';
 import { track } from '../lib/analytics';
 import { TopicStepper } from './TopicStepper';
 import { EvaluationSurface } from './EvaluationSurface';
 import { useRaceRankSource } from './RankSource';
+import { isRaceComplete } from '../utils/raceProgressState';
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -35,6 +36,9 @@ export const EvaluationPhase: React.FC = () => {
         return t ? t.currentIndex >= t.quotesToEvaluate.length : true;
       })
     : false;
+
+  const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
+  const revealLabel = isRaceComplete(race ?? undefined) ? 'See your full ballot' : 'Reveal ballot';
 
   const onVerdict = (direction: 'agree' | 'disagree', quote: BlindQuote) => {
     track('readrank_verdict', {
@@ -76,7 +80,7 @@ export const EvaluationPhase: React.FC = () => {
       source={source}
       header={<TopicStepper />}
       completeState={completeState}
-      reveal={{ label: 'Reveal my ballot', onReveal: revealBallot, enabled: agreed.length >= 1 }}
+      reveal={{ label: revealLabel, onReveal: revealBallot, enabled: raceAgreedCount >= 1 }}
       showCoachMarks={!coachMarksCompleted}
       onCoachComplete={completeCoachMarks}
     />
