@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveProgressState, progressLabel } from '../raceProgressState';
+import { deriveProgressState, progressLabel, isRaceComplete } from '../raceProgressState';
 import type { RaceProgress, TopicProgress } from '../../store/useReadRankStore';
 
 function topic(over: Partial<TopicProgress>): TopicProgress {
@@ -59,10 +59,18 @@ describe('deriveProgressState', () => {
     expect(deriveProgressState(race({ completed: true, topics: { t: done } }), 1).state).toBe('complete');
   });
 
-  it('partial when revealed but a live scorable topic remains undone', () => {
+  it('in-progress (not partial) when a partial ballot was revealed but topics remain', () => {
     const done = topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }], disagreed: [q('2','b')] });
-    // Live count is 2 but only one topic was finished -> partial (skipped or newly added).
-    expect(deriveProgressState(race({ completed: true, topics: { t: done } }), 2).state).toBe('partial');
+    // Live count is 2 but only one topic is done -> the race is still in-progress and
+    // invites the user back (revealing no longer marks the race complete).
+    expect(deriveProgressState(race({ topics: { t: done } }), 2).state).toBe('in-progress');
+  });
+
+  it('complete is derived from topics, ignoring a stale completed flag', () => {
+    const done = topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }], disagreed: [q('2','b')] });
+    // Old data may carry completed:true after only one topic; completion is now
+    // derived purely from topics vs the live rankable count.
+    expect(deriveProgressState(race({ completed: true, topics: { t: done } }), 3).state).toBe('in-progress');
   });
 });
 
@@ -76,9 +84,9 @@ describe('progressLabel', () => {
     expect(progressLabel({ ...base, state: 'in-progress', doneTopics: 2, liveScorableTopics: 4, selectedScorableTopics: 4 }))
       .toBe('Continue · 2 of 4 topics');
   });
-  it('in-progress with all selected done -> Reveal your ballot', () => {
+  it('in-progress label always counts against all live rankable topics', () => {
     expect(progressLabel({ ...base, state: 'in-progress', doneTopics: 3, liveScorableTopics: 4, selectedScorableTopics: 3 }))
-      .toBe('Reveal your ballot');
+      .toBe('Continue · 3 of 4 topics');
   });
   it('in-progress with zero scorable topics -> null (no "0 of 0")', () => {
     expect(progressLabel({ ...base, state: 'in-progress' })).toBeNull();
@@ -90,5 +98,18 @@ describe('progressLabel', () => {
   it('complete -> Completed', () => {
     expect(progressLabel({ ...base, state: 'complete', doneTopics: 4, liveScorableTopics: 4, selectedScorableTopics: 4 }))
       .toBe('Completed');
+  });
+});
+
+describe('isRaceComplete', () => {
+  const done = topic({ quotesToEvaluate: [q('1','a'), q('2','b')], agreed: [{ ...q('1','a'), addedAt: 0 }], disagreed: [q('2','b')] });
+
+  it('true only when every live rankable topic is done', () => {
+    expect(isRaceComplete(race({ topics: { t: done }, topicOrder: ['t'] }), 1)).toBe(true);
+    expect(isRaceComplete(race({ topics: { t: done }, topicOrder: ['t'] }), 3)).toBe(false);
+  });
+
+  it('false for an untouched or missing race', () => {
+    expect(isRaceComplete(undefined, 3)).toBe(false);
   });
 });
