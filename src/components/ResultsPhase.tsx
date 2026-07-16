@@ -11,13 +11,15 @@ import { CompassCrossLink } from './CompassCrossLink';
 import type { AlignmentTopic } from '../utils/alignmentGrid';
 import { buildPerTopicRankMap } from '../utils/alignmentMarks';
 import { track } from '../lib/analytics';
+import { isRaceComplete } from '../utils/raceProgressState';
 
 export const ResultsPhase: React.FC = () => {
-  const { goToHub, currentRaceId, getRaceVerdicts, getCurrentRaceProgress } = useReadRankStore();
+  const { goToHub, setPhase, currentRaceId, getRaceVerdicts, getCurrentRaceProgress } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
   const [loading, setLoading] = useState(true);
   const m = useMotion();
   const race = getCurrentRaceProgress();
+  const complete = race ? isRaceComplete(race) : false;
 
   useEffect(() => {
     if (!currentRaceId) { setLoading(false); return; }
@@ -85,8 +87,8 @@ export const ResultsPhase: React.FC = () => {
           </p>
         </div>
         <div className="flex justify-center pt-6">
-          <button onClick={() => { track('readrank_play_again_clicked'); goToHub(); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            Play another race near you
+          <button onClick={() => { if (complete) { track('readrank_play_again_clicked'); goToHub(); } else setPhase('issue-selection'); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            {complete ? 'Play another race near you' : '← Back to your topics'}
           </button>
         </div>
       </div>
@@ -122,12 +124,26 @@ export const ResultsPhase: React.FC = () => {
         <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={null} />
       </div>
 
-      <motion.div className="flex justify-center pt-6"
+      <motion.div className="flex flex-col items-center gap-3 pt-6"
         {...m.enter({ y: 12 })}
         transition={m.transition(DUR.moderate, EASE.settle, { delay: (timeline.cardDelay(ballot.length) + DUR.moderate) / 1000 })}>
-        <button onClick={() => goToHub()} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+        {!complete && (
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            ← Back to your topics
+          </button>
+        )}
+        <button
+          onClick={() => { track('readrank_play_again_clicked'); goToHub(); }}
+          className={complete ? 'ev-button-primary' : 'ev-button-secondary'}
+          style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}
+        >
           Play another race near you
         </button>
+        {complete && (
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
+            Review a topic
+          </button>
+        )}
       </motion.div>
     </div>
   );
