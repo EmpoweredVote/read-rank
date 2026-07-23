@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Header, getFeedbackUrl } from '@empoweredvote/ev-ui';
+import { Header, SiteFooter, getFeedbackUrl } from '@empoweredvote/ev-ui';
 import { track, identify, resetIdentity } from './lib/analytics';
 import { PhaseContainer } from './components/PhaseContainer';
 import { AuditBanner } from './components/AuditBanner';
@@ -146,6 +146,7 @@ function MainApp() {
       <main className={phase === 'hub' ? undefined : 'container mx-auto px-4 py-8 max-w-4xl xl:max-w-6xl 2xl:max-w-[1400px]'}>
         <PhaseContainer />
       </main>
+      <SiteFooter darkMode={isDark} />
     </div>
   );
 }
