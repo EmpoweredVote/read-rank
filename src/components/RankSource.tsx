@@ -7,12 +7,14 @@ export interface RankSource {
   agreed: AgreedQuote[];
   disagreed: BlindQuote[];
   reorder: (orderedIds: string[]) => void;
-  toggleTie: (id: string) => void;
+  /** Undefined for sources that never show ties (e.g. the practice round). */
+  toggleTie?: (id: string) => void;
   reAgree: (quote: BlindQuote) => void;
   /** Leading N of `agreed` are ranked; the rest are unranked "also agree".
    *  Undefined when there's no current topic — callers fall back to `agreed.length`. */
   rankedCount?: number;
-  setRankedCount: (n: number) => void;
+  /** Undefined for sources that never show truncation (e.g. the practice round). */
+  setRankedCount?: (n: number) => void;
 }
 
 const RankSourceContext = createContext<RankSource | null>(null);

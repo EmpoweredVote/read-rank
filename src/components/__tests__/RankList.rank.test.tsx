@@ -42,9 +42,12 @@ describe('RankList renders derived (tie-aware) rank numbers', () => {
     render(<RankList items={items} onReorder={vi.fn()} rankedCount={2} />);
     // a=1, b=1 (tied, both ranked); c is beyond rankedCount=2 -> unranked (null).
     expect(screen.getAllByText('1')).toHaveLength(2);
-    const cBadge = screen.getByText('Charlie quote.').closest('.rank-slip')?.querySelector('.rank-num-badge');
+    const cSlip = screen.getByText('Charlie quote.').closest('.rank-slip');
+    const cBadge = cSlip?.querySelector('.rank-num-badge');
     expect(cBadge?.textContent).toBe('');
     expect((cBadge as HTMLElement)?.style.opacity).toBe('0.45');
+    // The muted treatment is driven by this class, not just the blank number.
+    expect(cSlip?.className).toMatch(/rank-slip-also-agree/);
   });
 });
 

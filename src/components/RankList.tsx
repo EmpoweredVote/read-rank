@@ -55,8 +55,8 @@ interface RowContentProps {
   onSetRankedCount?: (n: number) => void;
 }
 
-/** Muted, empty-looking style for an unranked row's number — no CSS class churn
- *  since a real truncation control lands in a later task. */
+/** Muted, empty-looking style for an unranked row's number — the truncation
+ *  control itself lives alongside it (see onSetRankedCount below). */
 const UNRANKED_STYLE: React.CSSProperties = { opacity: 0.45 };
 
 /**
@@ -96,23 +96,23 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
       </button>
       <div className="rank-slip-quote">
         <span>{quote.text}</span>
-        {!unranked && (
+        {!unranked && onSetRankedCount && (
           <button
             type="button"
             className="rank-truncate-btn"
-            onClick={() => onSetRankedCount?.(index + 1)}
+            onClick={() => onSetRankedCount(index + 1)}
           >
             Place the rest as agreed
           </button>
         )}
       </div>
-      {index > 0 && (
+      {index > 0 && onToggleTie && (
         <button
           type="button"
           className="rank-tie-btn"
           aria-pressed={!!quote.tieWithPrev}
           aria-label="Tie with the quote above"
-          onClick={() => onToggleTie?.(quote.id)}
+          onClick={() => onToggleTie(quote.id)}
         >
           <span aria-hidden>=</span>
         </button>
@@ -314,11 +314,11 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
               {effectiveRankedCount < items.length && i === effectiveRankedCount && (
                 <div className="rank-rule">
                   <span>Also agreed</span>
-                  {!reorderMode && (
+                  {!reorderMode && onSetRankedCount && (
                     <button
                       type="button"
                       className="rank-rule-btn"
-                      onClick={() => onSetRankedCount?.(effectiveRankedCount + 1)}
+                      onClick={() => onSetRankedCount(effectiveRankedCount + 1)}
                     >
                       Rank more
                     </button>
@@ -334,7 +334,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
                 popOpen={pop?.id === q.id}
                 hidden={q.id === landingId}
                 onToggleTie={onToggleTie}
-                tieAbove={!!items[i + 1]?.tieWithPrev}
+                tieAbove={i + 1 < effectiveRankedCount && !!items[i + 1]?.tieWithPrev}
                 onSetRankedCount={onSetRankedCount}
               />
             </React.Fragment>
