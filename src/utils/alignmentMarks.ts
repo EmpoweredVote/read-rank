@@ -25,7 +25,15 @@ export function buildPerTopicRankMap(reveal: RevealResult): Map<string, number> 
   const map = new Map<string, number>();
   for (const arr of byTopic.values()) {
     arr.sort((a, b) => a.rank - b.rank);
-    arr.forEach((q, i) => map.set(q.quoteId, i + 1));
+    let perTopic = 0;
+    let consumed = 0;
+    let prevGlobal: number | null = null;
+    for (const q of arr) {
+      if (prevGlobal === null || q.rank !== prevGlobal) perTopic = consumed + 1;
+      map.set(q.quoteId, perTopic);
+      consumed++;
+      prevGlobal = q.rank;
+    }
   }
   return map;
 }
