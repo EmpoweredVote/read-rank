@@ -4,7 +4,7 @@ import React from 'react';
 import { RankSourceProvider, useRankSource, useRaceRankSource, type RankSource } from '../RankSource';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
-const src: RankSource = { agreed: [], disagreed: [], reorder: () => {}, toggleTie: () => {}, reAgree: () => {} };
+const src: RankSource = { agreed: [], disagreed: [], reorder: () => {}, toggleTie: () => {}, reAgree: () => {}, setRankedCount: () => {} };
 
 describe('useRankSource', () => {
   it('throws when used without a provider', () => {

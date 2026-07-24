@@ -9,6 +9,10 @@ export interface RankSource {
   reorder: (orderedIds: string[]) => void;
   toggleTie: (id: string) => void;
   reAgree: (quote: BlindQuote) => void;
+  /** Leading N of `agreed` are ranked; the rest are unranked "also agree".
+   *  Undefined when there's no current topic — callers fall back to `agreed.length`. */
+  rankedCount?: number;
+  setRankedCount: (n: number) => void;
 }
 
 const RankSourceContext = createContext<RankSource | null>(null);
@@ -25,7 +29,7 @@ export function useRankSource(): RankSource {
 
 /** Build a RankSource from the current race's active topic. */
 export function useRaceRankSource(): RankSource {
-  const { getCurrentTopicProgress, reorderAgreed, toggleTie, reAgree } = useReadRankStore();
+  const { getCurrentTopicProgress, reorderAgreed, toggleTie, reAgree, setRankedCount } = useReadRankStore();
   const topic = getCurrentTopicProgress();
   return useMemo(
     () => ({
@@ -36,8 +40,10 @@ export function useRaceRankSource(): RankSource {
       reorder: reorderAgreed,
       toggleTie,
       reAgree,
+      rankedCount: topic?.rankedCount,
+      setRankedCount,
     }),
-    [topic?.agreed, topic?.disagreed, reorderAgreed, toggleTie, reAgree]
+    [topic?.agreed, topic?.disagreed, topic?.rankedCount, reorderAgreed, toggleTie, reAgree, setRankedCount]
   );
 }
 

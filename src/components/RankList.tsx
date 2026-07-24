@@ -51,6 +51,8 @@ interface RowContentProps {
   /** True when the NEXT row ties up to this one — this row is the top of that
    *  tie group, so it gets the matching top half of the bracket accent. */
   tieAbove?: boolean;
+  /** view mode only: truncate the ranked set right after this row (index + 1). */
+  onSetRankedCount?: (n: number) => void;
 }
 
 /** Muted, empty-looking style for an unranked row's number — no CSS class churn
@@ -63,7 +65,7 @@ const UNRANKED_STYLE: React.CSSProperties = { opacity: 0.45 };
  * In reorder mode it collapses to a compact two-line row that is itself the
  * drag handle, so the whole list fits and drags stay short (spec: Record).
  */
-function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, dragHandleProps, onToggleTie, tieAbove }: RowContentProps) {
+function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, dragHandleProps, onToggleTie, tieAbove, onSetRankedCount }: RowContentProps) {
   const unranked = rank == null;
   const label = unranked ? '' : rank;
 
@@ -78,9 +80,10 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
   }
 
   const tieClass = `${quote.tieWithPrev ? ' rank-slip-tied' : ''}${tieAbove ? ' rank-slip-tie-above' : ''}`;
+  const alsoAgreeClass = unranked ? ' rank-slip-also-agree' : '';
 
   return (
-    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}${tieClass}`}>
+    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}${tieClass}${alsoAgreeClass}`}>
       <button
         type="button"
         className="rank-num"
@@ -91,7 +94,18 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
       >
         <span className="rank-num-badge" style={unranked ? UNRANKED_STYLE : undefined}>{label}</span>
       </button>
-      <div className="rank-slip-quote">{quote.text}</div>
+      <div className="rank-slip-quote">
+        <span>{quote.text}</span>
+        {!unranked && (
+          <button
+            type="button"
+            className="rank-truncate-btn"
+            onClick={() => onSetRankedCount?.(index + 1)}
+          >
+            Place the rest as agreed
+          </button>
+        )}
+      </div>
       {index > 0 && (
         <button
           type="button"
@@ -126,9 +140,10 @@ interface RowProps {
   hidden?: boolean;
   onToggleTie?: (id: string) => void;
   tieAbove?: boolean;
+  onSetRankedCount?: (n: number) => void;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNumberClick, popOpen, hidden, onToggleTie, tieAbove }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNumberClick, popOpen, hidden, onToggleTie, tieAbove, onSetRankedCount }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
 
   return (
@@ -156,6 +171,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNu
           dragHandleProps={{ ...attributes, ...listeners }}
           onToggleTie={onToggleTie}
           tieAbove={tieAbove}
+          onSetRankedCount={onSetRankedCount}
         />
       </motion.div>
     </div>
@@ -178,13 +194,18 @@ interface RankListProps {
   /** First N items (in `items` order) are ranked; the rest are unranked ("also agree").
    *  Defaults to `items.length`, i.e. everything ranked — today's no-truncation behavior. */
   rankedCount?: number;
+  /** Set the truncation threshold: quotes at/after this index become unranked "also agree". */
+  onSetRankedCount?: (n: number) => void;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, onToggleTie, reorderMode = false, emptyHint, longPressDrag, landingId, rankedCount }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, onToggleTie, reorderMode = false, emptyHint, longPressDrag, landingId, rankedCount, onSetRankedCount }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pop, setPop] = useState<{ id: string; top: number; left: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Resolved truncation threshold: everything ranked when unset (today's behavior).
+  const effectiveRankedCount = rankedCount ?? items.length;
 
   // Derived (tie-aware, truncation-aware) rank per quote id, replacing plain
   // positional numbering. No ties + rankedCount === items.length (today's data)
@@ -193,9 +214,9 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
     () => deriveRanks(
       items.map((q) => q.id),
       items.map((q) => !!q.tieWithPrev),
-      rankedCount ?? items.length,
+      effectiveRankedCount,
     ),
-    [items, rankedCount]
+    [items, effectiveRankedCount]
   );
 
   const sensors = useSensors(
@@ -290,8 +311,19 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
         <div ref={wrapRef} className="rank-list-wrap">
           {items.map((q, i) => (
             <React.Fragment key={q.id}>
-              {i === 3 && (
-                <div className={reorderMode ? 'rank-rule' : 'rank-rule'} aria-hidden="true">Also agreed</div>
+              {effectiveRankedCount < items.length && i === effectiveRankedCount && (
+                <div className="rank-rule">
+                  <span>Also agreed</span>
+                  {!reorderMode && (
+                    <button
+                      type="button"
+                      className="rank-rule-btn"
+                      onClick={() => onSetRankedCount?.(effectiveRankedCount + 1)}
+                    >
+                      Rank more
+                    </button>
+                  )}
+                </div>
               )}
               <SortableRow
                 quote={q}
@@ -303,6 +335,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
                 hidden={q.id === landingId}
                 onToggleTie={onToggleTie}
                 tieAbove={!!items[i + 1]?.tieWithPrev}
+                onSetRankedCount={onSetRankedCount}
               />
             </React.Fragment>
           ))}

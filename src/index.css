@@ -1694,14 +1694,21 @@ dialog.rank-sheet[open] {
 
 /* Tie-with-above bracket: a left-edge accent joining a tied row to the row
    it ties with above it. Static — no transition/animation, so it needs no
-   prefers-reduced-motion guard. box-shadow (not border) so it isn't clipped
-   by this element's own overflow:hidden. */
+   prefers-reduced-motion guard. box-shadow (not border) because box-shadow
+   doesn't participate in the box model, so toggling these classes can't
+   shift the grid layout. */
 .rank-slip-tied,
 .rank-slip-tie-above {
   box-shadow: inset 3px 0 0 0 var(--color-ev-yellow, #fed12e);
 }
 .rank-slip-tied { border-top-left-radius: 0; }
 .rank-slip-tie-above { border-bottom-left-radius: 0; }
+
+/* Truncation "also agree" pile: unranked rows past the rankedCount threshold.
+   Muted but still fully legible and still drag-reorderable. */
+.rank-slip-also-agree {
+  opacity: 0.65;
+}
 
 button.rank-num {
   font-family: 'Manrope', sans-serif;
@@ -1734,6 +1741,9 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 
 .rank-slip-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
   padding: 12px 13px 13px 4px;
   font-family: 'Manrope', sans-serif;
@@ -1741,6 +1751,26 @@ button.rank-num:focus-visible .rank-num-badge {
   font-weight: 500;
   line-height: 1.55;
   color: var(--text-ink);
+}
+
+/* "Place the rest as agreed" truncation control: one per ranked row, tucked
+   under the quote text. Small and muted so it doesn't compete with the quote. */
+.rank-truncate-btn {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.rank-truncate-btn:hover,
+.rank-truncate-btn:focus-visible {
+  color: var(--text-link);
 }
 
 /* "Tie with the quote above" control: view mode only, absent on the first row
@@ -1807,6 +1837,26 @@ button.rank-num:focus-visible .rank-num-badge {
   margin: 0.85rem 0.125rem 0.6rem;
 }
 .rank-rule::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
+
+/* "Rank more" control on the divider: ordered after the rule line (which
+   stays at the default order 0) so it reads "Also agreed ---- Rank more". */
+.rank-rule-btn {
+  order: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-link);
+  cursor: pointer;
+}
+.rank-rule-btn:hover,
+.rank-rule-btn:focus-visible {
+  text-decoration: underline;
+}
 
 /* Reorder mode: compact 2-line rows, handle + number centered. */
 .rank-mini {

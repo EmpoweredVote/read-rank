@@ -12,7 +12,7 @@ export interface RankRailProps {
 }
 
 export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
-  const { agreed, disagreed, reorder: reorderAgreed, toggleTie, reAgree } = useRankSource();
+  const { agreed, disagreed, reorder: reorderAgreed, toggleTie, reAgree, rankedCount, setRankedCount } = useRankSource();
   const [showDisagreed, setShowDisagreed] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const isSheet = variant === 'sheet';
@@ -61,6 +61,8 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
         reorderMode={reorderMode}
         longPressDrag={isSheet}
         landingId={landingId}
+        rankedCount={rankedCount ?? agreed.length}
+        onSetRankedCount={setRankedCount}
       />
 
       {agreed.length === 0 && (
