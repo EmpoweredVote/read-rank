@@ -46,6 +46,11 @@ interface RowContentProps {
   onNumberClick?: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
   popOpen?: boolean;
   dragHandleProps?: Record<string, unknown>;
+  /** view mode only: toggle "tie with the quote above" for this row. */
+  onToggleTie?: (id: string) => void;
+  /** True when the NEXT row ties up to this one — this row is the top of that
+   *  tie group, so it gets the matching top half of the bracket accent. */
+  tieAbove?: boolean;
 }
 
 /** Muted, empty-looking style for an unranked row's number — no CSS class churn
@@ -58,7 +63,7 @@ const UNRANKED_STYLE: React.CSSProperties = { opacity: 0.45 };
  * In reorder mode it collapses to a compact two-line row that is itself the
  * drag handle, so the whole list fits and drags stay short (spec: Record).
  */
-function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, dragHandleProps }: RowContentProps) {
+function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, dragHandleProps, onToggleTie, tieAbove }: RowContentProps) {
   const unranked = rank == null;
   const label = unranked ? '' : rank;
 
@@ -72,8 +77,10 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
     );
   }
 
+  const tieClass = `${quote.tieWithPrev ? ' rank-slip-tied' : ''}${tieAbove ? ' rank-slip-tie-above' : ''}`;
+
   return (
-    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}`}>
+    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}${tieClass}`}>
       <button
         type="button"
         className="rank-num"
@@ -85,6 +92,17 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
         <span className="rank-num-badge" style={unranked ? UNRANKED_STYLE : undefined}>{label}</span>
       </button>
       <div className="rank-slip-quote">{quote.text}</div>
+      {index > 0 && (
+        <button
+          type="button"
+          className="rank-tie-btn"
+          aria-pressed={!!quote.tieWithPrev}
+          aria-label="Tie with the quote above"
+          onClick={() => onToggleTie?.(quote.id)}
+        >
+          <span aria-hidden>=</span>
+        </button>
+      )}
       <button
         type="button"
         className="rank-grip"
@@ -106,9 +124,11 @@ interface RowProps {
   popOpen?: boolean;
   /** True while a flight is landing on this row — hidden but still laid out so its box can be measured. */
   hidden?: boolean;
+  onToggleTie?: (id: string) => void;
+  tieAbove?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNumberClick, popOpen, hidden }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNumberClick, popOpen, hidden, onToggleTie, tieAbove }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
 
   return (
@@ -134,6 +154,8 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNu
           onNumberClick={onNumberClick}
           popOpen={popOpen}
           dragHandleProps={{ ...attributes, ...listeners }}
+          onToggleTie={onToggleTie}
+          tieAbove={tieAbove}
         />
       </motion.div>
     </div>
@@ -145,6 +167,8 @@ interface RankListProps {
   onReorder: (orderedIds: string[]) => void;
   /** Tap-to-assign: place a quote at a 1-based podium position. */
   onAssign?: (id: string, position: number) => void;
+  /** view mode only: toggle "tie with the quote above" for a row (id). */
+  onToggleTie?: (id: string) => void;
   /** Collapse rows to compact draggable lines. */
   reorderMode?: boolean;
   emptyHint?: string;
@@ -156,7 +180,7 @@ interface RankListProps {
   rankedCount?: number;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, reorderMode = false, emptyHint, longPressDrag, landingId, rankedCount }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, onToggleTie, reorderMode = false, emptyHint, longPressDrag, landingId, rankedCount }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pop, setPop] = useState<{ id: string; top: number; left: number } | null>(null);
@@ -277,6 +301,8 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
                 onNumberClick={openPop}
                 popOpen={pop?.id === q.id}
                 hidden={q.id === landingId}
+                onToggleTie={onToggleTie}
+                tieAbove={!!items[i + 1]?.tieWithPrev}
               />
             </React.Fragment>
           ))}

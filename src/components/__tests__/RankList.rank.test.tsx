@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RankList } from '../RankList';
 import type { AgreedQuote } from '../../store/useReadRankStore';
 
@@ -44,5 +45,36 @@ describe('RankList renders derived (tie-aware) rank numbers', () => {
     const cBadge = screen.getByText('Charlie quote.').closest('.rank-slip')?.querySelector('.rank-num-badge');
     expect(cBadge?.textContent).toBe('');
     expect((cBadge as HTMLElement)?.style.opacity).toBe('0.45');
+  });
+});
+
+describe('RankList tie-with-above control', () => {
+  it('calls onToggleTie with the row id when its tie button is clicked, and the first row has no tie button', async () => {
+    const user = userEvent.setup();
+    const onToggleTie = vi.fn();
+    const twoItems: AgreedQuote[] = [
+      { id: 'a', text: 'Alpha quote.', candidateToken: 't1', topicKey: 'k', addedAt: 1 },
+      { id: 'b', text: 'Bravo quote.', candidateToken: 't2', topicKey: 'k', addedAt: 2 },
+    ];
+    render(<RankList items={twoItems} onReorder={vi.fn()} onToggleTie={onToggleTie} />);
+
+    // First row (a) has no "above" to tie with, so no tie button on it.
+    const aSlip = screen.getByText('Alpha quote.').closest('.rank-slip');
+    expect(aSlip?.querySelector('.rank-tie-btn')).toBeNull();
+
+    const bSlip = screen.getByText('Bravo quote.').closest('.rank-slip');
+    const bTieBtn = bSlip?.querySelector('.rank-tie-btn');
+    expect(bTieBtn).not.toBeNull();
+
+    await user.click(bTieBtn as HTMLElement);
+    expect(onToggleTie).toHaveBeenCalledWith('b');
+  });
+
+  it('renders the tie bracket accent on a row with tieWithPrev set', () => {
+    render(<RankList items={items} onReorder={vi.fn()} onToggleTie={vi.fn()} />);
+    const bSlip = screen.getByText('Bravo quote.').closest('.rank-slip');
+    expect(bSlip?.className).toMatch(/rank-slip-tied/);
+    const aSlip = screen.getByText('Alpha quote.').closest('.rank-slip');
+    expect(aSlip?.className).not.toMatch(/rank-slip-tied/);
   });
 });

@@ -1678,10 +1678,12 @@ dialog.rank-sheet[open] {
   gap: 0.5625rem;
 }
 
-/* Uniform slip: number badge + full quote + drag grip. */
+/* Uniform slip: number badge + full quote + tie control + drag grip. The
+   28px track is reserved for the tie button whether or not this row renders
+   one (the first row never does), so the grip stays aligned across rows. */
 .rank-slip {
   display: grid;
-  grid-template-columns: 42px 1fr auto;
+  grid-template-columns: 42px 1fr 28px auto;
   align-items: stretch;
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
@@ -1689,6 +1691,17 @@ dialog.rank-sheet[open] {
   overflow: hidden;
 }
 .rank-slip-top { border-color: var(--border-medium); }
+
+/* Tie-with-above bracket: a left-edge accent joining a tied row to the row
+   it ties with above it. Static — no transition/animation, so it needs no
+   prefers-reduced-motion guard. box-shadow (not border) so it isn't clipped
+   by this element's own overflow:hidden. */
+.rank-slip-tied,
+.rank-slip-tie-above {
+  box-shadow: inset 3px 0 0 0 var(--color-ev-yellow, #fed12e);
+}
+.rank-slip-tied { border-top-left-radius: 0; }
+.rank-slip-tie-above { border-bottom-left-radius: 0; }
 
 button.rank-num {
   font-family: 'Manrope', sans-serif;
@@ -1730,7 +1743,43 @@ button.rank-num:focus-visible .rank-num-badge {
   color: var(--text-ink);
 }
 
+/* "Tie with the quote above" control: view mode only, absent on the first row
+   (nothing to tie with). Reserves its own grid column so the grip always
+   lands in the same place whether or not a given row has this button. */
+.rank-tie-btn {
+  grid-column: 3;
+  align-self: center;
+  justify-self: center;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.rank-tie-btn:hover,
+.rank-tie-btn:focus-visible {
+  color: var(--text-link);
+  border-color: var(--text-link);
+}
+.rank-tie-btn[aria-pressed="true"] {
+  color: #1a1f27;
+  background: var(--color-ev-yellow, #fed12e);
+  border-color: var(--color-ev-yellow, #fed12e);
+}
+
 .rank-grip {
+  grid-column: 4;
   align-self: center;
   display: flex;
   align-items: center;
