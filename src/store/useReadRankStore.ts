@@ -18,6 +18,8 @@ export interface BlindQuote {
 /** An agreed quote. Position in a topic's `agreed` array IS the rank within that topic. */
 export interface AgreedQuote extends BlindQuote {
   addedAt: number;
+  /** True when this quote shares the rank of the quote immediately above it in `agreed`. */
+  tieWithPrev?: boolean;
 }
 
 export interface TopicProgress {
@@ -29,6 +31,9 @@ export interface TopicProgress {
   disagreed: BlindQuote[];
   /** Per-topic ordered pile. Index 0 = ranked #1 within this topic. */
   agreed: AgreedQuote[];
+  /** Leading N of `agreed` are ranked; the rest are unranked "also agree".
+   *  Defaults to agreed.length (all ranked = today's behavior). */
+  rankedCount?: number;
 }
 
 export interface RaceProgress {
@@ -158,6 +163,7 @@ interface ReadRankState {
   agree: (quote: BlindQuote) => void;
   disagree: (quote: BlindQuote) => void;
   reorderAgreed: (orderedIds: string[]) => void;
+  toggleTie: (quoteId: string) => void;
   /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
   reAgree: (quote: BlindQuote) => void;
   /** Reveal the (partial or full) ballot for topics evaluated so far. Does not
@@ -398,6 +404,20 @@ export const useReadRankStore = create<ReadRankState>()(
           // Append any not present in orderedIds (defensive).
           for (const q of topic.agreed) if (!orderedIds.includes(q.id)) next.push(q);
           return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, agreed: next } } };
+        });
+        if (patch) set(patch);
+      },
+
+      toggleTie: (quoteId) => {
+        const patch = withCurrentRace(get(), (race) => {
+          const topicKey = race.currentTopicKey;
+          if (!topicKey || !race.topics[topicKey]) return race;
+          const topic = race.topics[topicKey];
+          const idx = topic.agreed.findIndex((q) => q.id === quoteId);
+          if (idx <= 0) return race; // first row can't tie upward
+          const agreed = topic.agreed.map((q, i) =>
+            i === idx ? { ...q, tieWithPrev: !q.tieWithPrev } : q);
+          return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, agreed } } };
         });
         if (patch) set(patch);
       },
