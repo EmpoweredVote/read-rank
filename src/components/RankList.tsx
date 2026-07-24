@@ -1,5 +1,5 @@
 // src/components/RankList.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import type { AgreedQuote } from '../store/useReadRankStore';
 import { tierAnnouncement } from '../utils/tiers';
+import { deriveRanks } from '../utils/deriveRanks';
 
 /** Ordinal labels for the top three podium positions. */
 const ORD = ['', '1st', '2nd', '3rd'];
@@ -38,6 +39,8 @@ function GripIcon() {
 interface RowContentProps {
   quote: AgreedQuote;
   index: number;
+  /** Derived (tie-aware, truncation-aware) rank; null means unranked ("also agree"). */
+  rank: number | null;
   reorderMode: boolean;
   /** view mode only: open the assign popover for this row's number. */
   onNumberClick?: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
@@ -45,20 +48,25 @@ interface RowContentProps {
   dragHandleProps?: Record<string, unknown>;
 }
 
+/** Muted, empty-looking style for an unranked row's number — no CSS class churn
+ *  since a real truncation control lands in a later task. */
+const UNRANKED_STYLE: React.CSSProperties = { opacity: 0.45 };
+
 /**
  * A ranked row. In view mode it is a full-quote "slip" whose number is a button
  * that opens the tap-to-assign popover; the quote leads and the grip drags.
  * In reorder mode it collapses to a compact two-line row that is itself the
  * drag handle, so the whole list fits and drags stay short (spec: Record).
  */
-function RowContent({ quote, index, reorderMode, onNumberClick, popOpen, dragHandleProps }: RowContentProps) {
-  const num = index + 1;
+function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, dragHandleProps }: RowContentProps) {
+  const unranked = rank == null;
+  const label = unranked ? '' : rank;
 
   if (reorderMode) {
     return (
       <div className={`rank-mini${index > 2 ? ' rank-mini-sub' : ''}`} {...dragHandleProps}>
         <span className="rank-mini-grip" aria-hidden><GripIcon /></span>
-        <span className="rank-mini-num">{num}</span>
+        <span className="rank-mini-num" style={unranked ? UNRANKED_STYLE : undefined}>{label}</span>
         <span className="rank-mini-quote">{quote.text}</span>
       </div>
     );
@@ -71,16 +79,16 @@ function RowContent({ quote, index, reorderMode, onNumberClick, popOpen, dragHan
         className="rank-num"
         aria-haspopup="menu"
         aria-expanded={!!popOpen}
-        aria-label={index < 3 ? `Ranked ${num}. Change position` : `Position ${num}. Move to top three`}
+        aria-label={unranked ? 'Unranked. Tap to place in your top picks' : (index < 3 ? `Ranked ${rank}. Change position` : `Position ${rank}. Move to top three`)}
         onClick={(e) => onNumberClick?.(e, quote.id)}
       >
-        <span className="rank-num-badge">{num}</span>
+        <span className="rank-num-badge" style={unranked ? UNRANKED_STYLE : undefined}>{label}</span>
       </button>
       <div className="rank-slip-quote">{quote.text}</div>
       <button
         type="button"
         className="rank-grip"
-        aria-label={`Reorder, currently ranked ${num}`}
+        aria-label={unranked ? 'Reorder, unranked' : `Reorder, currently ranked ${rank}`}
         {...dragHandleProps}
       >
         <GripIcon />
@@ -92,6 +100,7 @@ function RowContent({ quote, index, reorderMode, onNumberClick, popOpen, dragHan
 interface RowProps {
   quote: AgreedQuote;
   index: number;
+  rank: number | null;
   reorderMode: boolean;
   onNumberClick?: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
   popOpen?: boolean;
@@ -99,7 +108,7 @@ interface RowProps {
   hidden?: boolean;
 }
 
-const SortableRow: React.FC<RowProps> = ({ quote, index, reorderMode, onNumberClick, popOpen, hidden }) => {
+const SortableRow: React.FC<RowProps> = ({ quote, index, rank, reorderMode, onNumberClick, popOpen, hidden }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: quote.id });
 
   return (
@@ -120,6 +129,7 @@ const SortableRow: React.FC<RowProps> = ({ quote, index, reorderMode, onNumberCl
         <RowContent
           quote={quote}
           index={index}
+          rank={rank}
           reorderMode={reorderMode}
           onNumberClick={onNumberClick}
           popOpen={popOpen}
@@ -141,13 +151,28 @@ interface RankListProps {
   longPressDrag?: boolean;
   /** Id of a row currently being landed on by a verdict flight — rendered hidden for a seamless handoff. */
   landingId?: string | null;
+  /** First N items (in `items` order) are ranked; the rest are unranked ("also agree").
+   *  Defaults to `items.length`, i.e. everything ranked — today's no-truncation behavior. */
+  rankedCount?: number;
 }
 
-export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, reorderMode = false, emptyHint, longPressDrag, landingId }) => {
+export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, reorderMode = false, emptyHint, longPressDrag, landingId, rankedCount }) => {
   const [announcement, setAnnouncement] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pop, setPop] = useState<{ id: string; top: number; left: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Derived (tie-aware, truncation-aware) rank per quote id, replacing plain
+  // positional numbering. No ties + rankedCount === items.length (today's data)
+  // yields the same 1..N sequence as before.
+  const ranks = useMemo(
+    () => deriveRanks(
+      items.map((q) => q.id),
+      items.map((q) => !!q.tieWithPrev),
+      rankedCount ?? items.length,
+    ),
+    [items, rankedCount]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -247,6 +272,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
               <SortableRow
                 quote={q}
                 index={i}
+                rank={ranks.get(q.id) ?? null}
                 reorderMode={reorderMode}
                 onNumberClick={openPop}
                 popOpen={pop?.id === q.id}
@@ -277,7 +303,7 @@ export const RankList: React.FC<RankListProps> = ({ items, onReorder, onAssign, 
       <DragOverlay>
         {activeItem && activeIndex !== -1 ? (
           <div style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.18)', borderRadius: '0.625rem', overflow: 'hidden', opacity: 0.97 }}>
-            <RowContent quote={activeItem} index={activeIndex} reorderMode={reorderMode} />
+            <RowContent quote={activeItem} index={activeIndex} rank={ranks.get(activeItem.id) ?? null} reorderMode={reorderMode} />
           </div>
         ) : null}
       </DragOverlay>
