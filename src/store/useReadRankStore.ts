@@ -16,7 +16,10 @@ export interface BlindQuote {
   topicKey: string;
 }
 
-/** An agreed quote. Position in a topic's `agreed` array IS the rank within that topic. */
+/** An agreed quote. Position in a topic's `agreed` array is the visual/drag order,
+ *  not the rank directly -- the actual rank is derived by `deriveRanks` from that
+ *  position plus `tieWithPrev` (ties share a rank) and the topic's `rankedCount`
+ *  (quotes beyond it are unranked "also agree"). */
 export interface AgreedQuote extends BlindQuote {
   addedAt: number;
   /** True when this quote shares the rank of the quote immediately above it in `agreed`. */

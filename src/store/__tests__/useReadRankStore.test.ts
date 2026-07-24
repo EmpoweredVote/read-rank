@@ -114,3 +114,66 @@ describe('reorderAgreed clears stale ties on move', () => {
     expect(b.tieWithPrev).toBe(true);
   });
 });
+
+describe('getRaceVerdicts', () => {
+  it('restarts ranks per topic and keeps ties, rather than using a global running index', () => {
+    const now = Date.now();
+    const race: RaceProgress = {
+      raceId: 'race-multi',
+      positionName: 'Governor',
+      topics: {
+        t1: {
+          topicKey: 't1',
+          title: 'Topic 1',
+          question: 'Q1?',
+          quotesToEvaluate: [],
+          currentIndex: 2,
+          disagreed: [],
+          agreed: [
+            { id: 'a', text: 'Quote a.', candidateToken: 'tok-a', topicKey: 't1', addedAt: now },
+            {
+              id: 'b',
+              text: 'Quote b.',
+              candidateToken: 'tok-b',
+              topicKey: 't1',
+              addedAt: now,
+              tieWithPrev: true,
+            },
+          ],
+        },
+        t2: {
+          topicKey: 't2',
+          title: 'Topic 2',
+          question: 'Q2?',
+          quotesToEvaluate: [],
+          currentIndex: 2,
+          disagreed: [],
+          agreed: [
+            { id: 'c', text: 'Quote c.', candidateToken: 'tok-c', topicKey: 't2', addedAt: now },
+            { id: 'd', text: 'Quote d.', candidateToken: 'tok-d', topicKey: 't2', addedAt: now },
+          ],
+        },
+      },
+      topicOrder: ['t1', 't2'],
+      currentTopicKey: 't1',
+      phase: 'evaluation',
+      completed: false,
+      selectedTopicKeys: ['t1', 't2'],
+    };
+    useReadRankStore.setState({
+      currentRaceId: 'race-multi',
+      raceProgress: { 'race-multi': race },
+    });
+
+    const verdicts = useReadRankStore.getState().getRaceVerdicts('race-multi');
+    const rankById = new Map(verdicts.map((v) => [v.quote_id, v.rank]));
+
+    // t1: a=1, b=1 (tie with a). t2 RESTARTS at 1: c=1, d=2 -- proving ranks are
+    // per-topic. Under the old global-index bug, t2 would have continued the
+    // running count from t1 and produced c=3, d=4.
+    expect(rankById.get('a')).toBe(1);
+    expect(rankById.get('b')).toBe(1);
+    expect(rankById.get('c')).toBe(1);
+    expect(rankById.get('d')).toBe(2);
+  });
+});
