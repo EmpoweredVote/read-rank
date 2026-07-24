@@ -12,7 +12,7 @@ The core issue is **convergence**, not raw count: a 2-candidate race with two ge
 
 ## What the current algorithm already does (important)
 
-- A quote carries `supported: boolean` (phase-1 swipe) and `rank: number | null` (global 1-based rank across the race; `null` for disagreed). Per-topic ranks are re-derived from the global order (`buildPerTopicRankMap`).
+- A quote carries `supported: boolean` (phase-1 swipe) and `rank: number | null` (1-based; `null` for disagreed/unranked). As of Phase 2, verdict ranks are derived per-topic (see Data model). `buildPerTopicRankMap` re-derives dense, tie-aware per-topic ranks at reveal.
 - The alignment marks **already truncate**: per topic, only the top **1/2/3** produce distinct "pick" marks; a supported quote ranked 4th-or-lower — *or supported-but-unranked* — collapses to a plain "agreed" check.
 - Therefore the precise ordering of the tail (4th onward) barely affects the result today. **The pain is UX friction, not signal.** Truncation is, in effect, already the model — the UI just doesn't let the user stop.
 
@@ -40,7 +40,7 @@ Clustering thus happens in the voter's hands (co-ranking equivalents), so there 
 
 ## Data model & algorithm
 
-- **`rank` may repeat** across quotes (ties). It stays a global 1-based value; a tie is two quotes sharing the same integer.
+- **`rank` is per-topic and may repeat**: verdict ranks restart at 1 within each topic — each question is an independent comparison, so a cross-topic global ordering carries no meaning — and a tie is two quotes sharing the same integer. (This supersedes an earlier draft that kept a single "global 1-based value"; the change was made during Phase 2 implementation, where it also fixed a latent global-index bug in `getRaceVerdicts` that let only the first topic's quote ever be rank 1, and it was verified safe against the live backend — see Open questions.)
 - **Per-topic rank derivation** (`buildPerTopicRankMap`) assigns tied quotes the *same* per-topic number (stable), rather than forcing a strict 1,2,3 sequence.
 - **Top-picks / ≤3 logic** handles a tie group: e.g., three quotes tied at #1 are all "rank 1" picks; `countTopPicks` counts each. Define the cutoff behavior when a tie group straddles the top-3 boundary (see Open Questions).
 - **Truncation** needs no algorithm change: supported + `rank = null` already renders as "agreed."
@@ -57,7 +57,7 @@ Clustering thus happens in the voter's hands (co-ranking equivalents), so there 
 
 - **Tie group crossing the top-3 boundary:** if four quotes tie at #1, are all four "rank 1" picks, and does that change `countTopPicks` weighting or the alignment-grid mark set? Pick a rule and make it explicit.
 - **Truncation UX affordance:** exact control for "place the rest as agreed" (button, drop zone, divider you drag) — a small mockup call during planning.
-- **Guest reveal payload:** confirm the reveal POST tolerates repeated `rank` values without server-side assumptions of uniqueness.
+- **Guest reveal payload — RESOLVED (2026-07-24):** verified the ev-accounts `/compass/verdicts` POST (`rank: int().min(1).nullable()`, no uniqueness constraint; per-quote upsert RPC) and the server reveal (`readrankService.ts`): `rankBonus`/`score`/`firstPlaceCount` operate per-quote and `topicBest`/`userTopWinner` are already keyed per topic, so per-topic and repeated ranks are not merely tolerated but are what the scoring expects. Caveat for release: shipping per-topic ranks *changes live reveal scores* for existing multi-topic races — a correction, since each topic's first-place bonus was previously suppressed by the global numbering.
 
 ## Relation to the comparability model
 
