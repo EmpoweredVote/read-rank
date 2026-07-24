@@ -67,3 +67,50 @@ describe('toggleTie', () => {
     expect(a.tieWithPrev).toBeFalsy();
   });
 });
+
+describe('setRankedCount', () => {
+  it('sets rankedCount on the current topic', () => {
+    useReadRankStore.getState().setRankedCount(2);
+    const race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.topics.housing.rankedCount).toBe(2);
+  });
+
+  it('clamps above agreed.length down to agreed.length', () => {
+    useReadRankStore.getState().setRankedCount(99);
+    const race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.topics.housing.rankedCount).toBe(3);
+  });
+
+  it('clamps below 0 up to 0', () => {
+    useReadRankStore.getState().setRankedCount(-1);
+    const race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.topics.housing.rankedCount).toBe(0);
+  });
+});
+
+describe('reorderAgreed clears stale ties on move', () => {
+  it("clears tieWithPrev on a quote that moved to a new index", () => {
+    useReadRankStore.getState().toggleTie('c');
+    let race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.topics.housing.agreed.find((q) => q.id === 'c')!.tieWithPrev).toBe(true);
+
+    // 'c' moves from index 2 to index 0 -- its old adjacency (tied to 'b') is broken.
+    useReadRankStore.getState().reorderAgreed(['c', 'a', 'b']);
+    race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    const c = race.topics.housing.agreed.find((q) => q.id === 'c')!;
+    expect(c.tieWithPrev).toBe(false);
+  });
+
+  it('preserves tieWithPrev on a quote that did not move', () => {
+    useReadRankStore.getState().toggleTie('b');
+    let race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    expect(race.topics.housing.agreed.find((q) => q.id === 'b')!.tieWithPrev).toBe(true);
+
+    // Original order is a(0), b(1), c(2). This reorder keeps 'b' at index 1
+    // while 'a' and 'c' swap around it -- a genuine "unmoved" case, not a no-op.
+    useReadRankStore.getState().reorderAgreed(['c', 'b', 'a']);
+    race = useReadRankStore.getState().getCurrentRaceProgress()!;
+    const b = race.topics.housing.agreed.find((q) => q.id === 'b')!;
+    expect(b.tieWithPrev).toBe(true);
+  });
+});

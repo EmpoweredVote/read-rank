@@ -164,6 +164,8 @@ interface ReadRankState {
   disagree: (quote: BlindQuote) => void;
   reorderAgreed: (orderedIds: string[]) => void;
   toggleTie: (quoteId: string) => void;
+  /** Rank only the first `n` agreed quotes; the rest become unranked "also agree". */
+  setRankedCount: (n: number) => void;
   /** Recover a disagreed quote: remove from its topic's disagreed list, append to agreed. */
   reAgree: (quote: BlindQuote) => void;
   /** Reveal the (partial or full) ballot for topics evaluated so far. Does not
@@ -399,8 +401,13 @@ export const useReadRankStore = create<ReadRankState>()(
           const topicKey = race.currentTopicKey;
           if (!topicKey || !race.topics[topicKey]) return race;
           const topic = race.topics[topicKey];
+          const prevIndex = new Map(topic.agreed.map((q, i) => [q.id, i]));
           const byId = new Map(topic.agreed.map((q) => [q.id, q]));
-          const next = orderedIds.map((id) => byId.get(id)).filter(Boolean) as AgreedQuote[];
+          const next = orderedIds.map((id, i) => {
+            const q = byId.get(id);
+            if (!q) return undefined;
+            return prevIndex.get(id) === i ? q : { ...q, tieWithPrev: false };
+          }).filter(Boolean) as AgreedQuote[];
           // Append any not present in orderedIds (defensive).
           for (const q of topic.agreed) if (!orderedIds.includes(q.id)) next.push(q);
           return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, agreed: next } } };
@@ -418,6 +425,17 @@ export const useReadRankStore = create<ReadRankState>()(
           const agreed = topic.agreed.map((q, i) =>
             i === idx ? { ...q, tieWithPrev: !q.tieWithPrev } : q);
           return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, agreed } } };
+        });
+        if (patch) set(patch);
+      },
+
+      setRankedCount: (n) => {
+        const patch = withCurrentRace(get(), (race) => {
+          const topicKey = race.currentTopicKey;
+          if (!topicKey || !race.topics[topicKey]) return race;
+          const topic = race.topics[topicKey];
+          const clamped = Math.max(0, Math.min(n, topic.agreed.length));
+          return { ...race, topics: { ...race.topics, [topicKey]: { ...topic, rankedCount: clamped } } };
         });
         if (patch) set(patch);
       },
