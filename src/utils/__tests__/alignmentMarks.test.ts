@@ -96,3 +96,45 @@ describe('countTopPicks', () => {
     expect(countTopPicks([q({ quoteId: 'q1', supported: false })], rankMap)).toBe(0);
   });
 });
+
+function reveal(quotes: { quoteId: string; supported: boolean; rank: number | null }[]): RevealResult {
+  return {
+    isRankedChoice: true,
+    ballot: [{ candidateId: 'c1', name: 'X', perTopic: [{ topicKey: 't', quotes }] }],
+  } as unknown as RevealResult;
+}
+
+describe('buildPerTopicRankMap ties', () => {
+  it('keeps equal global ranks equal per-topic, and jumps the next (competition)', () => {
+    const m = buildPerTopicRankMap(reveal([
+      { quoteId: 'a', supported: true, rank: 1 },
+      { quoteId: 'b', supported: true, rank: 1 },
+      { quoteId: 'c', supported: true, rank: 3 },
+    ]));
+    expect([m.get('a'), m.get('b'), m.get('c')]).toEqual([1, 1, 3]);
+  });
+
+  it('handles a 3-way tie at the top then jumps to 4', () => {
+    const m = buildPerTopicRankMap(reveal([
+      { quoteId: 'a', supported: true, rank: 1 },
+      { quoteId: 'b', supported: true, rank: 1 },
+      { quoteId: 'c', supported: true, rank: 1 },
+      { quoteId: 'd', supported: true, rank: 4 },
+    ]));
+    expect([m.get('a'), m.get('b'), m.get('c'), m.get('d')]).toEqual([1, 1, 1, 4]);
+  });
+
+  it('still numbers distinct ranks 1,2,3', () => {
+    const m = buildPerTopicRankMap(reveal([
+      { quoteId: 'a', supported: true, rank: 5 },
+      { quoteId: 'b', supported: true, rank: 9 },
+    ]));
+    expect([m.get('a'), m.get('b')]).toEqual([1, 2]);
+  });
+
+  it('a tied #1 is a rank-1 pick for its candidate', () => {
+    const rankMap = new Map([['a', 1], ['b', 1]]);
+    expect(markForQuotes([{ quoteId: 'a', supported: true }] as never, rankMap)).toEqual({ kind: 'rank', rank: 1 });
+    expect(countTopPicks([{ quoteId: 'b', supported: true }] as never, rankMap)).toBe(1);
+  });
+});

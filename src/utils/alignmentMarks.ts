@@ -9,7 +9,9 @@ export type AlignmentMark =
 
 /** quoteId → the quote's rank WITHIN its topic (1-based). Derived from the reveal:
  *  global ranks preserve per-topic order, so per topic we sort agreed quotes by
- *  global rank and number them 1,2,3… Disagreed/unranked quotes are omitted. */
+ *  global rank and assign standard/competition ranking — equal global ranks share
+ *  the same per-topic number, and the next distinct rank jumps by the tie size
+ *  (e.g. global 1,1,3 → per-topic 1,1,3). Disagreed/unranked quotes are omitted. */
 export function buildPerTopicRankMap(reveal: RevealResult): Map<string, number> {
   const byTopic = new Map<string, { quoteId: string; rank: number }[]>();
   for (const entry of reveal.ballot) {
@@ -25,7 +27,15 @@ export function buildPerTopicRankMap(reveal: RevealResult): Map<string, number> 
   const map = new Map<string, number>();
   for (const arr of byTopic.values()) {
     arr.sort((a, b) => a.rank - b.rank);
-    arr.forEach((q, i) => map.set(q.quoteId, i + 1));
+    let perTopic = 0;
+    let consumed = 0;
+    let prevGlobal: number | null = null;
+    for (const q of arr) {
+      if (prevGlobal === null || q.rank !== prevGlobal) perTopic = consumed + 1;
+      map.set(q.quoteId, perTopic);
+      consumed++;
+      prevGlobal = q.rank;
+    }
   }
   return map;
 }

@@ -31,12 +31,13 @@ describe('RankList rows', () => {
     expect(screen.getByText('Charlie quote.').closest('.rank-slip')).toHaveClass('rank-slip-top');
   });
 
-  it('demotes rows past third under "Also agreed" but still numbers them', () => {
+  it('gives rows past third a subordinate visual style but still numbers them (no truncation divider by default)', () => {
     const four = [...items, { id: 'd', text: 'Delta quote.', candidateToken: 't4', topicKey: 'k', addedAt: 4 }];
     render(<RankList items={four} onReorder={vi.fn()} />);
     expect(screen.getByText('Delta quote.').closest('.rank-slip')).toHaveClass('rank-slip-sub');
-    expect(screen.getByText('Also agreed')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
+    // rankedCount defaults to items.length (no truncation) -> no "Also agreed" divider.
+    expect(screen.queryByText('Also agreed')).not.toBeInTheDocument();
   });
 
   it('tapping a number opens the place menu and assigns a position', async () => {

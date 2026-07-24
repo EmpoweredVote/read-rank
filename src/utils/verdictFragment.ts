@@ -1,4 +1,36 @@
+import { deriveRanks } from './deriveRanks';
+import type { TopicProgress, VerdictRecord } from '../store/useReadRankStore';
+
 export type VerdictMap = Record<string, 'agreed' | 'disagreed'>;
+
+/**
+ * Pure per-topic verdict assembly. Ranks come from `deriveRanks` (ties share a
+ * rank, quotes beyond `rankedCount` are unranked) rather than array index, so
+ * the ties/truncation the user set on the agreed pile survive into the
+ * records sent to the backend. `sessionSize` is race-wide (all agreed +
+ * disagreed across every topic) so it's threaded in rather than computed here
+ * — a single topic doesn't know the race total.
+ */
+export function buildVerdictsForTopic(topic: TopicProgress, sessionSize: number): VerdictRecord[] {
+  const ids = topic.agreed.map((q) => q.id);
+  const ties = topic.agreed.map((q) => !!q.tieWithPrev);
+  const rankedCount = topic.rankedCount ?? topic.agreed.length;
+  const rankMap = deriveRanks(ids, ties, rankedCount);
+
+  const agreed: VerdictRecord[] = topic.agreed.map((q) => ({
+    quote_id: q.id,
+    supported: true,
+    rank: rankMap.get(q.id) ?? null,
+    session_size: sessionSize,
+  }));
+  const disagreed: VerdictRecord[] = topic.disagreed.map((q) => ({
+    quote_id: q.id,
+    supported: false,
+    rank: null,
+    session_size: sessionSize,
+  }));
+  return [...agreed, ...disagreed];
+}
 
 const ESSENTIALS_BASE =
   (import.meta.env as Record<string, string>).VITE_ESSENTIALS_URL ||
