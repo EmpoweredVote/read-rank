@@ -114,6 +114,16 @@ describe('buildPerTopicRankMap ties', () => {
     expect([m.get('a'), m.get('b'), m.get('c')]).toEqual([1, 1, 3]);
   });
 
+  it('handles a 3-way tie at the top then jumps to 4', () => {
+    const m = buildPerTopicRankMap(reveal([
+      { quoteId: 'a', supported: true, rank: 1 },
+      { quoteId: 'b', supported: true, rank: 1 },
+      { quoteId: 'c', supported: true, rank: 1 },
+      { quoteId: 'd', supported: true, rank: 4 },
+    ]));
+    expect([m.get('a'), m.get('b'), m.get('c'), m.get('d')]).toEqual([1, 1, 1, 4]);
+  });
+
   it('still numbers distinct ranks 1,2,3', () => {
     const m = buildPerTopicRankMap(reveal([
       { quoteId: 'a', supported: true, rank: 5 },
