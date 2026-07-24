@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CountyIndex, JurisdictionGeoIds } from '../data/api';
 import { isRaceComplete, isTopicDone, isTopicScorable } from '../utils/raceProgressState';
+import { buildVerdictsForTopic } from '../utils/verdictFragment';
 
 // ============================================
 // Types — race -> topics -> blind quotes
@@ -613,14 +614,10 @@ export const useReadRankStore = create<ReadRankState>()(
         const allAgreed = getAllAgreedQuotes(race);
         const disagreed = Object.values(race.topics).flatMap((t) => t.disagreed);
         const sessionSize = allAgreed.length + disagreed.length;
-        const verdicts: VerdictRecord[] = [];
-        allAgreed.forEach((q, i) => {
-          verdicts.push({ quote_id: q.id, supported: true, rank: i + 1, session_size: sessionSize });
+        return race.topicOrder.flatMap((k) => {
+          const topic = race.topics[k];
+          return topic ? buildVerdictsForTopic(topic, sessionSize) : [];
         });
-        for (const q of disagreed) {
-          verdicts.push({ quote_id: q.id, supported: false, rank: null, session_size: sessionSize });
-        }
-        return verdicts;
       },
 
       getPracticeProgress: () => get().practiceProgress,
