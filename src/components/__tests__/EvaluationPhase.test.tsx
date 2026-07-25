@@ -118,6 +118,44 @@ describe('EvaluationPhase keyboard shortcuts', () => {
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
   });
+
+  // Desktop split-layout counterpart. jsdom otherwise resolves useDeviceType to
+  // 'touch' (window has ontouchstart), so the mobile flight is all that runs by
+  // default; force a fine pointer to exercise the desktop flight, which commits
+  // first (flushSync) and then flies the clone onto the hidden landing row.
+  it('renders a flying card during the agree flight and commits (desktop split layout)', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('pointer: fine'),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      render(
+        <StrictMode>
+          <EvaluationPhase />
+        </StrictMode>,
+      );
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      // Same real-timer coupling as the mobile flight: the clone is created
+      // synchronously (setFlight runs before the flight's await, flushed by
+      // fireEvent's act) but lives only for the flight (~640ms of real time), so
+      // assert it synchronously rather than polling — under full-suite load a
+      // findBy* can first sample the DOM after that window has closed.
+      expect(screen.getByTestId('flying-card')).toBeInTheDocument();
+      // The desktop commit is synchronous (flushSync), so the next quote and the
+      // recorded agree are already settled; observe them rather than sleeping.
+      await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
+      expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
+    } finally {
+      window.matchMedia = original;
+    }
+  });
 });
 
 describe('EvaluationPhase reveal CTA', () => {
