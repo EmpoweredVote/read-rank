@@ -105,7 +105,16 @@ describe('EvaluationPhase keyboard shortcuts', () => {
       </StrictMode>,
     );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    await screen.findByTestId('flying-card', undefined, { timeout: 1000 });
+    // The flight starts synchronously on keydown: setFlight() runs before the
+    // first await inside the handler, and fireEvent flushes it via act(), so the
+    // flying clone is already in the DOM here. Assert it synchronously rather
+    // than polling with findBy*: the clone lives only for the flight (~640ms of
+    // real time) and is removed in the same commit that lands the agree, so under
+    // full-suite load a poll can first sample the DOM after that window has
+    // closed and time out — the source of the intermittent failure.
+    expect(screen.getByTestId('flying-card')).toBeInTheDocument();
+    // Then wait on the settled, observable state: the next quote surfaces and the
+    // agree is recorded once the flight lands and commits.
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
   });
