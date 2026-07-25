@@ -105,9 +105,56 @@ describe('EvaluationPhase keyboard shortcuts', () => {
       </StrictMode>,
     );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    await screen.findByTestId('flying-card', undefined, { timeout: 1000 });
+    // The flight starts synchronously on keydown: setFlight() runs before the
+    // first await inside the handler, and fireEvent flushes it via act(), so the
+    // flying clone is already in the DOM here. Assert it synchronously rather
+    // than polling with findBy*: the clone lives only for the flight (~640ms of
+    // real time) and is removed in the same commit that lands the agree, so under
+    // full-suite load a poll can first sample the DOM after that window has
+    // closed and time out — the source of the intermittent failure.
+    expect(screen.getByTestId('flying-card')).toBeInTheDocument();
+    // Then wait on the settled, observable state: the next quote surfaces and the
+    // agree is recorded once the flight lands and commits.
     await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
+  });
+
+  // Desktop split-layout counterpart. jsdom otherwise resolves useDeviceType to
+  // 'touch' (window has ontouchstart), so the mobile flight is all that runs by
+  // default; force a fine pointer to exercise the desktop flight, which commits
+  // first (flushSync) and then flies the clone onto the hidden landing row.
+  it('renders a flying card during the agree flight and commits (desktop split layout)', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('pointer: fine'),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      render(
+        <StrictMode>
+          <EvaluationPhase />
+        </StrictMode>,
+      );
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      // Same real-timer coupling as the mobile flight: the clone is created
+      // synchronously (setFlight runs before the flight's await, flushed by
+      // fireEvent's act) but lives only for the flight (~640ms of real time), so
+      // assert it synchronously rather than polling — under full-suite load a
+      // findBy* can first sample the DOM after that window has closed.
+      expect(screen.getByTestId('flying-card')).toBeInTheDocument();
+      // The desktop commit is synchronous (flushSync), so the next quote and the
+      // recorded agree are already settled; observe them rather than sleeping.
+      await screen.findByText('Eval quote two.', undefined, { timeout: 3000 });
+      expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1']);
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 
