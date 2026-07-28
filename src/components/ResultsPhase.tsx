@@ -141,7 +141,7 @@ export const ResultsPhase: React.FC = () => {
   const top = ranked[0];
   const revealAnnouncement = top
     ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
-    : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking to show.";
+    : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking — here's who said what.";
 
   return (
     <div className="pb-12 max-w-2xl mx-auto">

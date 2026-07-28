@@ -78,7 +78,7 @@ describe('ResultsPhase with unranked candidates', () => {
     play();
     render(<ResultsPhase />);
 
-    expect(await screen.findByText(/who said what/i, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(/how the candidates stack up/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/also on the ballot/i)).not.toBeInTheDocument();
   });
@@ -88,7 +88,7 @@ describe('ResultsPhase with unranked candidates', () => {
     play();
     render(<ResultsPhase />);
 
-    await screen.findByText(/who said what/i, {}, { timeout: 3000 });
+    await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 });
     expect(screen.queryByText(/your number one/i)).not.toBeInTheDocument();
     expect(screen.getByText(/no ranking/i)).toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe('ResultsPhase with unranked candidates', () => {
     play();
     render(<ResultsPhase />);
 
-    await screen.findByText(/who said what/i, {}, { timeout: 3000 });
+    await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 });
     expect(screen.queryByText(/^Tied$/)).not.toBeInTheDocument();
   });
 });
