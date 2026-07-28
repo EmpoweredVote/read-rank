@@ -104,12 +104,18 @@ describe('ResultsPhase with unranked candidates', () => {
     expect(await screen.findByText(/your number one is Sam Okafor/i, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it('does not tag unranked entries as tied', async () => {
-    stubReveal([entry({}), entry({ candidateId: 'c2', name: 'Sam Okafor' })]);
+  it('tags only the genuinely tied ranked entries, never the unranked one', async () => {
+    // Two ranked entries share rank 1 (a real tie); the third entry is unranked
+    // and must never pick up a tie tag from having a shared (null) rank.
+    stubReveal([
+      entry({ rank: 1, candidateId: 'c-tied-a', name: 'Sam Okafor', evidence: { agreementCount: 1, firstPlaceCount: 1, topicsWithAgreement: 1 } }),
+      entry({ rank: 1, candidateId: 'c-tied-b', name: 'Jordan Ruiz', evidence: { agreementCount: 1, firstPlaceCount: 1, topicsWithAgreement: 1 } }),
+      entry({ candidateId: 'c-unranked', name: 'Dana Reyes' }),
+    ]);
     play();
     render(<ResultsPhase />);
 
-    await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 });
-    expect(screen.queryByText(/^Tied$/)).not.toBeInTheDocument();
+    await screen.findByText(/how the candidates stack up/i, {}, { timeout: 3000 });
+    expect(screen.getAllByText(/^Tied$/)).toHaveLength(2);
   });
 });

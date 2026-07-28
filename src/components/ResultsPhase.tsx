@@ -47,7 +47,7 @@ export const ResultsPhase: React.FC = () => {
     [race]
   );
 
-  const ballot = reveal?.ballot ?? [];
+  const ballot = useMemo(() => reveal?.ballot ?? [], [reveal]);
   const office = race?.positionName ?? reveal?.positionName ?? '';
 
   const rankMap = useMemo(
@@ -143,6 +143,10 @@ export const ResultsPhase: React.FC = () => {
     ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
     : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking — here's who said what.";
 
+  // Shared by both ballot section headings ("How the candidates stack up" /
+  // "Also on the ballot" / "Who said what") so the style isn't duplicated.
+  const sectionHeadingStyle = { fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' } as const;
+
   return (
     <div className="pb-12 max-w-2xl mx-auto">
       <div aria-live="polite" role="status" className="sr-only">{revealAnnouncement}</div>
@@ -155,7 +159,7 @@ export const ResultsPhase: React.FC = () => {
 
         {ranked.length > 0 && (
           <>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+            <h3 style={sectionHeadingStyle}>
               How the candidates stack up
             </h3>
             {ranked.map((entry, i) => (
@@ -169,7 +173,7 @@ export const ResultsPhase: React.FC = () => {
 
         {unranked.length > 0 && (
           <>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+            <h3 style={sectionHeadingStyle}>
               {ranked.length > 0 ? 'Also on the ballot' : 'Who said what'}
             </h3>
             {ranked.length > 0 && (
