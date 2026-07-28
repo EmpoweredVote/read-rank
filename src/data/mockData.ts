@@ -218,8 +218,11 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
 
   for (const v of verdicts) {
     const q = quoteById.get(v.quote_id);
-    if (!q || !v.supported) continue;
+    if (!q) continue;
+    // Judging a candidate is enough to put them on the ballot; only agreements
+    // score and rank. Mirrors the backend rule (spec §2).
     const a = ensure(q.token);
+    if (!v.supported) continue;
     a.agreementCount += 1;
     a.topicsWithAgreement.add(q.topicKey);
     a.score += rankBonus(v.rank);
@@ -230,7 +233,7 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
     }
   }
 
-  // Build per-topic detail for every candidate the user agreed with.
+  // Build per-topic detail for every candidate the user judged.
   for (const a of aggs.values()) {
     for (const t of MOCK_TOPICS) {
       const quotes = MOCK_QUOTES.filter((q) => q.token === a.token && q.topicKey === t.topicKey)
@@ -254,14 +257,18 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
     }
   }
 
-  const ranked = [...aggs.values()].sort(
-    (x, y) => y.score - x.score || y.agreementCount - x.agreementCount || y.firstPlaceCount - x.firstPlaceCount
-  );
+  const all = [...aggs.values()];
+  const ranked = all
+    .filter((a) => a.agreementCount > 0)
+    .sort((x, y) => y.score - x.score || y.agreementCount - x.agreementCount || y.firstPlaceCount - x.firstPlaceCount);
+  // Judged but never agreed with: no rank, and they follow the ranked tail in a
+  // stable order (insertion order of `aggs`, which follows the verdict list).
+  const unrankedAggs = all.filter((a) => a.agreementCount === 0);
 
-  const ballot: BallotEntry[] = ranked.map((a, i) => {
+  const toEntry = (a: Agg, rank: number | null): BallotEntry => {
     const id = MOCK_IDENTITIES[a.token];
     return {
-      rank: i + 1,
+      rank,
       candidateId: id.candidateId,
       name: id.name,
       office: id.office,
@@ -278,7 +285,12 @@ export function buildMockReveal(verdicts: VerdictRecord[]): RevealResult {
       perTopic: [...a.perTopic.values()],
       score: a.score,
     };
-  });
+  };
+
+  const ballot: BallotEntry[] = [
+    ...ranked.map((a, i) => toEntry(a, i + 1)),
+    ...unrankedAggs.map((a) => toEntry(a, null)),
+  ];
 
   return { raceId: MOCK_RACE_ID, positionName: mockRaceSummary.office, usesRcv: false, ballot };
 }
