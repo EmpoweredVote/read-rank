@@ -18,7 +18,14 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      # The races/quotes/reveal API. Must match what the deployed dashboard value
+      # actually is — the shipped bundle calls https://api.empowered.vote/api/...,
+      # and this file said accounts-api, which would have silently repointed the
+      # app at the wrong host the moment anyone Blueprint-linked this service.
+      #
+      # Not the auth host: API_HUB_URL in src/lib/auth.ts is hardcoded to
+      # accounts-api.empowered.vote and does not read this variable.
       - key: VITE_API_URL
-        value: https://accounts-api.empowered.vote
+        value: https://api.empowered.vote
       - key: NPM_TOKEN
         sync: false

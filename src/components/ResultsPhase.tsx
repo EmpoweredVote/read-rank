@@ -151,9 +151,19 @@ export const ResultsPhase: React.FC = () => {
   }
 
   const top = ranked[0];
+  // A live region should announce the change and summarise it, not pre-read
+  // content the user will meet anyway. In the ranked case that summary is who
+  // came first. With nothing ranked it's how many candidates are listed — the
+  // explanation of *why* there's no ranking lives in the visible paragraph
+  // below the band, which a screen reader reaches in DOM order. Restating that
+  // sentence here read it out twice.
   const revealAnnouncement = top
     ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
-    : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking — here's who said what.";
+    : `Ballot revealed. No ranking — ${
+        unranked.length === 1
+          ? 'the candidate you read is'
+          : `the ${unranked.length} candidates you read are`
+      } listed below.`;
 
   // Shared by both ballot section headings ("How the candidates stack up" /
   // "Also on the ballot" / "Everyone you read") so the style isn't duplicated.

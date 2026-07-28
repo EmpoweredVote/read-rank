@@ -99,6 +99,32 @@ describe('ResultsPhase with unranked candidates', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/no ranking/i);
   });
 
+  it('does not read the visible explanation twice to screen readers', async () => {
+    stubReveal([entry({}), entry({ candidateId: 'c2', name: 'Sam Okafor' })]);
+    play();
+    render(<ResultsPhase />);
+    await screen.findByRole('heading', { name: /everyone you read/i, level: 3 }, { timeout: 3000 });
+
+    // The live region's job is to announce the change and summarise it — the
+    // same job it does in the ranked case ("your number one is X"). The visible
+    // paragraph carries the explanation, and a screen reader reaches it in DOM
+    // order, so restating it in the announcement reads the same sentence twice.
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/2 candidates you read/i);
+    expect(status).not.toHaveTextContent(/no ranking to build/i);
+    // The explanation itself is still on the page, once.
+    expect(screen.getByText(/no ranking to build/i)).toBeInTheDocument();
+  });
+
+  it('counts a single unranked candidate in the singular', async () => {
+    stubReveal([entry({})]);
+    play();
+    render(<ResultsPhase />);
+    await screen.findByRole('heading', { name: /everyone you read/i, level: 3 }, { timeout: 3000 });
+
+    expect(screen.getByRole('status')).toHaveTextContent(/the candidate you read is listed below/i);
+  });
+
   it('announces the number one from the ranked entries only', async () => {
     stubReveal([
       entry({ rank: 1, candidateId: 'c-ranked', name: 'Sam Okafor', evidence: { agreementCount: 1, firstPlaceCount: 1, topicsWithAgreement: 1 } }),
