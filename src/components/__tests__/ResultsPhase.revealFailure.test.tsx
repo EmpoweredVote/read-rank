@@ -88,7 +88,10 @@ describe('ResultsPhase when the reveal endpoint fails', () => {
     expect((await screen.findAllByText(/dana reyes/i, {}, { timeout: 3000 })).length).toBeGreaterThan(0);
   });
 
-  it('still shows the empty-ballot state when the endpoint succeeds with no agreements', async () => {
+  it('treats a 200 with an empty ballot as unresolved, not an empty-ballot outcome', async () => {
+    // The user judged real quotes (playThenReveal agrees/disagrees), so an empty
+    // ballot here means the backend resolved nobody — that's the retry state,
+    // not the "no agreements yet" copy (which is reserved for judging nothing).
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -99,7 +102,8 @@ describe('ResultsPhase when the reveal endpoint fails', () => {
     playThenReveal();
     render(<ResultsPhase />);
 
-    expect(await screen.findByText(/no agreements yet/i, {}, { timeout: 3000 })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+    expect(await screen.findByText(/couldn't build your ballot/i, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.queryByText(/no agreements yet/i)).not.toBeInTheDocument();
   });
 });

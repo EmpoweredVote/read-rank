@@ -103,7 +103,9 @@ export const ResultsPhase: React.FC = () => {
 
   // Outage, not an outcome. Must be checked before the empty-ballot state below,
   // which would otherwise tell the user they agreed with nothing.
-  if (failed) {
+  // An empty ballot after real verdicts means the backend resolved nobody — the
+  // same class of problem as an outage, not a statement about the user's choices.
+  if (failed || (ballot.length === 0 && judgedCount > 0)) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
         {/* An outage is never a verdict on the user's ranking — ballot.length is 0
@@ -129,21 +131,24 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
+  // Nothing judged at all — e.g. deep-linked straight to /results. Legitimate,
+  // so no retry: there is simply nothing to reveal yet.
   if (ballot.length === 0) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
+        {/* No band here: "Now see who said what" over an empty screen promises a
+            reveal that doesn't exist yet. */}
         <div className="text-center py-10">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-            No agreements yet
+            Nothing to reveal yet
           </p>
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            You didn&apos;t agree with any quotes, so there&apos;s no ballot to build. Try another race.
+            Read a topic first and this is where you&apos;ll find out who said what.
           </p>
         </div>
         <div className="flex justify-center pt-6">
-          <button onClick={() => { if (complete) { track('readrank_play_again_clicked'); goToHub(); } else setPhase('issue-selection'); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            {complete ? 'Play another race near you' : '← Back to your topics'}
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            ← Back to your topics
           </button>
         </div>
       </div>

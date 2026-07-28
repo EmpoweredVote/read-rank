@@ -125,3 +125,27 @@ describe('ResultsPhase with unranked candidates', () => {
     expect(screen.getAllByText(/^Tied$/)).toHaveLength(2);
   });
 });
+
+describe('ResultsPhase empty-ballot states', () => {
+  it('offers a retry when the user judged quotes but nothing resolved', async () => {
+    stubReveal([]);
+    play();                       // agrees with one quote, disagrees with another
+    render(<ResultsPhase />);
+
+    expect(await screen.findByText(/couldn't build your ballot/i, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.queryByText(/no agreements yet/i)).not.toBeInTheDocument();
+  });
+
+  it('says there is nothing to reveal when the user judged nothing', async () => {
+    stubReveal([]);
+    window.localStorage?.clear();
+    s().reset();
+    s().selectRace(payload);
+    s().revealBallot();           // straight to results, nothing judged
+    render(<ResultsPhase />);
+
+    expect(await screen.findByText(/nothing to reveal yet/i, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+  });
+});
