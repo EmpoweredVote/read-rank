@@ -39,6 +39,12 @@ export const EvaluationPhase: React.FC = () => {
 
   const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
   const revealLabel = isRaceComplete(race ?? undefined, race?.rankableTopicCount) ? 'See your full ballot' : 'Reveal ballot';
+  // Mid-race the reveal waits for a first agreement, so nobody reveals an empty
+  // ballot one quote in. But once every selected topic is triaged there is
+  // nothing left to do, and gating on agreements alone stranded anyone who
+  // disagreed with everything: the screen said "Reveal your ballot when you're
+  // ready" with no control anywhere. Finishing the race is its own entitlement.
+  const canReveal = raceAgreedCount >= 1 || allTopicsDone;
 
   const onVerdict = (direction: 'agree' | 'disagree', quote: BlindQuote) => {
     track('readrank_verdict', {
@@ -80,7 +86,7 @@ export const EvaluationPhase: React.FC = () => {
       source={source}
       header={<TopicStepper />}
       completeState={completeState}
-      reveal={{ label: revealLabel, onReveal: revealBallot, enabled: raceAgreedCount >= 1 }}
+      reveal={{ label: revealLabel, onReveal: revealBallot, enabled: canReveal }}
       showCoachMarks={!coachMarksCompleted}
       onCoachComplete={completeCoachMarks}
     />
