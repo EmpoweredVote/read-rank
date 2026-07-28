@@ -69,12 +69,13 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
 
   // #1 celebration: fire the burst once the card has landed (wall-clock timer so it
   // survives the preview rAF throttle, matching the old ResultsPhase behaviour).
+  // `rank === 1` is false for null, so unranked entries never burst.
   useEffect(() => {
-    if (m.reduced || entry.rank !== 1) return;
+    if (m.reduced || rank !== 1) return;
     const on = setTimeout(() => setBurst(true), landDelayMs);
     const off = setTimeout(() => setBurst(false), landDelayMs + DUR.burst + 200);
     return () => { clearTimeout(on); clearTimeout(off); };
-  }, [m.reduced, entry.rank, landDelayMs]);
+  }, [m.reduced, rank, landDelayMs]);
 
   return (
     <motion.div className="ballot-row"
