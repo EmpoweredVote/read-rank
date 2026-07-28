@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchRaceQuotes, fetchRaces, searchPoliticians } from '../api';
+import { fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, searchPoliticians } from '../api';
+import { MOCK_RACE_ID } from '../mockData';
+import type { VerdictRecord } from '../../store/useReadRankStore';
 
 // These tests assert the permanent blindness/thin-topic invariants, independent of
 // the temporary content lockdown. Neutralize the allowlist here; its filtering is
@@ -113,6 +115,35 @@ describe('fetchRaceQuotes structural blindness', () => {
       candidateToken: 'tok-a',
       topicKey: 'economy',
     });
+  });
+});
+
+describe('fetchRaceReveal failure handling', () => {
+  // The mock reveal resolves quote ids against MOCK_QUOTES only. Falling back to it
+  // for a real race matches nothing, yielding an empty ballot that ResultsPhase
+  // renders as "You didn't agree with any quotes" — a false statement about the
+  // user's own choices. A backend failure must stay a failure.
+  const realVerdicts: VerdictRecord[] = [
+    { quote_id: '24cf159e-2736-497b-abb9-adfe3ff87c61', supported: true, rank: 1, session_size: 2 },
+    { quote_id: '06854041-5789-4c84-972e-ba1521bb5732', supported: false, rank: null, session_size: 2 },
+  ];
+
+  it('rejects rather than faking an empty ballot when a real race fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(fetchRaceReveal('real-race-1', realVerdicts)).rejects.toBeInstanceOf(RevealUnavailableError);
+  });
+
+  it('rejects when the network is unreachable for a real race', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(fetchRaceReveal('real-race-1', realVerdicts)).rejects.toBeInstanceOf(RevealUnavailableError);
+  });
+
+  it('still falls back to the mock reveal for the mock race (offline dev)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const result = await fetchRaceReveal(MOCK_RACE_ID, [
+      { quote_id: 'q-103', supported: true, rank: 1, session_size: 1 },
+    ]);
+    expect(result.ballot.length).toBeGreaterThan(0);
   });
 });
 

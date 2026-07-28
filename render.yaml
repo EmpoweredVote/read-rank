@@ -4,6 +4,19 @@ services:
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    # Client-side routing: react-router owns /race/:id/:step, so any path the
+    # static host can't resolve to a file must serve the app shell and let the
+    # router take over. Without this, a mid-race refresh or a shared race link
+    # 404s at the CDN and never reaches useRaceRouteSync. Existing files still
+    # win, so /assets/* is unaffected.
+    #
+    # NOTE: this only takes effect if the Render service is managed by a synced
+    # Blueprint. A service created by hand in the dashboard ignores render.yaml
+    # entirely — set the same rule under Redirects/Rewrites there.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://accounts-api.empowered.vote
