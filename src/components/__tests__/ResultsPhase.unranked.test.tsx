@@ -135,6 +135,7 @@ describe('ResultsPhase empty-ballot states', () => {
     expect(await screen.findByText(/couldn't build your ballot/i, {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
     expect(screen.queryByText(/no agreements yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /now see/i })).not.toBeInTheDocument();
   });
 
   it('says there is nothing to reveal when the user judged nothing', async () => {
@@ -147,5 +148,6 @@ describe('ResultsPhase empty-ballot states', () => {
 
     expect(await screen.findByText(/nothing to reveal yet/i, {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /now see/i })).not.toBeInTheDocument();
   });
 });

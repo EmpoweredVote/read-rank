@@ -120,8 +120,8 @@ describe('fetchRaceQuotes structural blindness', () => {
 
 describe('fetchRaceReveal failure handling', () => {
   // The mock reveal resolves quote ids against MOCK_QUOTES only. Falling back to it
-  // for a real race matches nothing, yielding an empty ballot that ResultsPhase
-  // renders as "You didn't agree with any quotes" — a false statement about the
+  // for a real race matches nothing, yielding an empty ballot that ResultsPhase would
+  // otherwise treat as a legitimately empty ballot — a false statement about the
   // user's own choices. A backend failure must stay a failure.
   const realVerdicts: VerdictRecord[] = [
     { quote_id: '24cf159e-2736-497b-abb9-adfe3ff87c61', supported: true, rank: 1, session_size: 2 },

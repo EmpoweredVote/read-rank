@@ -290,8 +290,8 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
  * The reveal could not be built. Deliberately distinct from a legitimately empty
  * ballot: `buildMockReveal` resolves quote ids against MOCK_QUOTES only, so
  * falling back to it for a real race matches nothing and returns `ballot: []`,
- * which the results screen renders as "You didn't agree with any quotes" — a
- * false statement about the user's own choices. Callers must surface this as an
+ * which the results screen would otherwise treat as a legitimately empty ballot —
+ * a false statement about the user's own choices. Callers must surface this as an
  * error the user can retry, never as an outcome.
  */
 export class RevealUnavailableError extends Error {

@@ -101,39 +101,9 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
-  // Outage, not an outcome. Must be checked before the empty-ballot state below,
-  // which would otherwise tell the user they agreed with nothing.
-  // An empty ballot after real verdicts means the backend resolved nobody — the
-  // same class of problem as an outage, not a statement about the user's choices.
-  if (failed || (ballot.length === 0 && judgedCount > 0)) {
-    return (
-      <div className="pb-12 max-w-2xl mx-auto">
-        {/* An outage is never a verdict on the user's ranking — ballot.length is 0
-            here only because the fetch failed, not because ranked.length is 0. */}
-        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={false} />
-        <div className="text-center py-10" role="alert">
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-            We couldn&apos;t build your ballot
-          </p>
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            Something went wrong on our end. Your rankings are saved — nothing is lost.
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-3 pt-2">
-          <button onClick={() => setAttempt((n) => n + 1)} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            Try again
-          </button>
-          <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
-            ← Back to your topics
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Nothing judged at all — e.g. deep-linked straight to /results. Legitimate,
-  // so no retry: there is simply nothing to reveal yet.
-  if (ballot.length === 0) {
+  // Nothing judged: there is nothing to reveal, and that stays true whether or
+  // not the fetch succeeded — so don't dress it up as an outage.
+  if (ballot.length === 0 && judgedCount === 0) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
         {/* No band here: "Now see who said what" over an empty screen promises a
@@ -148,6 +118,31 @@ export const ResultsPhase: React.FC = () => {
         </div>
         <div className="flex justify-center pt-6">
           <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            ← Back to your topics
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Outage, or an empty ballot after real verdicts — either way the backend
+  // resolved nobody. Not a statement about the user's choices.
+  if (failed || ballot.length === 0) {
+    return (
+      <div className="pb-12 max-w-2xl mx-auto">
+        <div className="text-center py-10" role="alert">
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+            We couldn&apos;t build your ballot
+          </p>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            Something went wrong on our end. Your rankings are saved — nothing is lost.
+          </p>
+        </div>
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <button onClick={() => setAttempt((n) => n + 1)} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            Try again
+          </button>
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
             ← Back to your topics
           </button>
         </div>

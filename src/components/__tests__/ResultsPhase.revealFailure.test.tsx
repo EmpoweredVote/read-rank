@@ -44,7 +44,6 @@ describe('ResultsPhase when the reveal endpoint fails', () => {
     render(<ResultsPhase />);
 
     await screen.findByRole('button', { name: /try again/i }, { timeout: 3000 });
-    expect(screen.queryByText(/didn't agree with any quotes/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/no agreements yet/i)).not.toBeInTheDocument();
   });
 
