@@ -54,9 +54,15 @@ is why local dev never surfaced this.
 - **`rank`:** unchanged for candidates with ≥1 agreement. `null` for candidates
   with none.
 - **Ordering:** ranked candidates first, by rank, as today. Unranked candidates
-  follow in the race's existing candidate order (whatever the roster query
-  already returns). The hard requirement is stability across identical requests,
-  so a retry doesn't reshuffle the reveal cascade.
+  follow, **sorted by name**. The hard requirement is stability across identical
+  requests, so a retry doesn't reshuffle the reveal cascade.
+
+  *Implementation note (2026-07-28):* this section originally said to leave the
+  unranked tail in "the race's existing candidate order (whatever the roster
+  query already returns)". That is not stable — the reveal `SELECT` in
+  `computeRaceMatch` has no `ORDER BY`, so Postgres does not guarantee row order
+  across executions, and `aggs` is a `Map` in row-insertion order. Sorting by
+  name reuses the tiebreak the ranked comparator already ends with.
 - **Not a case:** a candidate you never judged at all — because you only played
   some topics, and they appear solely in ones you skipped — stays out. The
   reveal reports on quotes you actually read; it is not a roster of everyone
