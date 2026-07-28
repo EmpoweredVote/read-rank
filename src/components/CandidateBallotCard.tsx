@@ -114,7 +114,8 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
               </>
             ) : (
               <>
-                Disagreed on <strong>{disagreedTopics} of {totalTopics}</strong> topic{disagreedTopics === 1 ? '' : 's'}
+                {/* Plural agrees with the denominator: "1 of 3 topics", not "1 of 3 topic". */}
+                Disagreed on <strong>{disagreedTopics} of {totalTopics}</strong> topic{totalTopics === 1 ? '' : 's'}
               </>
             )}
           </p>

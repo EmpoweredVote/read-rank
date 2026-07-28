@@ -76,4 +76,10 @@ describe('CandidateBallotCard with an unranked entry', () => {
     expect(screen.getByText(/1 of 3/)).toBeInTheDocument();
     expect(screen.queryByText(/agreed with/i)).not.toBeInTheDocument();
   });
+
+  it('agrees the plural with the denominator, not the count', () => {
+    render(<CandidateBallotCard entry={unranked} totalTopics={3} rankMap={new Map()} />);
+    // One disagreed topic out of three reads "1 of 3 topics" — never "1 of 3 topic".
+    expect(screen.getByText(/topics$/i)).toBeInTheDocument();
+  });
 });
