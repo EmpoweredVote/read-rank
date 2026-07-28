@@ -105,7 +105,7 @@ const unranked = ballot.filter((e) => e.rank == null);
   explanation beneath it: "You read them, but didn't agree with any of their
   positions."
 - **When `ranked.length === 0`** there is no split and no "Also on the ballot" —
-  a single heading, *Who said what*, over the whole roster. ("Also" needs
+  a single heading, *Everyone you read*, over the whole roster. ("Also" needs
   something to be also-to.)
 
 Three existing behaviours need null-guarding:

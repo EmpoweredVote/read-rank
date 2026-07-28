@@ -41,8 +41,16 @@ export const ResultsPhase: React.FC = () => {
   const agreedList = race ? getAllAgreedQuotes(race) : [];
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
   const topicCount = activeTopicKeys.length;
-  const disagreedList = race ? activeTopicKeys.flatMap((k) => race.topics[k]?.disagreed ?? []) : [];
-  const judgedCount = agreedList.length + disagreedList.length;
+  // Denominator must be ALL topics (race.topicOrder), not just the selected
+  // ones in activeTopicKeys: getRaceVerdicts builds the reveal payload from
+  // topicOrder, and a topic left part-done after being deselected would
+  // otherwise still count its agreed quotes while dropping its disagreed ones.
+  const judgedCount = race
+    ? race.topicOrder.reduce((n, k) => {
+        const t = race.topics[k];
+        return n + (t ? t.agreed.length + t.disagreed.length : 0);
+      }, 0)
+    : 0;
 
   const alignmentTopics = useMemo<AlignmentTopic[]>(
     () => (race ? getActiveTopicKeys(race).map((key) => ({ key, title: race.topics[key].title })) : []),
@@ -98,7 +106,9 @@ export const ResultsPhase: React.FC = () => {
   if (failed) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
+        {/* An outage is never a verdict on the user's ranking — ballot.length is 0
+            here only because the fetch failed, not because ranked.length is 0. */}
+        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={false} />
         <div className="text-center py-10" role="alert">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
             We couldn&apos;t build your ballot
@@ -146,7 +156,7 @@ export const ResultsPhase: React.FC = () => {
     : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking — here's who said what.";
 
   // Shared by both ballot section headings ("How the candidates stack up" /
-  // "Also on the ballot" / "Who said what") so the style isn't duplicated.
+  // "Also on the ballot" / "Everyone you read") so the style isn't duplicated.
   const sectionHeadingStyle = { fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' } as const;
 
   return (
@@ -182,7 +192,7 @@ export const ResultsPhase: React.FC = () => {
         {unranked.length > 0 && (
           <>
             <h3 style={sectionHeadingStyle}>
-              {ranked.length > 0 ? 'Also on the ballot' : 'Who said what'}
+              {ranked.length > 0 ? 'Also on the ballot' : 'Everyone you read'}
             </h3>
             {ranked.length > 0 && (
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>

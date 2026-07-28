@@ -662,7 +662,7 @@ with:
         {unranked.length > 0 && (
           <>
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
-              {ranked.length > 0 ? 'Also on the ballot' : 'Who said what'}
+              {ranked.length > 0 ? 'Also on the ballot' : 'Everyone you read'}
             </h3>
             {ranked.length > 0 && (
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
@@ -1163,7 +1163,7 @@ Go to `/race/mock-in-gov-2024/topics`, start the race, and **disagree with every
 Expected:
 - Band reads "GOVERNOR · YOU READ 12 QUOTES ACROSS 3 TOPICS" and "Now see who said what".
 - The line "You didn't agree with any of these positions, so there's no ranking to build. Here's who said them."
-- A single "Who said what" heading — no "How the candidates stack up", no "Also on the ballot".
+- A single "Everyone you read" heading — no "How the candidates stack up", no "Also on the ballot".
 - Every candidate card: no rank chip, no "Tied", a "Disagreed on N of 3 topics" strip, and a working "See what they said" drawer with sources.
 - The alignment matrix shows disagreed marks, no rank numbers.
 
