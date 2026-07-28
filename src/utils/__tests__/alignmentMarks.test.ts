@@ -138,3 +138,55 @@ describe('buildPerTopicRankMap ties', () => {
     expect(countTopPicks([{ quoteId: 'b', supported: true }] as never, rankMap)).toBe(1);
   });
 });
+
+describe('mark layer tolerates unranked ballot entries', () => {
+  const reveal: RevealResult = {
+    raceId: 'r',
+    positionName: 'Office',
+    ballot: [
+      {
+        rank: 1,
+        candidateId: 'ranked',
+        name: 'Ranked Person',
+        office: 'Office',
+        photo: '',
+        essentialsUrl: '',
+        evidence: { agreementCount: 1, firstPlaceCount: 1, topicsWithAgreement: 1 },
+        perTopic: [
+          { topicKey: 'housing', title: 'Housing', userTopWinner: true,
+            quotes: [{ quoteId: 'a1', text: 'Yes.', supported: true, rank: 1 }] },
+        ],
+      },
+      {
+        rank: null,
+        candidateId: 'unranked',
+        name: 'Unranked Person',
+        office: 'Office',
+        photo: '',
+        essentialsUrl: '',
+        evidence: { agreementCount: 0, firstPlaceCount: 0, topicsWithAgreement: 0 },
+        perTopic: [
+          { topicKey: 'housing', title: 'Housing', userTopWinner: false,
+            quotes: [{ quoteId: 'd1', text: 'No.', supported: false, rank: null }] },
+        ],
+      },
+    ],
+  };
+
+  it('builds per-topic ranks from the agreed quotes only', () => {
+    const map = buildPerTopicRankMap(reveal);
+    expect(map.get('a1')).toBe(1);
+    expect(map.has('d1')).toBe(false);
+  });
+
+  it('reduces an all-disagreed candidate to a disagreed mark', () => {
+    const map = buildPerTopicRankMap(reveal);
+    const quotes = reveal.ballot[1].perTopic[0].quotes;
+    expect(markForQuotes(quotes, map)).toEqual({ kind: 'disagreed' });
+  });
+
+  it('counts no top picks for an unranked candidate', () => {
+    const map = buildPerTopicRankMap(reveal);
+    expect(countTopPicks(reveal.ballot[1].perTopic[0].quotes, map)).toBe(0);
+  });
+});
