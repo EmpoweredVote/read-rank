@@ -1187,8 +1187,18 @@ If anything looks wrong, fix it with a test that would have caught it, then re-v
 
 - `npm run test` and `npx tsc -b` both pass.
 - Both browser paths in Task 8 look right.
-- No occurrence of "You didn't agree with any quotes" remains in `src/` — check with
-  `grep -rn "didn't agree with any" src/`.
+- The retired empty-state copy is gone from `src/`. Check the three strings that
+  actually made it up, not the phrase they share with current copy:
+
+  ```bash
+  grep -rniE "No agreements yet|Try another race|no ballot to build" src/
+  ```
+
+  Expect only the retired-copy tripwire assertion in
+  `ResultsPhase.revealFailure.test.tsx`. Do NOT grep for the broader
+  `didn't agree with any` — that also matches copy this plan deliberately
+  *introduces* (the sr-only announcement and the "Also on the ballot"
+  explanatory line), so forcing it to zero would mean rewording correct text.
 - The reachability tests from `c6e5c08`
   (`src/components/__tests__/EvaluationPhase.zeroAgreement.test.tsx`) are still
   passing and unmodified — they cover getting *to* this screen, which every task
