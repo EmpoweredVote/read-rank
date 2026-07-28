@@ -66,6 +66,9 @@ export const ResultsPhase: React.FC = () => {
     return counts;
   }, [ballot]);
 
+  const ranked = useMemo(() => ballot.filter((e) => e.rank != null), [ballot]);
+  const unranked = useMemo(() => ballot.filter((e) => e.rank == null), [ballot]);
+
   const filledCells = useMemo(
     () => alignmentTopics.length * ballot.length, // upper bound is fine for the timeline pacing
     [alignmentTopics.length, ballot.length]
@@ -135,10 +138,10 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
-  const top = ballot[0];
+  const top = ranked[0];
   const revealAnnouncement = top
     ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
-    : '';
+    : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking to show.";
 
   return (
     <div className="pb-12 max-w-2xl mx-auto">
@@ -150,16 +153,39 @@ export const ResultsPhase: React.FC = () => {
         <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
           animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.cellsStart} />
 
-        <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
-          How the candidates stack up
-        </h3>
+        {ranked.length > 0 && (
+          <>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+              How the candidates stack up
+            </h3>
+            {ranked.map((entry, i) => (
+              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                rankMap={rankMap}
+                tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
+                landDelayMs={timeline.cardDelay(i)} />
+            ))}
+          </>
+        )}
 
-        {ballot.map((entry, i) => (
-          <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
-            rankMap={rankMap}
-            tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
-            landDelayMs={timeline.cardDelay(i)} />
-        ))}
+        {unranked.length > 0 && (
+          <>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
+              {ranked.length > 0 ? 'Also on the ballot' : 'Who said what'}
+            </h3>
+            {ranked.length > 0 && (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
+                You read them, but didn&apos;t agree with any of their positions.
+              </p>
+            )}
+            {/* Cascade index continues across both sections so the animation
+                doesn't restart at the second heading. */}
+            {unranked.map((entry, i) => (
+              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                rankMap={rankMap}
+                landDelayMs={timeline.cardDelay(ranked.length + i)} />
+            ))}
+          </>
+        )}
 
         <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={null} />
       </div>
