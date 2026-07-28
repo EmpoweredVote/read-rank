@@ -69,4 +69,11 @@ describe('CandidateBallotCard with an unranked entry', () => {
     expect(container.querySelector('.rank-number')?.textContent).toBe('2');
     expect(screen.getByText(/^Ranked 2$/)).toBeInTheDocument();
   });
+
+  it('reports what it disagreed on instead of "Agreed with 0"', () => {
+    render(<CandidateBallotCard entry={unranked} totalTopics={3} rankMap={new Map()} />);
+    expect(screen.getByText(/disagreed on/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 3/)).toBeInTheDocument();
+    expect(screen.queryByText(/agreed with/i)).not.toBeInTheDocument();
+  });
 });

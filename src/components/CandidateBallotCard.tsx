@@ -66,6 +66,8 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
   const topPicks = countTopPicks(entry.perTopic.flatMap((t) => t.quotes), rankMap);
   // Captured as a const so TypeScript narrows it inside the JSX below.
   const rank = entry.rank;
+  // Topics where the user judged one of this candidate's quotes and rejected it.
+  const disagreedTopics = entry.perTopic.filter((t) => t.quotes.some((q) => !q.supported)).length;
 
   // #1 celebration: fire the burst once the card has landed (wall-clock timer so it
   // survives the preview rAF throttle, matching the old ResultsPhase behaviour).
@@ -103,9 +105,17 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
 
         <div className="ballot-strip">
           <p className="ballot-evidence">
-            Agreed with <strong>{agreementCount} of {totalTopics}</strong>
-            {topPicks > 0 && (
-              <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+            {rank != null ? (
+              <>
+                Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                {topPicks > 0 && (
+                  <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+                )}
+              </>
+            ) : (
+              <>
+                Disagreed on <strong>{disagreedTopics} of {totalTopics}</strong> topic{disagreedTopics === 1 ? '' : 's'}
+              </>
             )}
           </p>
           {entry.perTopic.length > 0 && (
