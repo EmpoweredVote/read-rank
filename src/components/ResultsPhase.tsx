@@ -55,10 +55,14 @@ export const ResultsPhase: React.FC = () => {
     [reveal]
   );
 
-  // Detect shared ranks for the tie tag.
+  // Detect shared ranks for the tie tag. Unranked entries share no rank —
+  // bucketing their nulls together would tag every one of them "Tied".
   const tiedRanks = useMemo(() => {
     const counts = new Map<number, number>();
-    for (const e of ballot) counts.set(e.rank, (counts.get(e.rank) ?? 0) + 1);
+    for (const e of ballot) {
+      if (e.rank == null) continue;
+      counts.set(e.rank, (counts.get(e.rank) ?? 0) + 1);
+    }
     return counts;
   }, [ballot]);
 
@@ -153,7 +157,7 @@ export const ResultsPhase: React.FC = () => {
         {ballot.map((entry, i) => (
           <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
             rankMap={rankMap}
-            tied={(tiedRanks.get(entry.rank) ?? 0) > 1}
+            tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
             landDelayMs={timeline.cardDelay(i)} />
         ))}
 

@@ -99,7 +99,10 @@ export interface PerTopicReveal {
 }
 
 export interface BallotEntry {
-  rank: number;
+  /** 1-based rank, or null when the user judged this candidate but never agreed
+   *  with any of their quotes. See
+   *  docs/superpowers/specs/2026-07-28-unranked-candidates-reveal-design.md */
+  rank: number | null;
   candidateId: string;
   name: string;
   office: string;

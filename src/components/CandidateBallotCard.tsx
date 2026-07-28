@@ -64,6 +64,8 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
   const m = useMotion();
   const { agreementCount } = entry.evidence;
   const topPicks = countTopPicks(entry.perTopic.flatMap((t) => t.quotes), rankMap);
+  // Captured as a const so TypeScript narrows it inside the JSX below.
+  const rank = entry.rank;
 
   // #1 celebration: fire the burst once the card has landed (wall-clock timer so it
   // survives the preview rAF throttle, matching the old ResultsPhase behaviour).
@@ -79,11 +81,17 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
       initial={m.reduced ? false : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={m.transition(DUR.moderate, EASE.settle, { delay: landDelayMs / 1000 })}>
-      {!m.reduced && entry.rank === 1 && <MegaParticles active={burst} />}
+      {!m.reduced && rank === 1 && <MegaParticles active={burst} />}
       <div className="ballot-rankcol">
-        <RankNumber rank={entry.rank} size={28} />
-        <span className="sr-only">Ranked {entry.rank}{tied ? ', tied' : ''}</span>
-        {tied && <span className="ballot-tie">Tied</span>}
+        {rank != null ? (
+          <>
+            <RankNumber rank={rank} size={28} />
+            <span className="sr-only">Ranked {rank}{tied ? ', tied' : ''}</span>
+            {tied && <span className="ballot-tie">Tied</span>}
+          </>
+        ) : (
+          <span className="sr-only">Not ranked</span>
+        )}
       </div>
 
       <div className="ballot-outer">
