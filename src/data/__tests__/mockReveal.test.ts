@@ -13,6 +13,13 @@ function verdict(quoteId: string, supported: boolean, rank: number | null): Verd
 }
 
 describe('buildMockReveal inclusion rule', () => {
+  // Several cases below need one candidate to agree with and another to reject.
+  // Assert the fixture can support that, so trimming the mock roster fails here
+  // with an obvious message rather than as a confusing ballot-count mismatch.
+  it('has a fixture with at least two candidates', () => {
+    expect(tokens.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('returns every judged candidate unranked when nothing was agreed', () => {
     const verdicts = allQuotes.map((q) => verdict(q.id, false, null));
     const result = buildMockReveal(verdicts);
