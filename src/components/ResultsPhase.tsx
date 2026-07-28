@@ -17,16 +17,26 @@ export const ResultsPhase: React.FC = () => {
   const { goToHub, setPhase, currentRaceId, getRaceVerdicts, getCurrentRaceProgress } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
   const [loading, setLoading] = useState(true);
+  // The reveal call failed. Kept separate from "the ballot is empty": the user's
+  // verdicts are safe in the store, so this is a retryable outage, not a verdict
+  // on their choices.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const m = useMotion();
   const race = getCurrentRaceProgress();
   const complete = race ? isRaceComplete(race, race.rankableTopicCount) : false;
 
   useEffect(() => {
     if (!currentRaceId) { setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
     fetchRaceReveal(currentRaceId, getRaceVerdicts(currentRaceId))
-      .then(setReveal)
-      .finally(() => setTimeout(() => setLoading(false), 600));
-  }, [currentRaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+      .then((result) => { if (!cancelled) setReveal(result); })
+      .catch(() => { if (!cancelled) setFailed(true); })
+      .finally(() => setTimeout(() => { if (!cancelled) setLoading(false); }, 600));
+    return () => { cancelled = true; };
+  }, [currentRaceId, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const agreedList = race ? getAllAgreedQuotes(race) : [];
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
@@ -70,6 +80,32 @@ export const ResultsPhase: React.FC = () => {
         <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, color: 'var(--text-secondary)', fontSize: '1rem' }}>
           Tallying your ballot…
         </p>
+      </div>
+    );
+  }
+
+  // Outage, not an outcome. Must be checked before the empty-ballot state below,
+  // which would otherwise tell the user they agreed with nothing.
+  if (failed) {
+    return (
+      <div className="pb-12 max-w-2xl mx-auto">
+        <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+        <div className="text-center py-10" role="alert">
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+            We couldn&apos;t build your ballot
+          </p>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            Something went wrong on our end. Your rankings are saved — nothing is lost.
+          </p>
+        </div>
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <button onClick={() => setAttempt((n) => n + 1)} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            Try again
+          </button>
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
+            ← Back to your topics
+          </button>
+        </div>
       </div>
     );
   }

@@ -284,9 +284,29 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
 }
 
 /**
+ * The reveal could not be built. Deliberately distinct from a legitimately empty
+ * ballot: `buildMockReveal` resolves quote ids against MOCK_QUOTES only, so
+ * falling back to it for a real race matches nothing and returns `ballot: []`,
+ * which the results screen renders as "You didn't agree with any quotes" — a
+ * false statement about the user's own choices. Callers must surface this as an
+ * error the user can retry, never as an outcome.
+ */
+export class RevealUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    super('Reveal unavailable');
+    this.name = 'RevealUnavailableError';
+    this.cause = cause;
+  }
+}
+
+/**
  * Reveal the candidate ballot. POSTs the user's verdicts so guests can reveal
  * without auth (the client knows everything except identities). Authed users'
  * verdicts are also persisted separately via verdictSync.
+ *
+ * Unlike the other endpoints here, a failure does NOT degrade to mock data for a
+ * real race — the mock can only speak about mock quotes. See
+ * `RevealUnavailableError`.
  */
 export async function fetchRaceReveal(raceId: string, verdicts: VerdictRecord[]): Promise<RevealResult> {
   try {
@@ -298,9 +318,15 @@ export async function fetchRaceReveal(raceId: string, verdicts: VerdictRecord[])
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return (await res.json()) as RevealResult;
   } catch (err) {
-    console.error('Failed to fetch reveal, falling back to mock', err);
-    const { buildMockReveal } = await import('./mockData');
-    return buildMockReveal(verdicts);
+    const { buildMockReveal, MOCK_RACE_ID } = await import('./mockData');
+    // Offline/local dev on the mock race: the mock knows these quote ids, so the
+    // ballot it builds is truthful. Any other race: fail loudly.
+    if (raceId === MOCK_RACE_ID) {
+      console.error('Failed to fetch reveal, falling back to mock', err);
+      return buildMockReveal(verdicts);
+    }
+    console.error('Failed to fetch reveal', err);
+    throw new RevealUnavailableError(err);
   }
 }
 
