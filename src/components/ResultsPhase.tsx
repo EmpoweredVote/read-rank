@@ -41,13 +41,23 @@ export const ResultsPhase: React.FC = () => {
   const agreedList = race ? getAllAgreedQuotes(race) : [];
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
   const topicCount = activeTopicKeys.length;
+  // Denominator must be ALL topics (race.topicOrder), not just the selected
+  // ones in activeTopicKeys: getRaceVerdicts builds the reveal payload from
+  // topicOrder, and a topic left part-done after being deselected would
+  // otherwise still count its agreed quotes while dropping its disagreed ones.
+  const judgedCount = race
+    ? race.topicOrder.reduce((n, k) => {
+        const t = race.topics[k];
+        return n + (t ? t.agreed.length + t.disagreed.length : 0);
+      }, 0)
+    : 0;
 
   const alignmentTopics = useMemo<AlignmentTopic[]>(
     () => (race ? getActiveTopicKeys(race).map((key) => ({ key, title: race.topics[key].title })) : []),
     [race]
   );
 
-  const ballot = reveal?.ballot ?? [];
+  const ballot = useMemo(() => reveal?.ballot ?? [], [reveal]);
   const office = race?.positionName ?? reveal?.positionName ?? '';
 
   const rankMap = useMemo(
@@ -55,12 +65,19 @@ export const ResultsPhase: React.FC = () => {
     [reveal]
   );
 
-  // Detect shared ranks for the tie tag.
+  // Detect shared ranks for the tie tag. Unranked entries share no rank —
+  // bucketing their nulls together would tag every one of them "Tied".
   const tiedRanks = useMemo(() => {
     const counts = new Map<number, number>();
-    for (const e of ballot) counts.set(e.rank, (counts.get(e.rank) ?? 0) + 1);
+    for (const e of ballot) {
+      if (e.rank == null) continue;
+      counts.set(e.rank, (counts.get(e.rank) ?? 0) + 1);
+    }
     return counts;
   }, [ballot]);
+
+  const ranked = useMemo(() => ballot.filter((e) => e.rank != null), [ballot]);
+  const unranked = useMemo(() => ballot.filter((e) => e.rank == null), [ballot]);
 
   const filledCells = useMemo(
     () => alignmentTopics.length * ballot.length, // upper bound is fine for the timeline pacing
@@ -84,12 +101,35 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
-  // Outage, not an outcome. Must be checked before the empty-ballot state below,
-  // which would otherwise tell the user they agreed with nothing.
-  if (failed) {
+  // Nothing judged: there is nothing to reveal, and that stays true whether or
+  // not the fetch succeeded — so don't dress it up as an outage.
+  if (ballot.length === 0 && judgedCount === 0) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+        {/* No band here: "Now see who said what" over an empty screen promises a
+            reveal that doesn't exist yet. */}
+        <div className="text-center py-10">
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+            Nothing to reveal yet
+          </p>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            Read a topic first and this is where you&apos;ll find out who said what.
+          </p>
+        </div>
+        <div className="flex justify-center pt-6">
+          <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+            ← Back to your topics
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Outage, or an empty ballot after real verdicts — either way the backend
+  // resolved nobody. Not a statement about the user's choices.
+  if (failed || ballot.length === 0) {
+    return (
+      <div className="pb-12 max-w-2xl mx-auto">
         <div className="text-center py-10" role="alert">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
             We couldn&apos;t build your ballot
@@ -110,52 +150,64 @@ export const ResultsPhase: React.FC = () => {
     );
   }
 
-  if (ballot.length === 0) {
-    return (
-      <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
-        <div className="text-center py-10">
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-            No agreements yet
-          </p>
-          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            You didn&apos;t agree with any quotes, so there&apos;s no ballot to build. Try another race.
-          </p>
-        </div>
-        <div className="flex justify-center pt-6">
-          <button onClick={() => { if (complete) { track('readrank_play_again_clicked'); goToHub(); } else setPhase('issue-selection'); }} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            {complete ? 'Play another race near you' : '← Back to your topics'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const top = ballot[0];
+  const top = ranked[0];
   const revealAnnouncement = top
     ? `Ballot revealed. Your number one is ${top.name}, agreed with ${top.evidence.agreementCount} position${top.evidence.agreementCount === 1 ? '' : 's'}.`
-    : '';
+    : "Ballot revealed. You didn't agree with any of these positions, so there's no ranking — here's who said what.";
+
+  // Shared by both ballot section headings ("How the candidates stack up" /
+  // "Also on the ballot" / "Everyone you read") so the style isn't duplicated.
+  const sectionHeadingStyle = { fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' } as const;
 
   return (
     <div className="pb-12 max-w-2xl mx-auto">
       <div aria-live="polite" role="status" className="sr-only">{revealAnnouncement}</div>
 
-      <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+      <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
+
+      {ranked.length === 0 && unranked.length > 0 && (
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '1rem 0 0' }}>
+          You didn&apos;t agree with any of these positions, so there&apos;s no ranking to build. Here&apos;s who said them.
+        </p>
+      )}
 
       <div className="space-y-4">
         <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
           animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.cellsStart} />
 
-        <h3 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' }}>
-          How the candidates stack up
-        </h3>
+        {ranked.length > 0 && (
+          <>
+            <h3 style={sectionHeadingStyle}>
+              How the candidates stack up
+            </h3>
+            {ranked.map((entry, i) => (
+              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                rankMap={rankMap}
+                tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
+                landDelayMs={timeline.cardDelay(i)} />
+            ))}
+          </>
+        )}
 
-        {ballot.map((entry, i) => (
-          <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
-            rankMap={rankMap}
-            tied={(tiedRanks.get(entry.rank) ?? 0) > 1}
-            landDelayMs={timeline.cardDelay(i)} />
-        ))}
+        {unranked.length > 0 && (
+          <>
+            <h3 style={sectionHeadingStyle}>
+              {ranked.length > 0 ? 'Also on the ballot' : 'Everyone you read'}
+            </h3>
+            {ranked.length > 0 && (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
+                You read them, but didn&apos;t agree with any of their positions.
+              </p>
+            )}
+            {/* Cascade index continues across both sections so the animation
+                doesn't restart at the second heading. */}
+            {unranked.map((entry, i) => (
+              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                rankMap={rankMap}
+                landDelayMs={timeline.cardDelay(ranked.length + i)} />
+            ))}
+          </>
+        )}
 
         <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={null} />
       </div>

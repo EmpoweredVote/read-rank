@@ -99,7 +99,10 @@ export interface PerTopicReveal {
 }
 
 export interface BallotEntry {
-  rank: number;
+  /** 1-based rank, or null when the user judged this candidate but never agreed
+   *  with any of their quotes. See
+   *  docs/superpowers/specs/2026-07-28-unranked-candidates-reveal-design.md */
+  rank: number | null;
   candidateId: string;
   name: string;
   office: string;
@@ -287,8 +290,8 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
  * The reveal could not be built. Deliberately distinct from a legitimately empty
  * ballot: `buildMockReveal` resolves quote ids against MOCK_QUOTES only, so
  * falling back to it for a real race matches nothing and returns `ballot: []`,
- * which the results screen renders as "You didn't agree with any quotes" — a
- * false statement about the user's own choices. Callers must surface this as an
+ * which the results screen would otherwise treat as a legitimately empty ballot —
+ * a false statement about the user's own choices. Callers must surface this as an
  * error the user can retry, never as an outcome.
  */
 export class RevealUnavailableError extends Error {

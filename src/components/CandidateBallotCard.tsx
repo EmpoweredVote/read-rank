@@ -64,26 +64,37 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
   const m = useMotion();
   const { agreementCount } = entry.evidence;
   const topPicks = countTopPicks(entry.perTopic.flatMap((t) => t.quotes), rankMap);
+  // Captured as a const so TypeScript narrows it inside the JSX below.
+  const rank = entry.rank;
+  // Topics where the user judged one of this candidate's quotes and rejected it.
+  const disagreedTopics = entry.perTopic.filter((t) => t.quotes.some((q) => !q.supported)).length;
 
   // #1 celebration: fire the burst once the card has landed (wall-clock timer so it
   // survives the preview rAF throttle, matching the old ResultsPhase behaviour).
+  // `rank === 1` is false for null, so unranked entries never burst.
   useEffect(() => {
-    if (m.reduced || entry.rank !== 1) return;
+    if (m.reduced || rank !== 1) return;
     const on = setTimeout(() => setBurst(true), landDelayMs);
     const off = setTimeout(() => setBurst(false), landDelayMs + DUR.burst + 200);
     return () => { clearTimeout(on); clearTimeout(off); };
-  }, [m.reduced, entry.rank, landDelayMs]);
+  }, [m.reduced, rank, landDelayMs]);
 
   return (
     <motion.div className="ballot-row"
       initial={m.reduced ? false : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={m.transition(DUR.moderate, EASE.settle, { delay: landDelayMs / 1000 })}>
-      {!m.reduced && entry.rank === 1 && <MegaParticles active={burst} />}
+      {!m.reduced && rank === 1 && <MegaParticles active={burst} />}
       <div className="ballot-rankcol">
-        <RankNumber rank={entry.rank} size={28} />
-        <span className="sr-only">Ranked {entry.rank}{tied ? ', tied' : ''}</span>
-        {tied && <span className="ballot-tie">Tied</span>}
+        {rank != null ? (
+          <>
+            <RankNumber rank={rank} size={28} />
+            <span className="sr-only">Ranked {rank}{tied ? ', tied' : ''}</span>
+            {tied && <span className="ballot-tie">Tied</span>}
+          </>
+        ) : (
+          <span className="sr-only">Not ranked</span>
+        )}
       </div>
 
       <div className="ballot-outer">
@@ -94,9 +105,18 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
 
         <div className="ballot-strip">
           <p className="ballot-evidence">
-            Agreed with <strong>{agreementCount} of {totalTopics}</strong>
-            {topPicks > 0 && (
-              <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+            {rank != null ? (
+              <>
+                Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                {topPicks > 0 && (
+                  <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Plural agrees with the denominator: "1 of 3 topics", not "1 of 3 topic". */}
+                Disagreed on <strong>{disagreedTopics} of {totalTopics}</strong> topic{totalTopics === 1 ? '' : 's'}
+              </>
             )}
           </p>
           {entry.perTopic.length > 0 && (
