@@ -41,6 +41,8 @@ export const ResultsPhase: React.FC = () => {
   const agreedList = race ? getAllAgreedQuotes(race) : [];
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
   const topicCount = activeTopicKeys.length;
+  const disagreedList = race ? activeTopicKeys.flatMap((k) => race.topics[k]?.disagreed ?? []) : [];
+  const judgedCount = agreedList.length + disagreedList.length;
 
   const alignmentTopics = useMemo<AlignmentTopic[]>(
     () => (race ? getActiveTopicKeys(race).map((key) => ({ key, title: race.topics[key].title })) : []),
@@ -96,7 +98,7 @@ export const ResultsPhase: React.FC = () => {
   if (failed) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
         <div className="text-center py-10" role="alert">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
             We couldn&apos;t build your ballot
@@ -120,7 +122,7 @@ export const ResultsPhase: React.FC = () => {
   if (ballot.length === 0) {
     return (
       <div className="pb-12 max-w-2xl mx-auto">
-        <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+        <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
         <div className="text-center py-10">
           <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
             No agreements yet
@@ -151,7 +153,13 @@ export const ResultsPhase: React.FC = () => {
     <div className="pb-12 max-w-2xl mx-auto">
       <div aria-live="polite" role="status" className="sr-only">{revealAnnouncement}</div>
 
-      <RevealBand office={office} rankedCount={agreedList.length} topicCount={topicCount} />
+      <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
+
+      {ranked.length === 0 && unranked.length > 0 && (
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '1rem 0 0' }}>
+          You didn&apos;t agree with any of these positions, so there&apos;s no ranking to build. Here&apos;s who said them.
+        </p>
+      )}
 
       <div className="space-y-4">
         <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}

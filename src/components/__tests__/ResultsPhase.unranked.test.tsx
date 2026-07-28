@@ -78,7 +78,9 @@ describe('ResultsPhase with unranked candidates', () => {
     play();
     render(<ResultsPhase />);
 
-    expect(await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 })).toBeInTheDocument();
+    // level: 3 distinguishes the section heading from the RevealBand's own
+    // "Now see who said what" h2, which matches the same name pattern.
+    expect(await screen.findByRole('heading', { name: /who said what/i, level: 3 }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(/how the candidates stack up/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/also on the ballot/i)).not.toBeInTheDocument();
   });
@@ -88,9 +90,12 @@ describe('ResultsPhase with unranked candidates', () => {
     play();
     render(<ResultsPhase />);
 
-    await screen.findByRole('heading', { name: /who said what/i }, { timeout: 3000 });
+    await screen.findByRole('heading', { name: /who said what/i, level: 3 }, { timeout: 3000 });
     expect(screen.queryByText(/your number one/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/no ranking/i)).toBeInTheDocument();
+    // Scoped to the sr-only live-region announcement: the visible explanatory
+    // line below the band also says "no ranking", so an unscoped query would
+    // now match two elements.
+    expect(screen.getByRole('status')).toHaveTextContent(/no ranking/i);
   });
 
   it('announces the number one from the ranked entries only', async () => {
