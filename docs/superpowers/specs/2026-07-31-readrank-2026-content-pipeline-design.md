@@ -1,7 +1,7 @@
 # Read & Rank 2026 Content Pipeline — Design
 
 **Date:** 2026-07-31
-**Status:** Approved design, pending implementation plan
+**Status:** Implemented — queue live and seeded (607 races, 2026-07-31), sessions running via the `race-pipeline` skill in on-the-record
 **Owner repos:** read-rank (this spec), on-the-record (curation skills + playbook), ev-accounts DB (data + work queue)
 
 ## Goal
