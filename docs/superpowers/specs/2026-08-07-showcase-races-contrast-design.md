@@ -1,9 +1,10 @@
 # Showcase Races — Contrast as the Shipping Bar
 
 **Date:** 2026-08-07
-**Status:** Design — approved in conversation, not yet planned or implemented
+**Status:** Parts 1–2 superseded (see Revision, below); 0b applied 2026-08-07. Implementation of
+record: `docs/superpowers/plans/2026-08-07-showcase-races-contrast.md`
 **Owner repos:** read-rank (this spec), on-the-record (`audit-quotes` skill), essentials
-(`QUOTE-CURATION-PRINCIPLES.md`), ev-accounts DB (override flag, pipeline row, quote provenance)
+(`QUOTE-CURATION-PRINCIPLES.md`), ev-accounts (payload joins, pipeline row, quote provenance)
 
 ## Goal
 
@@ -115,6 +116,66 @@ either race, currently unusable.
   (`readrankService.ts:603`) joins `compass_topics` only for the topic *title* and the `is_live`
   gate. No spectrum, no number; no `compass`/`stance` field in the frontend API types. This
   matters for the override decision below.
+
+---
+
+## Revision — 2026-08-07, after finding the comparability model
+
+**Parts 1 and 2 below are superseded.** Investigating the LA Mayor quotes surfaced two existing
+designs in on-the-record that this spec did not know about:
+
+- `docs/superpowers/specs/2026-07-21-readrank-question-as-unit-design.md` — the **question**, not
+  the topic, is the unit of comparison. `essentials.readrank_questions` is already live (2,429 rows
+  across 304 races). It explicitly defers *"the compelling/contrast layer"* to a follow-on spec —
+  which is what Part 1 below turned out to be, built on the wrong unit.
+- `docs/superpowers/specs/2026-07-23-readrank-comparability-model.md` — the rubric, with five races
+  of empirical grounding (TX Senate, AZ-01, MI Gov R, MI Senate Dem, KS Senate Dem).
+
+**Where they disagree with this spec, they win.** Three corrections in particular:
+
+1. **Two properties, not one verdict.** *Commensurable* (a shared latent axis) and *Differentiated*
+   (real distance on it) are separate tests with different remedies — incommensurable means you have
+   **two questions** and should split them; undifferentiated means the candidates **agree**.
+2. **Agreement is information; the gate was wrong.** Part 1 proposed dropping a no-contrast topic.
+   The model's §4 is better and answers the concern raised when the gate was chosen: *"Show 'these
+   candidates converge here'; just don't rank it."* Dropping the question discards a true fact
+   about the race.
+3. **Layering is the guardrail.** The model's §7 runs per-set strictly after per-quote *"so contrast
+   can never leak backward into selection."* A prose rule is not enough — the ordering must be real.
+
+**Part 2's mechanism was also wrong. There is no FK.** `essentials.readrank_questions.topic_key`
+carries only `NOT NULL` and a lowercase CHECK — no foreign key to `inform.compass_topics` exists, so
+"relax the FK" was a no-op. What actually blocks a non-compass question is the **read path**: four
+inner joins on `inform.compass_topics … AND ct.is_live = true` in
+`ev-accounts/backend/src/lib/readrankService.ts` (lines 314, 333, 535, 603).
+`readrankQuestionsService.ts:30` already documents this divergence deliberately.
+
+**What survived unchanged:** 0a (pipeline row), 0c (the `SCOPE_SQL` race-attribution bug), 0b, and
+Part 3 — which the model's §6 reinforces: *"Questionnaires (Vote411/LWV, Ballotpedia surveys) are
+gold… Mine existing ones now."*
+
+**What was genuinely net-new here:** the rule that **articulacy is not a contrast signal in either
+direction** (same position stated more fluently is still undifferentiated; ranking it measures
+rhetoric, not policy). That is now in the rubric and the principles doc.
+
+**Two further decisions taken after this spec was written:** `source-tier-4`'s medium ladder is
+replaced by **directness of answer** (questionnaires become level 1), and the **casebook** is built
+as a first-class artifact of `audit-quotes`.
+
+The implementation of record is
+`docs/superpowers/plans/2026-08-07-showcase-races-contrast.md`. Read Parts 1 and 2 below as history
+— they record how the problem was found, not how it is being solved.
+
+### Status of the numbered parts
+
+| Part | Status |
+|---|---|
+| 0a — repoint the LA Mayor pipeline row | Stands. Plan Task 1. |
+| 0b — identify the debate | ✅ **Done 2026-08-07.** All 30 traced to the 2026-05-06 NBC4/Telemundo debate, already ingested as meeting `f2cf80ef`. Applied as ev-accounts `1566`; four duplicates removed in `1567`. |
+| 0c — fix race attribution | Stands. Plan Task 3. |
+| Part 1 — `topic-no-contrast` | **Superseded** by the comparability rubric. Plan Tasks 4, 5, 6, 14. |
+| Part 2 — relax axis-invariance | **Superseded**; the mechanism was misdiagnosed. Plan Task 2. |
+| Part 3 — aimed discovery | Stands, reinforced. Plan Tasks 8, 10. |
 
 ---
 
