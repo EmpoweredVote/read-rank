@@ -69,12 +69,15 @@ worth shipping at all. That is the actual missing piece.
 
 ### 2. Nothing checks whether a topic is a real choice
 
-`audit-quotes` has nine judgment checks at `level: "quote"` and one portfolio check at
-`level: "portfolio"`. Both ends are covered; the middle is empty.
+`audit-quotes` has nine **judgment** checks, all at `level: "quote"`, and one portfolio check at
+`level: "portfolio"`. The `level: "topic"` slot exists and is used — but only by two *mechanical
+counting* checks (`multiple-live`, `not-rankable`). No check anywhere reads a topic's quotes and
+exercises judgment about them as a set.
 
 - `non-differentiating-goal` reads **one quote in isolation** — is *this* quote an agreeable
   goal with no mechanism.
 - `coverage-skew` counts rows per candidate.
+- `not-rankable` counts *whether* two candidates are live, never *what they said*.
 
 Neither asks: *do the two quotes we ship on this topic, side by side, present a real choice?*
 A topic where both candidates say something specific, mechanism-bearing, and **substantively
@@ -144,6 +147,30 @@ provenance is not a Read & Rank quote.
 
 This is the highest-leverage single item in the spec.
 
+### 0c. Fix race attribution in the audit's scope SQL
+
+`SCOPE_SQL` in `.claude/skills/audit-quotes/scripts/db.py:20` assigns each quote a race with:
+
+```sql
+(SELECT rc.race_id::text FROM essentials.race_candidates rc
+ WHERE rc.politician_id = q.politician_id ORDER BY rc.race_id LIMIT 1) AS race_id
+```
+
+— the lexicographically lowest race id the politician appears in. Bass and Raman sit on **both**
+LA Mayor rosters, and `24bc3631…` sorts before `9e888818…`, so **all 81 of their quotes are tagged
+with the June primary**, including when the audit is run with `--race 9e888818…` (the `--race`
+filter is a separate `EXISTS` clause, so it selects the right rows but does not correct the label).
+
+Consequences, all silent:
+
+- `fetch_stance` is called with the primary's race id, so **a ranking-question override set on the
+  general race is invisible to the audit** — this would break Part 2 without any error.
+- The context bundle is written to `context/24bc3631….json` when auditing the general.
+- Topic grouping — and therefore the new contrast check — keys on the wrong race.
+
+Fix: when `--race` is supplied, that race id is authoritative for every row returned. Blocks
+Parts 1 and 2.
+
 ---
 
 ## Part 1 — `topic-no-contrast`, a `level: "topic"` check
@@ -196,7 +223,7 @@ never whether a position is good, deep, or well-argued.
 ### Finding shape
 
 - `check_id`: `topic-no-contrast`
-- `level`: `"topic"` (new — the schema currently has `quote` and `portfolio` only)
+- `level`: `"topic"` — the level already exists (`models.py:8`); this is its first *judgment* check
 - `severity`: `high`
 - `fix_class`: `decision-required`
 - `race_id`, `topic_key` set; `quote_id` and `candidate` null — the finding is about the pairing,
@@ -298,7 +325,7 @@ answers, safe under the written-source verbatim rule.
 
 ## Sequence
 
-1. **0a** repoint the pipeline row (blocks 3).
+1. **0a** repoint the pipeline row (blocks 3), and **0c** fix race attribution (blocks 1 and 2).
 2. **0b** identify the debate behind the 30 orphan quotes (highest leverage; unblocks most of
    LA Mayor's topic pool).
 3. **Part 3** discovery — force sweeps, CA outlet pack, deep hunt. Runs in the background.
