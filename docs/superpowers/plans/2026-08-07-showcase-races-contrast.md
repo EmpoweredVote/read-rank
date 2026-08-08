@@ -1877,7 +1877,35 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 14: Build and seed the casebook
+## Task 14: Build and seed the casebook — ✅ DONE 2026-08-07
+
+**Applied** on `feat/audit-comparability-rubric`, commit `5624607`.
+`.claude/skills/audit-quotes/CASEBOOK.md` created; wired into `SKILL.md` both ways (read before
+judging, append after) and pointed at from `CHECKS.md §6`.
+
+**18 rulings, not the 14 planned.** Fourteen seeded from the reference runs; **four are net-new,
+drawn from the 2026-08-07 LA Mayor pass**:
+
+- *A quote with no provenance is not a quote* — the reveal IS the provenance, and a wrong citation
+  is worse than a missing one. From the 30 orphans.
+- *When two rows capture the same moment, keep the one that carries the mechanism* — seniority and
+  prior curation effort are not tie-breakers. From the dedupe, where two of the four keepers were
+  the newer uncurated rows.
+- *Articulacy is not a differentiation signal* — promoted from a guardrail buried in a check
+  description to a ruling in its own right, since it is the one genuinely new idea this spec
+  contributed.
+- *A primary debate can still be a general-election asset* — what matters is whether the candidates
+  who **remain** shared a prompt, not how the event was billed. The distinction from AZ-01 is
+  **shared room, not shared season**; AZ-01's primary debates were party-segregated, so its general
+  candidates never shared a prompt at all.
+
+That last one is the kind of entry the casebook exists for: without it, the AZ-01 ruling ("primary
+debates are lossy") reads as a blanket rule and would have argued against using the LA Mayor debate
+at all — which would have been wrong.
+
+---
+
+### Original steps
 
 **Files:**
 - Create: `on-the-record/.claude/skills/audit-quotes/CASEBOOK.md`
