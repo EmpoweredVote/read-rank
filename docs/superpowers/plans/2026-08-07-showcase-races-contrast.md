@@ -1287,7 +1287,45 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 7: Update the curation principles (spec Parts 1 and 2, revised)
+## Task 7: Update the curation principles (spec Parts 1 and 2, revised) — ✅ DONE 2026-08-07
+
+**Applied** on `docs/curation-directness-and-per-set` (essentials), commit `795bb780`; reconciled
+in on-the-record by `692e379`. Reviewed by Chris before landing — draft at
+`docs/superpowers/plans/2026-08-07-task7-principles-draft.md`.
+
+Both decisions the draft surfaced were taken as recommended:
+
+1. **§5's levels are NAMED, not numbered** — `answered-this-question` / `adjacent` /
+   `curator-extracted` / `excluded`. `discovered_sources.source_tier_guess` runs 1–4 on a different
+   scale; two 1–4 scales meaning different things is a trap, and naming one makes the collision
+   unrepresentable rather than merely documented.
+2. **Off-axis is declared via `readrank_questions.origin`** — `compass` is on-axis by construction,
+   `moderator`/`emergent` may not be, so coupling is skipped for those. Deliberately blunt (a
+   moderator question can be on-axis and we skip a valid check), but it uses a populated field, needs
+   no migration, and errs toward not emitting a finding it cannot justify.
+
+**Discovery's tier is now documented as intended, not as debt.** §5 and CHECKS.md §3.2 both state
+that discovery stays medium-ordered on purpose: the classifier guesses from a title and channel name
+*before anything has been read*, where directness is not yet knowable. Its `source_tier_guess` is a
+**triage-priority** signal, not a quality claim. That resolves the "new scope" flagged under Task 5
+— no realignment needed, only the naming that keeps the two scales distinguishable.
+
+**One correction made during application.** The draft *said* it assumed named levels but its §5
+prose still used numbers 1–4. The decision was implemented, not the oversight.
+
+**Three stale references cleaned up beyond the drafted scope**, all referencing the retired scale:
+the §2 provenance table's "source tier (§5)", §6.3's "tier 3–4 sources" in the high-scrutiny class,
+and the social-media bullet's "tier 2–3" / "~tier 4" slotting.
+
+**Loop closed:** the audit no longer departs from its stated authority. CHECKS.md §3.2's ⚠️ became a
+✅, and SKILL.md's "the principles doc wins — with one recorded exception" is back to "the principles
+doc wins."
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `essentials/docs/QUOTE-CURATION-PRINCIPLES.md` (§4.6, §5, §7.3)
