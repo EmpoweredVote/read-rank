@@ -224,7 +224,69 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 2: Let a question ship without a live compass topic (spec Part 2, revised)
+## Task 2: Let a question ship without a live compass topic (spec Part 2, revised) — ✅ DONE 2026-08-07
+
+**Applied** in ev-accounts `45fbfeeb`. All four `inform.compass_topics` joins converted to LEFT with
+the predicate relocated to each query's own `WHERE` as `(ct.topic_key IS NULL OR ct.is_live = true)`
+(alias `ct2` in the `rankable_topic_count` subquery). `topicTitleFromKey` exported and used at both
+mapping sites; `getRaceBlindQuotes` joins `readrank_questions` and resolves the question
+`question → race override → compass`. Suite: **983 → 995 passing**, `tsc --noEmit` clean.
+
+### It ships with zero production effect — verify before assuming otherwise
+
+Measured 2026-08-07, independently confirmed:
+
+- **0** live quotes on a non-compass topic. In fact **0** quotes in the whole table map to no Compass
+  row.
+- **0** retired topics — all **44** `compass_topics` rows are `is_live = true`.
+
+So nothing becomes newly visible and nothing changes for a citizen today. This is a **capability
+enabler** for the MI Senate Israel-aid case and its successors, not a fix to observable behaviour.
+That is the *second* task in this plan (with Task 4) that turned out to be prospective — worth
+remembering when judging whether the remaining effort is aimed at real problems or anticipated ones.
+
+### The kill-switch trap, demonstrated
+
+Because there are no retired topics, the `is_live` kill switch has **no real rows exercising it**.
+It was proved instead with a synthetic read-only query comparing both predicate placements:
+
+| quote | `ON`-clause (the trap) | `WHERE`-clause (shipped) |
+|---|---|---|
+| live compass topic | visible | visible |
+| no compass row | visible | visible |
+| **retired compass topic** | **visible ← bug** | hidden ✓ |
+
+The first `is_live = false` set in production will be the first real exercise of this path. That
+synthetic query is the only behavioural evidence; keep it in mind if the kill switch ever misbehaves.
+
+### One change beyond the brief, accepted
+
+`getRaceBlindQuotes` ordered by `ct.short_title`, which is NULL for every non-compass topic — a race
+with two of them would return in arbitrary order. Now `ORDER BY COALESCE(ct.short_title,
+lower(q.topic_key))`. Good catch; the brief missed it.
+
+### Two things flagged for later
+
+- **473 of 3,281 live quotes have `question_id` NULL** (~14%). They fall through the new
+  highest-priority COALESCE source to the override/Compass question exactly as before — no
+  regression, but the new source is inactive for them until questions are attached.
+- **A non-compass topic can now surface with an empty question string** if it has no
+  `readrank_questions` row, no race override *and* no Compass row. Nothing in the code prevents it;
+  it is a curation-time obligation. Worth a publish-time validation if a hard floor is wanted.
+  Unreachable today (zero such rows), but Task 12 starts creating non-compass questions.
+
+### Test coverage, honestly
+
+`pool.query` is mocked, so **no SQL semantics are covered by tests** — the join conversions and the
+COALESCE never execute in-process. That is why the title fallback was moved into TypeScript, where
+it is genuinely tested. The SQL half rests on the `EXPLAIN`/`PREPARE` parse checks and the synthetic
+predicate table above. One in-code SQL assertion exists and is labelled a weak structural guard.
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `ev-accounts/backend/src/lib/readrankService.ts` (four join sites: 314, 333, 535, 603)
