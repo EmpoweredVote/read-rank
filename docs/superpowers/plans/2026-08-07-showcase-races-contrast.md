@@ -90,7 +90,23 @@ Tests run from the repo root:
 
 ---
 
-## Task 1: Repoint the LA Mayor pipeline row (spec 0a)
+## Task 1: Repoint the LA Mayor pipeline row (spec 0a) — ✅ DONE 2026-08-07
+
+**Applied** as `ev-accounts/backend/migrations/1564_repoint_la_mayor_pipeline_row.sql`. Dry-run
+first; both guards passed. Pipeline row `9612b60a` now carries `9e888818` (the November general).
+
+Verified through discovery's own code path rather than only by reading the row back:
+`src.discovery.db.fetch_tracked_candidates` now returns exactly **Karen Ruth Bass** and
+**Nithya Raman** on race `9e888818` — previously 14 names, 12 of them eliminated primary
+candidates. `refresh_readrank_pipeline_counters()` re-run; `rankable_topics` stays at 1, which is
+correct (both candidates sit on both rosters, and `public-safety-approach` is still the only topic
+with two live quotes).
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Create: `ev-accounts/backend/migrations/1564_repoint_la_mayor_pipeline_row.sql`
