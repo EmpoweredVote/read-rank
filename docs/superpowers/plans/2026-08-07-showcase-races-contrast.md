@@ -406,7 +406,42 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 3: Fix race attribution in the audit's scope SQL (spec 0c)
+## Task 3: Fix race attribution in the audit's scope SQL (spec 0c) — ✅ DONE 2026-08-07
+
+**Applied** on branch `fix/audit-race-attribution` (on-the-record), commits `b46e07c` + `fdbcc82`.
+`SCOPE_SQL` is replaced by `race_id_expr(race)` and `build_scope_sql(race)`; `--race` is now
+authoritative, unscoped runs keep the lowest-id fallback.
+
+Verified read-only against production: `--race 9e888818-…` writes
+`9e888818-c50b-4c61-a106-a0839ff2479d.json` (77 quotes, 22 race-topic groups, zero occurrences of
+`24bc3631` anywhere in the bundle); `--candidate "Karen Ruth Bass"` unscoped still writes
+`24bc3631-….json`. Full suite: **2049 passed, 3 skipped** (skips pre-existing, need `DATABASE_URL`
+exported).
+
+**Test gap found and closed.** The three tests this plan specified assert on the *shape of the
+generated SQL string* — so a regression reverting `fetch_rows` to `build_scope_sql(None)` would
+have passed all three while silently restoring the bug. A fourth and fifth test now drive
+`fetch_rows` through a fake cursor and assert the scoped expression and the bound `race` parameter
+actually arrive. Confirmed by breaking the call: only the new test goes red. **This was a defect in
+the plan, not in the implementation.**
+
+**Note on effect.** No ranking-question override exists on either LA Mayor race today, so all 77
+quotes report `override_active: false` either way. The correction is *latent* — the stance lookup
+now keys on the right race, so a future general-race override registers instead of being silently
+missed. Do not expect the audit output to change beyond the bundle filename until Task 12 seeds
+questions.
+
+**Branch note.** `fix/audit-race-attribution` was cut from `research/la-mayor-quote-provenance`
+rather than `main`, so it carries the two Task 9 research commits (`aa770ab`, `64fc760`). That was
+the right call — checking out `main` would have churned a working tree holding uncommitted
+`EDITORIAL.md` work. `git cherry-pick b46e07c fdbcc82` onto `main` is clean if a standalone PR is
+wanted; the fix touches neither research file.
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `on-the-record/.claude/skills/audit-quotes/scripts/db.py:15-37`
