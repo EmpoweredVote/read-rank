@@ -1189,7 +1189,17 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 6: Wire the rubric into the audit workflow
+## Task 6: Wire the rubric into the audit workflow — ✅ DONE 2026-08-07
+
+**Applied** in `614be76`. Task 5 had already split the fan-out into two steps; this closed the four
+things it left behind: the frontmatter `description` and the opening paragraph both still described
+a single judgment pass, there was no `--include-drafts` workflow step (the flag was only listed
+under flags), and the three new non-negotiables were missing — never merge the two passes,
+agreement is information, demotions are policy not automation.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `on-the-record/.claude/skills/audit-quotes/SKILL.md`
@@ -1482,7 +1492,20 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 8: Make shared-question moments a sourcing target (spec Part 3, revised)
+## Task 8: Make shared-question moments a sourcing target (spec Part 3, revised) — ✅ DONE 2026-08-07
+
+**Applied** in `614be76`. Written against the **named** directness levels, not the numbered ones
+this plan originally drafted — Task 7 retired the numbers to avoid colliding with
+`discovered_sources.source_tier_guess`, so the drafted text here was already stale when it landed.
+
+`race-pipeline/SKILL.md` now sources by `answered-this-question` / `adjacent` / `curator-extracted`
+/ `excluded`, makes shared-question moments an explicit first target with the MI-Governor-vs-AZ-01
+evidence, and records that sourcing is for faithfulness only — a question whose answers converge is
+a real finding, not a sourcing failure.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `on-the-record/.claude/skills/race-pipeline/SKILL.md`
