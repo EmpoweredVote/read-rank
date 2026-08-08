@@ -869,7 +869,69 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 5: Encode the comparability rubric in audit-quotes (spec Part 1, revised)
+## Task 5: Encode the comparability rubric in audit-quotes (spec Part 1, revised) — ✅ DONE 2026-08-07
+
+**Applied** on `feat/audit-comparability-rubric`, commits `5b8a151` + `0b0fdf7`. All four parts
+landed: `source-tier-4` retired from `checks.py` and replaced by the judgment check
+`source-not-an-answer` (§3.2 carries the rationale); `misleading-verbatim` added; §3.1 defines the
+two per-set checks; §4 becomes the per-quote pass and §4.1 the per-set one. Suite: **2064 passed,
+3 skipped**.
+
+### One defect found and fixed after the fact
+
+§4.1 as first written told the per-set pass to **drop every draft** — "the set a citizen sees is
+the live one." Defensible for a pure audit, wrong for the run this exists to serve: an audit
+invoked with `--include-drafts` is answering *"which questions are worth shipping, and with which
+answers?"* On LA Mayor that is 1 live question out of 22, with drafts on both sides of the other
+21 — it would have reported almost nothing.
+
+Fixed in `0b0fdf7`: the set is now **scope-dependent** — live quotes on a default run, each
+candidate's *best available answer* when drafts are in scope. This does not loosen the
+"observed, never engineered" guardrail: each candidate's best answer is still chosen on
+faithfulness alone, in the earlier pass, blind to what the other said. The per-set pass judges the
+set that selection produced; it does not select.
+
+### Two flagged concerns that were NOT defects
+
+- **`??` is intentional.** The `(override ?? Compass)` in the §4 prompt is null-coalescing
+  notation, used consistently in CHECKS.md and QUOTE-CURATION-PRINCIPLES §7.1/§7.3 — not a mangled
+  arrow. Correctly left alone.
+- The casebook's Sources path pointed at `read-rank/` for the comparability model, which actually
+  lives in on-the-record. **That was an error in this plan**, corrected in `0b0fdf7`.
+
+### NEW SCOPE FOUND: source discovery still ranks by medium
+
+`src/discovery/classify.py:44` prompts the model to *"rank by QUESTIONER INDEPENDENCE"* and emit
+`source_tier: 1-4` against the **old** §5 ladder. That value is stored as
+`discovered_sources.source_tier_guess`, ordered on by the triage queue, and is a scored dimension
+in the classifier eval. It spans **seven source files and six test files**
+(`db.py`, `classify.py`, `reclassify.py`, `models.py`, `eval.py`, `engine.py`, `gui/discovery.py`,
+`gui/templates/discovery.html`) plus a 2026-08-05 recalibration effort built on it.
+
+So the tier change is not confined to `audit-quotes`: **discovery and the audit now disagree about
+what a good source is.** Discovery will keep ranking a Vote411/LWV questionnaire below a partisan
+podcast, and the triage queue will keep surfacing them in that order.
+
+Not in this plan's scope, and not urgent for two showcase races — but it should not be left
+indefinitely, and it is bigger than a doc edit. **Decision needed** on whether discovery's tier
+model is realigned, retired in favour of an audit-time judgment, or deliberately kept as a distinct
+*triage-priority* signal that is not a quality claim. That last reading is defensible: discovery is
+guessing from a title and channel before anything is read, where questioner independence is
+genuinely the best available proxy.
+
+### Live conflict with the principles doc
+
+`QUOTE-CURATION-PRINCIPLES §5` still states the medium-ordered ladder, so **as committed, the audit
+knowingly departs from its own stated authority.** CHECKS.md §3.2 carries an explicit ⚠️ naming
+the conflict rather than papering over it, and SKILL.md's "the principles doc wins" line now reads
+"with one recorded exception, the source ladder." **Task 7 closes this**, and until it lands the
+inconsistency is documented rather than silent.
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `on-the-record/.claude/skills/audit-quotes/CHECKS.md`
