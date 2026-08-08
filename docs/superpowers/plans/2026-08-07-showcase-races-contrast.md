@@ -602,7 +602,56 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 4: Group the audit bundle by question, not only by topic
+## Task 4: Group the audit bundle by question, not only by topic — ✅ DONE 2026-08-07
+
+**Applied** on `feat/audit-comparability-rubric`, commit `6894fa9` (post-rebase). `build_scope_sql`
+selects `question_id` / `question_text` / `origin` via a LEFT JOIN on `readrank_questions`;
+`build_bundle` is extracted from `audit.py`'s `main()` and emits `questions` and
+`unattached_quote_ids` alongside `topics`. Suite: **2056 passed, 3 skipped**.
+
+### Two findings that change what to expect downstream
+
+**1. The multi-question-per-topic case does not exist yet.** A read-only sweep found **zero**
+`(race_id, topic_key)` groups in `essentials.readrank_questions` carrying more than one question.
+Origins are 2,421 `compass`, 7 `emergent`, 1 `moderator` — the table is still essentially the 1:1
+Compass mapping. So the grouping this task adds is **prospective**: it prevents a bug the live data
+cannot yet demonstrate, and it changes no judgment outcome today. It starts paying off when Task 12
+seeds `origin='moderator'` questions from the LA Mayor debate. Plan accordingly — do not expect the
+per-set checks to behave differently from per-topic ones on the first run.
+
+**2. The LEFT JOIN is doing real work immediately.** **742 quotes carry a NULL `question_id`, 473 of
+them live.** An INNER join would have silently dropped all of them from every audit — a far larger
+blast radius than the case this task was written for.
+
+### Measured ceilings (drafts included, by DISTINCT candidates per question)
+
+| Race | Questions | ≥2 candidates | Rankable live today |
+|---|---|---|---|
+| LA Mayor | 22 | **11** | 1 |
+| CA Governor | 25 | **16** | 7 |
+
+These reproduce the spec's topic-based estimates exactly, which is the expected consequence of
+questions being 1:1 with topics. Note the distinction: *quotes* per question runs as high as 9, but
+what makes a set rankable is **distinct candidates**, and several of those large sets are one
+candidate with many drafts.
+
+### Deviations from the plan as written, both accepted
+
+- The specified test preamble could not import `audit.py` (it does `from scripts.db import …`, so
+  the skill root must be on `sys.path`). A documented `sys.path` insert was added.
+- **An extra contract test was added**, and it is better than what this plan specified. The two SQL
+  assertions are structural — `assert "rq.origin" in sql` would still pass if the alias were
+  `rq.origin AS q_origin` while `build_bundle` reads `question_origin`, silently yielding an empty
+  `questions` map against the real DB. The added test parses the SELECT list into its output column
+  names and asserts every key `build_bundle` reads is present, making it a contract across the two
+  modules. **This is the second time the plan's specified tests were structural where behavioural
+  ones were needed** — a pattern worth correcting in the remaining tasks.
+
+The original step list is kept below for the record.
+
+---
+
+### Original steps
 
 **Files:**
 - Modify: `on-the-record/.claude/skills/audit-quotes/scripts/db.py` (`build_scope_sql`)
