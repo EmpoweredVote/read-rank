@@ -1,4 +1,4 @@
-import type { RevealQuote, RevealResult } from '../data/api';
+import { revealCardKey, type RevealQuote, type RevealResult } from '../data/api';
 
 /** How a candidate's quote on a topic is marked at the reveal. null = not judged. */
 export type AlignmentMark =
@@ -18,9 +18,11 @@ export function buildPerTopicRankMap(reveal: RevealResult): Map<string, number> 
     for (const t of entry.perTopic) {
       for (const q of t.quotes) {
         if (!q.supported || q.rank == null) continue;
-        const arr = byTopic.get(t.topicKey) ?? [];
+        // Per CARD, not per topic: pooling two questions' ranks into one bucket
+        // renumbered them against each other.
+        const arr = byTopic.get(revealCardKey(t)) ?? [];
         arr.push({ quoteId: q.quoteId, rank: q.rank });
-        byTopic.set(t.topicKey, arr);
+        byTopic.set(revealCardKey(t), arr);
       }
     }
   }

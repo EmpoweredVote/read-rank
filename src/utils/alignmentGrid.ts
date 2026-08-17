@@ -1,4 +1,4 @@
-import type { RevealResult } from '../data/api';
+import { revealCardKey, type RevealResult } from '../data/api';
 import { markForQuotes, type AlignmentMark } from './alignmentMarks';
 
 export interface AlignmentTopic {
@@ -23,8 +23,10 @@ export function buildAlignmentGrid(
   rankMap: Map<string, number>
 ): AlignmentRow[] {
   return reveal.ballot.map((entry) => {
-    const byTopic = new Map(entry.perTopic.map((t) => [t.topicKey, t]));
-    const cells = topics.map((topic) => markForQuotes(byTopic.get(topic.key)?.quotes ?? [], rankMap));
+    // Keyed by CARD: `topics` columns are card keys, and two sections can share a
+    // topicKey, so a topicKey map resolved both columns to whichever landed last.
+    const byCard = new Map(entry.perTopic.map((t) => [revealCardKey(t), t]));
+    const cells = topics.map((topic) => markForQuotes(byCard.get(topic.key)?.quotes ?? [], rankMap));
     return { candidateId: entry.candidateId, name: entry.name, cells };
   });
 }

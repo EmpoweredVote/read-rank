@@ -19,7 +19,10 @@ export const IssueSelection: React.FC = () => {
       const topic = race.topics[key];
       const uniqueTokens = new Set(topic.quotesToEvaluate.map((q) => q.candidateToken));
       return {
-        topicKey: topic.topicKey,
+        // The CARD key, which is what topicOrder/selectedTopicKeys hold. Using
+        // topic.topicKey gave sibling cards in a split topic the same identity, so
+        // React keys collided and toggling one selected both.
+        key,
         title: topic.title,
         quoteCount: topic.quotesToEvaluate.length,
         isScored: uniqueTokens.size > 1,
@@ -36,15 +39,15 @@ export const IssueSelection: React.FC = () => {
 
   const isReentry = topicData.some((t) => t.isScored && t.isDone);
   const selectedUndoneScorable = topicData
-    .filter((t) => t.isScored && !t.isDone && selectedKeys.includes(t.topicKey))
+    .filter((t) => t.isScored && !t.isDone && selectedKeys.includes(t.key))
     .length;
 
   const selectedScorableCount = topicData
-    .filter((t) => t.isScored && selectedKeys.includes(t.topicKey))
+    .filter((t) => t.isScored && selectedKeys.includes(t.key))
     .length;
 
   const totalSelectedQuotes = topicData
-    .filter((t) => t.isScored && selectedKeys.includes(t.topicKey))
+    .filter((t) => t.isScored && selectedKeys.includes(t.key))
     .reduce((sum, t) => sum + t.quoteCount, 0);
 
   const estimatedMinutes = Math.ceil(totalSelectedQuotes / 8);
@@ -79,7 +82,7 @@ export const IssueSelection: React.FC = () => {
         {topicData.map((topic, i) => {
           if (topic.isScored && topic.isDone) {
             return (
-              <motion.div key={topic.topicKey} className="issue-row issue-row-done" data-testid={`issue-done-${topic.topicKey}`}
+              <motion.div key={topic.key} className="issue-row issue-row-done" data-testid={`issue-done-${topic.key}`}
                 {...m.enter({ y: 10 })}
                 transition={m.transition(DUR.base, EASE.settle, { delay: i * (STAGGER.gridCell / 1000) })}>
                 <span className="issue-check-tile issue-check-tile-selected" aria-hidden="true">
@@ -95,7 +98,7 @@ export const IssueSelection: React.FC = () => {
 
           if (!topic.isScored) {
             return (
-              <motion.div key={topic.topicKey} className="issue-row issue-row-unscored"
+              <motion.div key={topic.key} className="issue-row issue-row-unscored"
                 {...m.enter({ y: 10 })}
                 transition={m.transition(DUR.base, EASE.settle, { delay: i * (STAGGER.gridCell / 1000) })}>
                 <span className="issue-check-tile" aria-hidden="true" />
@@ -105,15 +108,15 @@ export const IssueSelection: React.FC = () => {
             );
           }
 
-          const isSelected = selectedKeys.includes(topic.topicKey);
+          const isSelected = selectedKeys.includes(topic.key);
           return (
             <motion.button
-              key={topic.topicKey}
+              key={topic.key}
               {...m.enter({ y: 10 })}
               transition={m.transition(DUR.base, EASE.settle, { delay: i * (STAGGER.gridCell / 1000) })}
               type="button"
               className={`issue-row issue-row-toggle ${isSelected ? 'issue-row-selected' : ''}`}
-              onClick={() => toggleTopic(topic.topicKey)}
+              onClick={() => toggleTopic(topic.key)}
               aria-pressed={isSelected}
               aria-label={`${topic.title}, ${topic.quoteCount} quotes`}
             >

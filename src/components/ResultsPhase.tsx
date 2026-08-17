@@ -9,6 +9,7 @@ import { CandidateBallotCard } from './CandidateBallotCard';
 import { RevealBand } from './RevealBand';
 import { CompassCrossLink } from './CompassCrossLink';
 import type { AlignmentTopic } from '../utils/alignmentGrid';
+import { disambiguateCardLabels } from '../utils/cardLabels';
 import { buildPerTopicRankMap } from '../utils/alignmentMarks';
 import { track } from '../lib/analytics';
 import { isRaceComplete } from '../utils/raceProgressState';
@@ -52,8 +53,16 @@ export const ResultsPhase: React.FC = () => {
       }, 0)
     : 0;
 
+  // These are CARD keys, so a split topic contributes several columns that all carry
+  // the same topic title — disambiguateCardLabels swaps in the question for those.
   const alignmentTopics = useMemo<AlignmentTopic[]>(
-    () => (race ? getActiveTopicKeys(race).map((key) => ({ key, title: race.topics[key].title })) : []),
+    () => (race
+      ? disambiguateCardLabels(getActiveTopicKeys(race).map((key) => ({
+          key,
+          title: race.topics[key].title,
+          question: race.topics[key].question,
+        })))
+      : []),
     [race]
   );
 
