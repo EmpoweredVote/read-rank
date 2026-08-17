@@ -1,5 +1,5 @@
 import React from 'react';
-import type { BallotEntry } from '../data/api';
+import { revealCardKey, type BallotEntry } from '../data/api';
 import { markForQuotes, markStrength } from '../utils/alignmentMarks';
 import { QuoteBlock } from './QuoteBlock';
 
@@ -22,7 +22,9 @@ export const QuoteDrawer: React.FC<QuoteDrawerProps> = ({ entry, rankMap }) => {
         const strength = (x: (typeof topic.quotes)[number]) =>
           x.supported ? (rankMap.get(x.quoteId) ?? Number.MAX_SAFE_INTEGER) : Infinity;
         const quote = [...topic.quotes].sort((a, b) => strength(a) - strength(b))[0];
-        return <QuoteBlock key={topic.topicKey} topicTitle={topic.title} quote={quote} mark={mark} />;
+        // Keyed by CARD: two sections of one topic share a topicKey, so a topicKey
+        // React key duplicates and one block is dropped.
+        return <QuoteBlock key={revealCardKey(topic)} topicTitle={topic.title} quote={quote} mark={mark} />;
       })}
     </div>
   );

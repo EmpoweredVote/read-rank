@@ -8,12 +8,35 @@ import { buildVerdictsForTopic } from '../utils/verdictFragment';
 // Types — race -> topics -> blind quotes
 // ============================================
 
+/**
+ * The QUESTION is the unit of comparison, not the topic.
+ *
+ * The accounts backend serves one card per ranking question (migration 1377; player
+ * path made question-keyed 2026-08-17), so ONE TOPIC CAN PRODUCE SEVERAL CARDS — LA
+ * Mayor's economic-development topic hosts a film/TV question and a downtown question.
+ * `topicKey` is therefore NOT unique across cards and cannot address one; `cardKey` /
+ * `TopicProgress.key` can. Keying this store's `topics` record by `topicKey` made two
+ * cards collide: the second overwrote the first, `topicOrder` listed the key twice, and
+ * one question rendered twice while the other's quotes never appeared.
+ */
+
 /** A de-identified quote. Identity is withheld behind candidateToken until the reveal. */
 export interface BlindQuote {
   id: string;
   text: string;
   candidateToken: string; // opaque, stable per-candidate within a race
+  /** The real Compass topic. Not unique across cards — see the note above. */
   topicKey: string;
+  /** The card this quote belongs to (accounts `quotes[].cardKey`): a question id, or
+   *  `topic:<topic_key>` for a compass-era quote. Optional ONLY to tolerate a backend
+   *  that predates per-question cards — always read it through `cardKeyOf`. */
+  cardKey?: string;
+}
+
+/** The card a quote belongs to. Falls back to `topicKey` when the payload predates
+ *  per-question cards, which reproduces the old behaviour exactly. */
+export function cardKeyOf(quote: Pick<BlindQuote, 'topicKey' | 'cardKey'>): string {
+  return quote.cardKey ?? quote.topicKey;
 }
 
 /** An agreed quote. Position in a topic's `agreed` array is the visual/drag order,
@@ -27,7 +50,15 @@ export interface AgreedQuote extends BlindQuote {
 }
 
 export interface TopicProgress {
+  /** This card's identity, and the key it is stored under in `RaceProgress.topics`.
+   *  Optional only for progress persisted before per-question cards — read it via
+   *  `cardKeyOfTopic`. */
+  key?: string;
+  /** The real Compass topic. Shared with sibling cards in the same topic; used for
+   *  display, the live-content allowlist and analytics, never for addressing. */
   topicKey: string;
+  /** NULL/absent for a compass-era card that answers no readrank_question. */
+  questionId?: string | null;
   title: string;
   question: string;
   quotesToEvaluate: BlindQuote[];
@@ -48,13 +79,17 @@ export interface RaceProgress {
   office?: string;
   seat?: string | null;
   state?: string | null;
+  /** Keyed by CARD key (TopicProgress.key), not topicKey — one topic can host
+   *  several cards. */
   topics: Record<string, TopicProgress>;
+  /** Card keys in canonical order. Name retained for the persisted shape. */
   topicOrder: string[];
+  /** The current CARD key. Name retained for the persisted shape. */
   currentTopicKey: string | null;
   phase: 'evaluation' | 'results';
   /** @deprecated completion is derived from topics; retained only for persisted-shape compatibility. */
   completed: boolean;
-  /** Keys of topics the user chose to evaluate. Undefined for races started before this field existed. */
+  /** CARD keys the user chose to evaluate. Undefined for races started before this field existed. */
   selectedTopicKeys?: string[];
   /** Backend rankable-topic count captured at selection (RaceSummary.rankableTopicCount).
    *  The single completion basis shared by the hub, browse, reveal, and evaluation surfaces.
@@ -84,12 +119,23 @@ export function getActiveTopicKeys(race: RaceProgress): string[] {
 export interface RacePayload {
   raceId: string;
   positionName: string;
+  /** One entry per QUESTION. Named `topics` for wire compatibility. */
   topics: Array<{
+    /** Card identity (accounts `topics[].key`). Optional only to tolerate a backend
+     *  that predates per-question cards. */
+    key?: string;
     topicKey: string;
+    questionId?: string | null;
     title: string;
     question: string;
     quotes: BlindQuote[];
   }>;
+}
+
+/** Card key of a payload entry or a stored TopicProgress, with the same
+ *  fall-back-to-topicKey tolerance as `cardKeyOf`. */
+export function cardKeyOfTopic(topic: { key?: string; topicKey: string }): string {
+  return topic.key ?? topic.topicKey;
 }
 
 export interface PracticeProgress {
@@ -211,8 +257,13 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
   const topics: Record<string, TopicProgress> = {};
   const topicOrder: string[] = [];
   for (const t of payload.topics) {
-    topics[t.topicKey] = {
+    // Keyed by CARD, not topic: two questions in one topic are two cards. Keying by
+    // topicKey let the second overwrite the first and pushed the key twice.
+    const key = cardKeyOfTopic(t);
+    topics[key] = {
+      key,
       topicKey: t.topicKey,
+      questionId: t.questionId ?? null,
       title: t.title,
       question: t.question,
       quotesToEvaluate: t.quotes,
@@ -220,7 +271,7 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
       disagreed: [],
       agreed: [],
     };
-    topicOrder.push(t.topicKey);
+    topicOrder.push(key);
   }
   return {
     raceId: payload.raceId,
@@ -245,8 +296,9 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
 function refreshRaceContent(race: RaceProgress, payload: RacePayload): RaceProgress {
   const topics = { ...race.topics };
   for (const t of payload.topics) {
-    const prev = topics[t.topicKey];
-    if (prev) topics[t.topicKey] = { ...prev, title: t.title, question: t.question };
+    const key = cardKeyOfTopic(t);
+    const prev = topics[key];
+    if (prev) topics[key] = { ...prev, title: t.title, question: t.question };
   }
   return { ...race, topics };
 }
@@ -363,14 +415,14 @@ export const useReadRankStore = create<ReadRankState>()(
 
       agree: (quote) => {
         const patch = withCurrentRace(get(), (race) => {
-          const topic = race.topics[quote.topicKey];
+          const topic = race.topics[cardKeyOf(quote)];
           if (!topic) return race;
           if (topic.agreed.some((q) => q.id === quote.id)) return race;
           return {
             ...race,
             topics: {
               ...race.topics,
-              [quote.topicKey]: {
+              [cardKeyOf(quote)]: {
                 ...topic,
                 agreed: [...topic.agreed, { ...quote, addedAt: Date.now() }],
                 currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length),
@@ -383,13 +435,13 @@ export const useReadRankStore = create<ReadRankState>()(
 
       disagree: (quote) => {
         const patch = withCurrentRace(get(), (race) => {
-          const topic = race.topics[quote.topicKey];
+          const topic = race.topics[cardKeyOf(quote)];
           if (!topic) return race;
           return {
             ...race,
             topics: {
               ...race.topics,
-              [quote.topicKey]: {
+              [cardKeyOf(quote)]: {
                 ...topic,
                 disagreed: [...topic.disagreed, quote],
                 currentIndex: Math.min(topic.currentIndex + 1, topic.quotesToEvaluate.length),
@@ -446,7 +498,7 @@ export const useReadRankStore = create<ReadRankState>()(
 
       reAgree: (quote) => {
         const patch = withCurrentRace(get(), (race) => {
-          const topic = race.topics[quote.topicKey];
+          const topic = race.topics[cardKeyOf(quote)];
           if (!topic) return race;
           if (topic.agreed.some((q) => q.id === quote.id)) return race;
           if (!topic.disagreed.some((q) => q.id === quote.id)) return race;
@@ -454,7 +506,7 @@ export const useReadRankStore = create<ReadRankState>()(
             ...race,
             topics: {
               ...race.topics,
-              [quote.topicKey]: {
+              [cardKeyOf(quote)]: {
                 ...topic,
                 agreed: [...topic.agreed, { ...quote, addedAt: Date.now() }],
                 disagreed: topic.disagreed.filter((q) => q.id !== quote.id),
@@ -627,8 +679,13 @@ export const useReadRankStore = create<ReadRankState>()(
     }),
     {
       name: 'ev_readrank',
-      version: 10,
+      version: 11,
       migrate: (persistedState, version) => {
+        // v10: `topics` re-keyed from topicKey to CARD key (one card per question).
+        // A faithful in-place remap is impossible: a question-bearing card's new key
+        // is a question id the client cannot derive from persisted state, and mapping
+        // the topic onto one of its questions would attribute the user's verdicts to
+        // a card they never saw. Reset race progress, as v8/v9 did for shape changes.
         // v9: per-topic agreed arrays. Cannot map old race.agreed (no topicKey
         // partition guaranteed). Reset race progress; preserve onboarding flags.
         // v8: race-scoped model. Same reset rationale.

@@ -38,7 +38,11 @@ export function deriveProgressState(
   const doneTopics = scorable.filter(isTopicDone).length;
 
   const selectedKeys = progress.selectedTopicKeys ?? progress.topicOrder;
-  const selectedScorableTopics = scorable.filter((t) => selectedKeys.includes(t.topicKey)).length;
+  // Both hold CARD keys, so match on the card key. `t.topicKey` is shared by sibling
+  // cards in a split topic and matches nothing once cards are question-keyed. Inlined
+  // rather than importing cardKeyOfTopic — the store imports this module, and taking a
+  // value back from it would close a require cycle.
+  const selectedScorableTopics = scorable.filter((t) => selectedKeys.includes(t.key ?? t.topicKey)).length;
 
   // When the live scorable count is unknown, fall back to the scorable topics we
   // can see in the user's own progress — never total topicCount, which would

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RevealResult } from '../data/api';
+import { revealCardKey, type RevealResult } from '../data/api';
 import type { AlignmentTopic } from '../utils/alignmentGrid';
 import { markForQuotes, markStrength } from '../utils/alignmentMarks';
 import { AlignmentMarkView } from './AlignmentMark';
@@ -19,7 +19,8 @@ export const AlignmentPills: React.FC<AlignmentPillsProps> = ({ reveal, topics, 
   return (
     <div className="pills-wrap">
       {reveal.ballot.map((entry) => {
-        const byTopic = new Map(entry.perTopic.map((t) => [t.topicKey, t]));
+        // Keyed by CARD — see buildAlignmentGrid.
+        const byTopic = new Map(entry.perTopic.map((t) => [revealCardKey(t), t]));
         const pills = topics
           .map((t) => ({ key: t.key, title: titleByKey.get(t.key) ?? t.title, mark: markForQuotes(byTopic.get(t.key)?.quotes ?? [], rankMap) }))
           .filter((p) => p.mark != null)

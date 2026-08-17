@@ -91,11 +91,25 @@ export interface RevealQuote {
   videoTimestampSeconds?: number;
 }
 
+/** One reveal section per QUESTION. Two sections can share a `topicKey` — one topic
+ *  can host several questions — so address them by `key`, via `revealCardKey`. */
 export interface PerTopicReveal {
+  /** Card identity, matching the evaluation payload's `topics[].key`. Optional only
+   *  to tolerate a backend that predates per-question cards. */
+  key?: string;
   topicKey: string;
+  questionId?: string | null;
   title: string;
+  /** The ranking question. Two sections of one topic share `title`, so this is what
+   *  distinguishes them to the reader. */
+  question?: string;
   userTopWinner: boolean;
   quotes: RevealQuote[];
+}
+
+/** Card key of a reveal section, falling back to `topicKey` for older payloads. */
+export function revealCardKey(section: Pick<PerTopicReveal, 'key' | 'topicKey'>): string {
+  return section.key ?? section.topicKey;
 }
 
 export interface BallotEntry {
@@ -252,6 +266,12 @@ function sanitizeRacePayload(raw: RacePayload): RacePayload {
     positionName: raw.positionName,
     topics: (raw.topics ?? [])
       .map((topic) => ({
+        // `key`/`questionId`/`cardKey` name the QUESTION, never the speaker, so they
+        // pass this guard without weakening it. They must be listed explicitly: this
+        // is a whitelist rebuild, so an omitted field is silently dropped and the
+        // store would fall back to topic-keying and collide two cards into one.
+        key: topic.key,
+        questionId: topic.questionId ?? null,
         topicKey: topic.topicKey,
         title: topic.title,
         question: topic.question,
@@ -261,6 +281,7 @@ function sanitizeRacePayload(raw: RacePayload): RacePayload {
             text: quote.text,
             candidateToken: quote.candidateToken,
             topicKey: quote.topicKey,
+            cardKey: quote.cardKey,
           })
         ),
       }))

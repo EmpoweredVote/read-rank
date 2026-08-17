@@ -106,7 +106,10 @@ describe('fetchRaceQuotes structural blindness', () => {
     const allQuotes = payload.topics.flatMap((t) => t.quotes);
     expect(allQuotes).toHaveLength(4);
     for (const quote of allQuotes) {
-      expect(Object.keys(quote).sort()).toEqual(['candidateToken', 'id', 'text', 'topicKey']);
+      // `cardKey` joined the allowed set when cards became per-question. It names the
+      // QUESTION, never the speaker, so it widens the shape without weakening the
+      // blind premise.
+      expect(Object.keys(quote).sort()).toEqual(['candidateToken', 'cardKey', 'id', 'text', 'topicKey']);
     }
     // Allowed fields survive intact.
     expect(allQuotes[0]).toEqual({
@@ -115,6 +118,47 @@ describe('fetchRaceQuotes structural blindness', () => {
       candidateToken: 'tok-a',
       topicKey: 'economy',
     });
+  });
+
+  it('carries the per-question card keys through the whitelist rebuild', async () => {
+    // sanitizeRacePayload rebuilds the payload field by field, so a field it does not
+    // name is silently dropped. Dropping `key`/`cardKey` would send the store back to
+    // topic-keying and collide two questions of one topic into a single card — with no
+    // error anywhere. This is that regression test.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        raceId: 'race-la-mayor',
+        positionName: 'Los Angeles Mayor',
+        topics: [
+          {
+            key: 'q-film', questionId: 'q-film', topicKey: 'economic-development',
+            title: 'Economic Development', question: 'Film and TV?',
+            quotes: [
+              { id: 'bass-film', text: 'a', candidateToken: 'tok-a', topicKey: 'economic-development', cardKey: 'q-film' },
+              { id: 'raman-film', text: 'b', candidateToken: 'tok-b', topicKey: 'economic-development', cardKey: 'q-film' },
+            ],
+          },
+          {
+            key: 'q-downtown', questionId: 'q-downtown', topicKey: 'economic-development',
+            title: 'Economic Development', question: 'Downtown?',
+            quotes: [
+              { id: 'bass-dt', text: 'c', candidateToken: 'tok-a', topicKey: 'economic-development', cardKey: 'q-downtown' },
+              { id: 'raman-dt', text: 'd', candidateToken: 'tok-b', topicKey: 'economic-development', cardKey: 'q-downtown' },
+            ],
+          },
+        ],
+      }),
+    }));
+
+    const payload = await fetchRaceQuotes('race-la-mayor');
+
+    expect(payload.topics.map((t) => t.key)).toEqual(['q-film', 'q-downtown']);
+    expect(payload.topics.map((t) => t.questionId)).toEqual(['q-film', 'q-downtown']);
+    expect(payload.topics.map((t) => t.topicKey)).toEqual(['economic-development', 'economic-development']);
+    for (const t of payload.topics) {
+      for (const q of t.quotes) expect(q.cardKey).toBe(t.key);
+    }
   });
 });
 
