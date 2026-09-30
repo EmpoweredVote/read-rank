@@ -18,12 +18,17 @@ This folder holds a clickable HTML prototype of a visual/UX refresh of the Read 
 | 3 | Choose your issues (in-progress race) | `04-choose-issues.png` |
 | 4 | Read a quote: agree / disagree, arrow-key shortcuts | `05-read-quote.png` |
 | 5 | After answering: ranking panel (reorderable), disagreed tray, topic complete | `06-topic-complete-ranking.png` |
-| 6 | See your full ballot: loading step, then staged reveal | `07-ballot-loading.png`, `08-full-ballot.png` |
+| 6 | See your full ballot: loading step, then staged reveal | `07-ballot-loading.png` (full-ballot capture pending re-shoot) |
 | 7 | Compass step 1: choose topics (3–8) | `09-compass-choose-topics.png` |
 | 8 | Compass step 2: your stances, with a 2-step guide pop-up | `10-stances-guide.png`, `11-stances.png` |
 | 9 | Compass step 3: compass ready, compare animation | `12-compass-ready-compared.png` |
 
 ## Placeholder content (must be replaced with real data)
+
+- **All candidate names in the prototype are fictional** (Rosa Lindqvist, Dev Ramanathan) and the
+  office line reads "Sample District". This is deliberate and must stay that way: never pair a
+  placeholder quote with a real person's name, even in a design doc. The ballot screen carries an
+  on-page "sample content" notice for the same reason.
 
 - The second Housing quote ("Local zoning should allow more homes near jobs and transit…").
 - Border Security and Civil Rights stances on the stances screen; any other Compass topic shows `[Stance n for …]`.
@@ -44,6 +49,11 @@ This folder holds a clickable HTML prototype of a visual/UX refresh of the Read 
 
 - `prototype/index.html` — the combined, clickable prototype (open this).
 - `prototype/*.html` — one file per screen (landing, browse, issues, read, ballot, compass, stances, ready).
-- `prototype/build_flow.py` — combines the screen files into `index.html` (`python3 build_flow.py`). Its output omits the `<!doctype html>` / `<head>` wrapper, which was added to the checked-in `index.html` so it opens directly in a browser.
+- `prototype/build_flow.py` — combines the screen files into `index.html` (`python3 build_flow.py`). It emits a complete HTML document, so the regenerated `index.html` opens directly in a browser; edit the per-screen files and re-run it rather than editing `index.html` by hand.
 - `prototype/assets/` — the official Empowered Vote and Read & Rank logos, unchanged.
 - `screenshots/` — desktop captures at 1280px wide. They were captured without network access, so text renders in a fallback font instead of Manrope.
+
+## Known gaps
+
+- `screenshots/08-full-ballot.png` was removed because it showed the earlier real-politician names.
+  It needs re-capturing from the updated `prototype/index.html` (ballot screen, 1280px wide).
