@@ -35,6 +35,8 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const [inputValue, setInputValue] = useState('');
   const [noMatchWarning, setNoMatchWarning] = useState(false);
   const [editing, setEditing] = useState(false);
+  const editingRef = useRef(false);
+  useEffect(() => { editingRef.current = editing; }, [editing]);
   const showInput = locationFilter === null || editing;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [inputEl, setInputEl] = useState<HTMLInputElement | null>(null);
@@ -77,7 +79,8 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         jurisdiction: result.jurisdiction ?? null,
       });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
-      restoreFocus.current = 'change';
+      // Only restore focus when the user was editing — never on silent auto-hydrate.
+      if (editingRef.current) restoreFocus.current = 'change';
       setEditing(false);
     } else {
       setNoMatchWarning(true);

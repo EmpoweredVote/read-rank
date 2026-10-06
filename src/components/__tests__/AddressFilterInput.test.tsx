@@ -58,6 +58,7 @@ vi.mock('@empoweredvote/ev-ui', () => ({
 }));
 
 import { AddressFilterInput } from '../AddressFilterInput';
+import { evContext } from '@empoweredvote/ev-ui';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -209,5 +210,18 @@ describe('AddressFilterInput known-address line', () => {
     const last = autocompleteCalls[autocompleteCalls.length - 1];
     expect(last.attachKey).toBe(input);
     expect(last.el).toBe(input);
+  });
+  it('silent auto-hydrate on load does not steal focus to the Change button', async () => {
+    storeSlice.locationFilter = null;
+    vi.mocked(evContext.get).mockResolvedValueOnce({
+      address: { addr: '1 Main St, Salt Lake City, UT', ts: Date.now() },
+    });
+    searchPoliticians.mockResolvedValueOnce({ data: [{ id: 'p1' }], county: null });
+    setLocationFilter.mockImplementationOnce((v: unknown) => { storeSlice.locationFilter = v; });
+    const { rerender } = render(<AddressFilterInput />);
+    await waitFor(() => expect(setLocationFilter).toHaveBeenCalled());
+    rerender(<AddressFilterInput />);
+    const change = await screen.findByRole('button', { name: 'Change address' });
+    expect(document.activeElement).not.toBe(change);
   });
 });

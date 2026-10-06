@@ -98,7 +98,7 @@ export function Landing() {
         {/* Picker */}
         <div id="choose-election" className="scroll-mt-6 border-t pt-10" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-full sm:basis-auto">
               <h2
                 ref={pickerHeadingRef}
                 tabIndex={-1}
