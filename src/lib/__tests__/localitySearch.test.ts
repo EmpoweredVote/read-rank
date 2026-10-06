@@ -1,45 +1,66 @@
 import { describe, it, expect } from 'vitest';
-import { routeFromClassification } from '../localitySearch';
+import { routeFromQuery, resolveQueryRoute } from '../localitySearch';
 
 const counties = { '06037': 'Los Angeles County', '06059': 'Orange County' };
+const multiState = {
+  '53061': 'Snohomish County',
+  '06037': 'Los Angeles County',
+  '17999': 'Washington County',
+  '49053': 'Washington County',
+};
 
-describe('routeFromClassification', () => {
-  it('address → located ballot', () => {
-    expect(routeFromClassification({ kind: 'address' }, counties, 'anything'))
-      .toEqual({ kind: 'address' });
+describe('routeFromQuery', () => {
+  it('street address → address', () => {
+    expect(routeFromQuery('123 Main St, Springfield', counties)).toEqual({ kind: 'address' });
   });
-  it('state → browse that state', () => {
-    expect(routeFromClassification({ kind: 'state', stateAbbrev: 'CA' }, counties, 'California'))
+  it('ZIP code → address', () => {
+    expect(routeFromQuery('90012', counties)).toEqual({ kind: 'address' });
+  });
+  it('full state name → browse that state', () => {
+    expect(routeFromQuery('California', counties)).toEqual({ kind: 'browse-state', state: 'CA' });
+  });
+  it('state abbreviation, any case → browse that state', () => {
+    expect(routeFromQuery('tx', counties)).toEqual({ kind: 'browse-state', state: 'TX' });
+  });
+  it('"Washington" → Washington state', () => {
+    expect(routeFromQuery('Washington', counties)).toEqual({ kind: 'browse-state', state: 'WA' });
+  });
+  it('DC is not browsable → address', () => {
+    expect(routeFromQuery('DC', counties)).toEqual({ kind: 'address' });
+    expect(routeFromQuery('Washington, D.C.', counties)).toEqual({ kind: 'address' });
+  });
+  it('county name with "County" → browse that county', () => {
+    expect(routeFromQuery('Los Angeles County', counties))
+      .toEqual({ kind: 'browse-county', geoid: '06037', state: 'CA' });
+  });
+  it('county name without "County" → browse that county', () => {
+    expect(routeFromQuery('Los Angeles', counties))
+      .toEqual({ kind: 'browse-county', geoid: '06037', state: 'CA' });
+  });
+  it('state qualifier scopes a repeated county name', () => {
+    expect(routeFromQuery('Washington County, UT', multiState))
+      .toEqual({ kind: 'browse-county', geoid: '49053', state: 'UT' });
+  });
+  it('repeated county name with no qualifier is ambiguous → address', () => {
+    expect(routeFromQuery('Washington County', multiState)).toEqual({ kind: 'address' });
+  });
+  it('unknown county with a state qualifier → browse that state', () => {
+    expect(routeFromQuery('Nowhere County, CA', counties))
       .toEqual({ kind: 'browse-state', state: 'CA' });
   });
-  it('county name → browse that county GEOID', () => {
-    expect(routeFromClassification(
-      { kind: 'county', stateAbbrev: 'CA', countyName: 'Los Angeles County' }, counties, 'Los Angeles',
-    )).toEqual({ kind: 'browse-county', geoid: '06037', state: 'CA' });
+  it('unresolvable text → address', () => {
+    expect(routeFromQuery('zzz', counties)).toEqual({ kind: 'address' });
   });
-  it('city name resolves to its county when known', () => {
-    expect(routeFromClassification(
-      { kind: 'city', stateAbbrev: 'CA', countyName: 'Orange County', cityName: 'Irvine' }, counties, 'Irvine',
-    )).toEqual({ kind: 'browse-county', geoid: '06059', state: 'CA' });
+  it('empty → address', () => {
+    expect(routeFromQuery('', counties)).toEqual({ kind: 'address' });
+    expect(routeFromQuery('   ', counties)).toEqual({ kind: 'address' });
   });
-  it('unresolvable place → falls back to address', () => {
-    expect(routeFromClassification({ kind: 'unknown' }, counties, 'zzz'))
-      .toEqual({ kind: 'address' });
-  });
-  it('county name not in the index but state known → browse that state', () => {
-    expect(routeFromClassification(
-      { kind: 'county', stateAbbrev: 'CA', countyName: 'Nowhere County' }, counties, 'Nowhere',
-    )).toEqual({ kind: 'browse-state', state: 'CA' });
-  });
-  it('scopes county match to the resolved state when the name repeats across states', () => {
-    const multiState = {
-      '53061': 'Snohomish County',
-      '06037': 'Los Angeles County',
-      '17999': 'Washington County',
-      '49053': 'Washington County',
-    };
-    expect(routeFromClassification(
-      { kind: 'county', stateAbbrev: 'UT', countyName: 'Washington County' }, multiState, 'Washington County',
-    )).toEqual({ kind: 'browse-county', geoid: '49053', state: 'UT' });
+});
+
+describe('resolveQueryRoute', () => {
+  it('resolves to the same route as routeFromQuery', async () => {
+    await expect(resolveQueryRoute('Los Angeles', counties))
+      .resolves.toEqual({ kind: 'browse-county', geoid: '06037', state: 'CA' });
+    await expect(resolveQueryRoute('zzz', counties)).resolves.toEqual({ kind: 'address' });
   });
 });

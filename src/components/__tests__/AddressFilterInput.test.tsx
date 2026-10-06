@@ -35,12 +35,6 @@ vi.mock('../../data/api', () => ({
 }));
 
 // Neutralize the environment-heavy dependencies.
-const autocompleteCalls: Array<{ el: unknown; attachKey: unknown }> = [];
-vi.mock('../../hooks/useGooglePlacesAutocomplete', () => ({
-  default: (ref: { current: unknown }, opts: { attachKey?: unknown }) => {
-    autocompleteCalls.push({ el: ref.current, attachKey: opts.attachKey });
-  },
-}));
 vi.mock('../../hooks/useAuthState', () => ({
   useAuthState: () => ({ isLoggedIn: false, userId: null, logout: vi.fn() }),
 }));
@@ -64,7 +58,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   storeSlice.locationFilter = null;
   storeSlice.browseTarget = null;
-  autocompleteCalls.length = 0;
 });
 
 describe('AddressFilterInput smart-search routing', () => {
@@ -202,15 +195,6 @@ describe('AddressFilterInput known-address line', () => {
     expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
   });
 
-  it('keys autocomplete attach on the mounted input element after Change', async () => {
-    storeSlice.locationFilter = located;
-    render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
-    const input = await screen.findByRole('textbox');
-    const last = autocompleteCalls[autocompleteCalls.length - 1];
-    expect(last.attachKey).toBe(input);
-    expect(last.el).toBe(input);
-  });
   it('silent auto-hydrate on load does not steal focus to the Change button', async () => {
     storeSlice.locationFilter = null;
     vi.mocked(evContext.get).mockResolvedValueOnce({

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMotion, DUR } from '../motion';
 import { useReadRankStore } from '../store/useReadRankStore';
 import { searchPoliticians } from '../data/api';
-import useGooglePlacesAutocomplete from '../hooks/useGooglePlacesAutocomplete';
 import { useAuthState } from '../hooks/useAuthState';
 import { evContext, useEvContextPromotion } from '@empoweredvote/ev-ui';
 import { parseStateFromAddress } from '../utils/parseStateFromAddress';
@@ -90,8 +89,6 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     setSearching(false);
     onFilterApplied?.(politicianIds);
   }, [setLocationFilter, onFilterApplied, isLoggedIn, userId]);
-
-  useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected, attachKey: inputEl });
 
   useEffect(() => {
     if ((editing || restoreFocus.current === 'input') && inputEl) {
