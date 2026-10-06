@@ -25,6 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 /** Minimal RaceSummary — only the fields the hub/grouping read. */
@@ -145,5 +146,47 @@ describe('RaceHub browse wiring', () => {
     // Controlled "past": the 2024 demo race shows without clicking a tab.
     expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /filter by election timing/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('RaceHub load failure', () => {
+  it('shows an error with a retry (not "no races" or mock data) when production fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    expect(await screen.findByText(/couldn.t load races/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no upcoming races/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no races available/i)).not.toBeInTheDocument();
+
+    // Retry recovers once the API answers.
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' })], { '06037': 'Los Angeles' });
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+  });
+});
+
+describe('RaceHub race start failure', () => {
+  it('shows an error and stays on the hub when production quote fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mayor = race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) =>
+      url.includes('/quotes')
+        ? { ok: false, status: 500 }
+        : { ok: true, json: async () => ({ races: [mayor], counties: { '06037': 'Los Angeles' } }) }));
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    await userEvent.click(await screen.findByRole('button', { name: /open mayor race/i }));
+    expect(await screen.findByText(/couldn.t open that race/i)).toBeInTheDocument();
+    expect(useReadRankStore.getState().currentRaceId).toBeNull();
   });
 });
