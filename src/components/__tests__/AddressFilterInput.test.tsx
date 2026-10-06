@@ -34,7 +34,12 @@ vi.mock('../../data/api', () => ({
 }));
 
 // Neutralize the environment-heavy dependencies.
-vi.mock('../../hooks/useGooglePlacesAutocomplete', () => ({ default: () => {} }));
+const autocompleteCalls: Array<{ el: unknown; attachKey: unknown }> = [];
+vi.mock('../../hooks/useGooglePlacesAutocomplete', () => ({
+  default: (ref: { current: unknown }, opts: { attachKey?: unknown }) => {
+    autocompleteCalls.push({ el: ref.current, attachKey: opts.attachKey });
+  },
+}));
 vi.mock('../../hooks/useAuthState', () => ({
   useAuthState: () => ({ isLoggedIn: false, userId: null, logout: vi.fn() }),
 }));
@@ -56,6 +61,7 @@ import { AddressFilterInput } from '../AddressFilterInput';
 beforeEach(() => {
   vi.clearAllMocks();
   storeSlice.locationFilter = null;
+  autocompleteCalls.length = 0;
 });
 
 describe('AddressFilterInput smart-search routing', () => {
@@ -164,5 +170,15 @@ describe('AddressFilterInput known-address line', () => {
     render(<AddressFilterInput />);
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
+  });
+
+  it('keys autocomplete attach on the mounted input element after Change', async () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    const input = await screen.findByRole('textbox');
+    const last = autocompleteCalls[autocompleteCalls.length - 1];
+    expect(last.attachKey).toBe(input);
+    expect(last.el).toBe(input);
   });
 });

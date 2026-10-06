@@ -36,7 +36,12 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const [noMatchWarning, setNoMatchWarning] = useState(false);
   const [editing, setEditing] = useState(false);
   const showInput = locationFilter === null || editing;
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [inputEl, setInputEl] = useState<HTMLInputElement | null>(null);
+  const setInputNode = useCallback((el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    setInputEl(el);
+  }, []);
 
   const handlePlaceSelected = useCallback(async (formattedAddress: string, opts?: { track?: boolean }) => {
     if (!formattedAddress.trim()) return;
@@ -75,11 +80,11 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     onFilterApplied?.(politicianIds);
   }, [setLocationFilter, onFilterApplied, isLoggedIn, userId]);
 
-  useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected, attachKey: showInput });
+  useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected, attachKey: inputEl });
 
   useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
+    if (editing && inputEl) inputEl.focus();
+  }, [editing, inputEl]);
 
   // Manual submit (Search button / Enter). Classify the free text first: place names
   // (state/county/city) route into browse; anything else — and any failure — falls through
@@ -189,11 +194,10 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             animate={{ opacity: 1, y: 0 }}
             exit={m.reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             transition={m.transition(DUR.base)}
-            onAnimationStart={() => { if (editing) inputRef.current?.focus(); }}
           >
             <div className="flex gap-2">
               <input
-                ref={inputRef}
+                ref={setInputNode}
                 type="text"
                 placeholder="If you reside in an Alpha Community, enter your street address"
                 value={inputValue}
