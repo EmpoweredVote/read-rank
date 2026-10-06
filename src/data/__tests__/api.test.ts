@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, RacesUnavailableError, RACES_ID_BATCH_SIZE, searchPoliticians } from '../api';
+import { fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, RacesUnavailableError, RaceQuotesUnavailableError, RACES_ID_BATCH_SIZE, searchPoliticians } from '../api';
 import { MOCK_RACE_ID } from '../mockData';
 import type { VerdictRecord } from '../../store/useReadRankStore';
 
@@ -351,5 +351,21 @@ describe('fetchRaces with a large roster (LA address, ~500 ids)', () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation(async () =>
       call++ === 2 ? { ok: false, status: 414 } : { ok: true, json: async () => ({ races: [], counties: {} }) }));
     await expect(fetchRaces(ids)).rejects.toBeInstanceOf(RacesUnavailableError);
+  });
+});
+
+describe('fetchRaceQuotes failure', () => {
+  it('throws in production instead of serving mock quotes', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(fetchRaceQuotes('race-1')).rejects.toBeInstanceOf(RaceQuotesUnavailableError);
+  });
+
+  it('still falls back to the mock race outside production', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const payload = await fetchRaceQuotes('race-1');
+    expect(payload.raceId).toBe(MOCK_RACE_ID);
   });
 });

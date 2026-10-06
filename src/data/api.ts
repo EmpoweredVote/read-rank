@@ -359,6 +359,14 @@ function sanitizeRacePayload(raw: RacePayload): RacePayload {
   };
 }
 
+/** Thrown in production when a race's quotes can't be loaded (no mock fallback). */
+export class RaceQuotesUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super('Race quotes are unavailable right now', { cause });
+    this.name = 'RaceQuotesUnavailableError';
+  }
+}
+
 /** Blind, topic-grouped quotes for a race. Never returns candidate identities. */
 export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
   try {
@@ -368,7 +376,12 @@ export async function fetchRaceQuotes(raceId: string): Promise<RacePayload> {
     // Content lockdown: restrict live topics to the allowlist (src/config/liveContent.ts).
     return { ...payload, topics: payload.topics.filter((t) => isTopicAllowed(t.topicKey)) };
   } catch (err) {
-    console.error('Failed to fetch race quotes, falling back to mock', err);
+    // Production must never serve mock quotes as a real race's — surface the failure.
+    if (import.meta.env.PROD) {
+      console.error('Failed to fetch race quotes', err);
+      throw new RaceQuotesUnavailableError(err);
+    }
+    console.error('Failed to fetch race quotes, falling back to mock (dev only)', err);
     const { buildMockRacePayload } = await import('./mockData');
     // Same choke point as the live path: blindness + thin-topic invariants
     // hold structurally for the fallback too, not by curation discipline.
@@ -398,7 +411,7 @@ export class RevealUnavailableError extends Error {
  * verdicts are also persisted separately via verdictSync.
  *
  * Unlike the other endpoints here, a failure does NOT degrade to mock data for a
- * real race — the mock can only speak about mock quotes. See
+ * real race even in dev — the mock can only speak about mock quotes. See
  * `RevealUnavailableError`.
  */
 export async function fetchRaceReveal(raceId: string, verdicts: VerdictRecord[]): Promise<RevealResult> {

@@ -158,3 +158,23 @@ describe('RaceHub load failure', () => {
     expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
   });
 });
+
+describe('RaceHub race start failure', () => {
+  it('shows an error and stays on the hub when production quote fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mayor = race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) =>
+      url.includes('/quotes')
+        ? { ok: false, status: 500 }
+        : { ok: true, json: async () => ({ races: [mayor], counties: { '06037': 'Los Angeles' } }) }));
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    await userEvent.click(await screen.findByRole('button', { name: /open mayor race/i }));
+    expect(await screen.findByText(/couldn.t open that race/i)).toBeInTheDocument();
+    expect(useReadRankStore.getState().currentRaceId).toBeNull();
+  });
+});

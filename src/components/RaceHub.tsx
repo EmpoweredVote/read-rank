@@ -35,6 +35,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [starting, setStarting] = useState<string | null>(null);
+  const [startError, setStartError] = useState(false);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
 
   const m = useMotion();
@@ -98,6 +99,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
+    setStartError(false);
     // Capture resume state BEFORE selectRace mutates the store. Read fresh state
     // (not the render-closure `raceProgress`) since this callback isn't recreated
     // when progress changes. Drives the `resumed` funnel property below.
@@ -123,6 +125,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         resumed,
         resumed_completed: resumed ? isRaceComplete(existingProgress, race.rankableTopicCount ?? race.topicCount) : false,
       });
+    } catch {
+      // Production throws instead of serving mock quotes; tell the user and stay on the hub.
+      setStartError(true);
     } finally {
       setStarting(null);
     }
@@ -354,6 +359,14 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       <div className="max-w-2xl mx-auto">
         {!hideFilter && <AddressFilterInput />}
       </div>
+
+      {startError && (
+        <p role="alert" className="max-w-2xl mx-auto text-center mb-2" style={{
+          fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-heading)',
+        }}>
+          We couldn&apos;t open that race. Please try again in a moment.
+        </p>
+      )}
 
       {content}
     </div>
