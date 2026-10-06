@@ -531,32 +531,38 @@ dialog::backdrop {
 
 .action-button {
   flex: 1;
-  border: none;
-  border-radius: 0;
-  font-family: 'Manrope', sans-serif;
-  font-weight: 800;
-  font-size: 1.1875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: filter 0.15s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 1rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  border-radius: 0; cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard), filter 0.15s ease;
 }
+.action-button-disagree {
+  background-color: var(--surface-card);
+  color: var(--text-heading);
+  border: 1.5px solid var(--text-heading);
+}
+.action-button-agree {
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
+  border: 1.5px solid var(--action-primary);
+  position: relative; overflow: hidden;
+}
+.action-button-disagree:hover:not(:disabled),
+.action-button-disagree:active:not(:disabled),
+.action-button-disagree.keyboard-active { background-color: var(--surface-sunken); }
+.action-button-agree:hover:not(:disabled),
+.action-button-agree:active:not(:disabled),
+.action-button-agree.keyboard-active { background-color: var(--action-primary-hover); border-color: var(--action-primary-hover); }
+.action-button:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+
+/* Desktop: inside the quote card */
+.action-buttons-incard { height: auto; gap: 0.75rem; margin-top: 1.25rem; }
+.action-buttons-incard .action-button { border-radius: 0.75rem; min-height: 3.25rem; }
 
 .action-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.action-button-disagree {
-  background-color: #1a1a1a;
-  color: #ffffff;
-}
-
-.action-button-agree {
-  background-color: var(--action-primary);
-  color: var(--action-primary-ink);
-  position: relative;
-  overflow: hidden;
 }
 
 .action-button-sweep {
@@ -566,19 +572,6 @@ dialog::backdrop {
   transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
-
-.action-button-disagree:hover:not(:disabled),
-.action-button-disagree:active:not(:disabled) {
-  filter: brightness(1.2);
-}
-
-.action-button-agree:hover:not(:disabled),
-.action-button-agree:active:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-.action-button-disagree.keyboard-active { filter: brightness(1.2); }
-.action-button-agree.keyboard-active { filter: brightness(1.1); }
 
 /* Extra bottom clearance for the fixed verdict stack (paddles + dock) on mobile */
 .has-fixed-paddles {
