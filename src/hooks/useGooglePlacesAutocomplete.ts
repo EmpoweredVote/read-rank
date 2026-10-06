@@ -32,20 +32,22 @@ export default function useGooglePlacesAutocomplete(
   callbackRef.current = onPlaceSelected;
 
   useEffect(() => {
-    if (!API_KEY || !inputRef.current) {
+    const el = inputRef.current;
+    if (!API_KEY || !el) {
       setLoadError(true);
       return;
     }
 
+    let cancelled = false;
     let autocomplete: google.maps.places.Autocomplete | null = null;
 
     ensureConfigured();
 
     importLibrary('places')
       .then((placesLib) => {
-        if (!inputRef.current) return;
+        if (cancelled) return;
         const Places = placesLib as typeof google.maps.places;
-        autocomplete = new Places.Autocomplete(inputRef.current, {
+        autocomplete = new Places.Autocomplete(el, {
           componentRestrictions: { country: 'us' },
           fields: ['formatted_address', 'address_components'],
           types: ['address'],
@@ -63,6 +65,7 @@ export default function useGooglePlacesAutocomplete(
       });
 
     return () => {
+      cancelled = true;
       // Guard against window.google not being available during cleanup
       if (autocomplete && window.google) {
         google.maps.event.clearInstanceListeners(autocomplete);

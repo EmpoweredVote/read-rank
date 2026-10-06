@@ -55,7 +55,7 @@ describe('Landing', () => {
     useReadRankStore.getState().setLocationFilter(located);
     render(<Landing />);
     expect(screen.getByText(/races for/i)).toHaveTextContent('100 W Kirkwood Ave');
-    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change address' })).toBeInTheDocument();
     // The demo Indiana race (2024-11-05) is past — switch to Past to see it.
     await userEvent.click(screen.getByRole('button', { name: 'Past' }));
     expect(await screen.findByText('Governor', undefined, { timeout: 3000 })).toBeInTheDocument();

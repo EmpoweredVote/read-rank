@@ -29,7 +29,7 @@ interface AddressFilterInputProps {
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const m = useMotion();
-  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget } = useReadRankStore();
+  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget, browseTarget } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -38,6 +38,13 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const showInput = locationFilter === null || editing;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [inputEl, setInputEl] = useState<HTMLInputElement | null>(null);
+  const restoreFocus = useRef<'change' | 'input' | null>(null);
+  const focusChangeBtn = useCallback((el: HTMLButtonElement | null) => {
+    if (el && restoreFocus.current === 'change') {
+      el.focus();
+      restoreFocus.current = null;
+    }
+  }, []);
   const setInputNode = useCallback((el: HTMLInputElement | null) => {
     inputRef.current = el;
     setInputEl(el);
@@ -70,6 +77,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         jurisdiction: result.jurisdiction ?? null,
       });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
+      restoreFocus.current = 'change';
       setEditing(false);
     } else {
       setNoMatchWarning(true);
@@ -83,7 +91,10 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected, attachKey: inputEl });
 
   useEffect(() => {
-    if (editing && inputEl) inputEl.focus();
+    if ((editing || restoreFocus.current === 'input') && inputEl) {
+      inputEl.focus();
+      if (restoreFocus.current === 'input') restoreFocus.current = null;
+    }
   }, [editing, inputEl]);
 
   // Manual submit (Search button / Enter). Classify the free text first: place names
@@ -149,12 +160,6 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     tryHydrate();
   }, [locationFilter, handlePlaceSelected, isLoggedIn, userId]);
 
-  const truncatedAddress = locationFilter?.address
-    ? locationFilter.address.length > 40
-      ? locationFilter.address.slice(0, 40) + '…'
-      : locationFilter.address
-    : '';
-
   return (
     <div>
       {promoteAddressShouldPrompt && (
@@ -182,8 +187,11 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <span>Races for <strong>{truncatedAddress}</strong></span>
-            <button type="button" className="rr-text-btn" onClick={() => setEditing(true)}>
+            <span className="rr-address-line__text">
+              {browseTarget ? 'Your address: ' : 'Races for '}
+              <strong className="rr-address-line__addr" title={locationFilter?.address}>{locationFilter?.address}</strong>
+            </span>
+            <button ref={focusChangeBtn} type="button" className="rr-text-btn" aria-label="Change address" onClick={() => setEditing(true)}>
               Change
             </button>
           </motion.p>
@@ -199,12 +207,13 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
               <input
                 ref={setInputNode}
                 type="text"
+                aria-label="Street address"
                 placeholder="If you reside in an Alpha Community, enter your street address"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSubmit(inputValue);
-                  if (e.key === 'Escape' && editing) setEditing(false);
+                  if (e.key === 'Escape' && editing) { restoreFocus.current = 'change'; setEditing(false); }
                 }}
                 className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-[var(--surface-card)] text-[var(--text-ink)] placeholder:text-[var(--text-tertiary)] shadow-sm"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
@@ -220,13 +229,13 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             </div>
             {editing && (
               <div className="flex gap-4 mt-2">
-                <button type="button" className="rr-text-btn" onClick={() => setEditing(false)}>
+                <button type="button" className="rr-text-btn" onClick={() => { restoreFocus.current = 'change'; setEditing(false); }}>
                   Cancel
                 </button>
                 <button
                   type="button"
                   className="rr-text-btn rr-text-btn--muted"
-                  onClick={() => { setEditing(false); clearLocationFilter(); }}
+                  onClick={() => { restoreFocus.current = 'input'; setEditing(false); clearLocationFilter(); }}
                 >
                   Clear address
                 </button>

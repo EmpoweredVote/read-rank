@@ -15,6 +15,7 @@ const storeSlice = {
   clearLocationFilter,
   counties: { '06037': 'Los Angeles County' } as Record<string, string>,
   setBrowseTarget,
+  browseTarget: null as unknown,
 };
 vi.mock('../../store/useReadRankStore', () => ({
   useReadRankStore: () => storeSlice,
@@ -61,6 +62,7 @@ import { AddressFilterInput } from '../AddressFilterInput';
 beforeEach(() => {
   vi.clearAllMocks();
   storeSlice.locationFilter = null;
+  storeSlice.browseTarget = null;
   autocompleteCalls.length = 0;
 });
 
@@ -117,14 +119,14 @@ describe('AddressFilterInput known-address line', () => {
     storeSlice.locationFilter = located;
     render(<AddressFilterInput />);
     expect(screen.getByText(/races for/i)).toHaveTextContent('100 W Kirkwood Ave');
-    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change address' })).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
   it('Change opens a focused search box with Cancel and Clear address', async () => {
     storeSlice.locationFilter = located;
     render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     expect(await screen.findByRole('textbox')).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear address' })).toBeInTheDocument();
@@ -133,22 +135,49 @@ describe('AddressFilterInput known-address line', () => {
   it('Cancel and Escape return to the line without changing the filter', async () => {
     storeSlice.locationFilter = located;
     render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
-    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Change address' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     await screen.findByRole('textbox');
     await userEvent.keyboard('{Escape}');
-    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Change address' })).toBeInTheDocument();
     expect(setLocationFilter).not.toHaveBeenCalled();
     expect(clearLocationFilter).not.toHaveBeenCalled();
+  });
+
+  it('returns focus to the Change button after Cancel and after Escape', async () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    await waitFor(async () => expect(await screen.findByRole('button', { name: 'Change address' })).toHaveFocus());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
+    await screen.findByRole('textbox');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(async () => expect(await screen.findByRole('button', { name: 'Change address' })).toHaveFocus());
+  });
+
+  it('says "Your address" instead of "Races for" while a browse target is set', () => {
+    storeSlice.locationFilter = located;
+    storeSlice.browseTarget = { state: 'CA', geoid: null };
+    render(<AddressFilterInput />);
+    expect(screen.getByText(/your address/i)).toHaveTextContent('100 W Kirkwood Ave');
+    expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
+  });
+
+  it('labels the search input "Street address"', () => {
+    storeSlice.locationFilter = null;
+    render(<AddressFilterInput />);
+    expect(screen.getByRole('textbox', { name: 'Street address' })).toBeInTheDocument();
   });
 
   it('Clear address clears the location filter', async () => {
     storeSlice.locationFilter = located;
     render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Clear address' }));
     expect(clearLocationFilter).toHaveBeenCalledTimes(1);
   });
@@ -158,11 +187,11 @@ describe('AddressFilterInput known-address line', () => {
     resolveQueryRoute.mockResolvedValue({ kind: 'address' });
     searchPoliticians.mockResolvedValueOnce({ data: [{ id: 'p2' }], county: null });
     render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     await userEvent.type(await screen.findByRole('textbox'), '1 Main St, Salt Lake City, UT');
     await userEvent.click(screen.getByRole('button', { name: /search/i }));
     await waitFor(() => expect(setLocationFilter).toHaveBeenCalled());
-    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Change address' })).toBeInTheDocument();
   });
 
   it('with no address, shows the search box and no "Races for" line', () => {
@@ -175,7 +204,7 @@ describe('AddressFilterInput known-address line', () => {
   it('keys autocomplete attach on the mounted input element after Change', async () => {
     storeSlice.locationFilter = located;
     render(<AddressFilterInput />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change address' }));
     const input = await screen.findByRole('textbox');
     const last = autocompleteCalls[autocompleteCalls.length - 1];
     expect(last.attachKey).toBe(input);
