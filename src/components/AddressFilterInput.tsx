@@ -163,22 +163,22 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             exit={m.reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
             transition={m.transition(DUR.base)}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e8f4f6]">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--surface-raised)]">
               <svg
                 width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="#00657c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                stroke="currentColor" className="text-[var(--text-link)]" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 aria-hidden="true"
               >
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <span className="text-sm font-medium" style={{ color: '#1a1a2e', fontFamily: "'Manrope', sans-serif" }}>
+              <span className="text-sm font-medium" style={{ color: 'var(--text-ink)', fontFamily: "'Manrope', sans-serif" }}>
                 {truncatedAddress}
               </span>
               <button
                 onClick={() => clearLocationFilter()}
                 aria-label="Clear filter"
-                className="flex items-center justify-center w-5 h-5 rounded-full border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-800 transition-colors text-base leading-none p-0"
+                className="flex items-center justify-center w-5 h-5 rounded-full border-none bg-transparent cursor-pointer text-[var(--text-tertiary)] hover:text-[var(--text-ink)] transition-colors text-base leading-none p-0"
               >
                 &times;
               </button>
@@ -200,7 +200,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit(inputValue)}
-                className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-white dark:bg-gray-900 dark:text-white dark:placeholder-gray-400 shadow-sm"
+                className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-[var(--surface-card)] text-[var(--text-ink)] placeholder:text-[var(--text-tertiary)] shadow-sm"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
               />
               <button
@@ -241,8 +241,8 @@ function AddressPromotionBanner({ payload, onSave, onDismiss, status, error }: A
   return (
     <div
       role="status"
-      className="flex items-center gap-2 px-3 py-2 mb-2 rounded-lg text-[#003E4D] text-[0.8125rem]"
-      style={{ background: '#e8f4f6', fontFamily: "'Manrope', sans-serif" }}
+      className="flex items-center gap-2 px-3 py-2 mb-2 rounded-lg text-[var(--text-link)] text-[0.8125rem]"
+      style={{ background: 'var(--surface-raised)', fontFamily: "'Manrope', sans-serif" }}
     >
       <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
         Use <strong>{addr}</strong>?
@@ -254,8 +254,8 @@ function AddressPromotionBanner({ payload, onSave, onDismiss, status, error }: A
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="px-3 py-1 rounded-full border-none text-white text-xs font-semibold cursor-pointer"
-        style={{ background: '#00657c', opacity: saving ? 0.6 : 1, cursor: saving ? 'wait' : 'pointer' }}
+        className="px-3 py-1 rounded-full border-none text-[var(--action-primary-ink)] text-xs font-semibold cursor-pointer"
+        style={{ background: 'var(--action-primary)', opacity: saving ? 0.6 : 1, cursor: saving ? 'wait' : 'pointer' }}
       >
         {saving ? 'Saving…' : 'Use it'}
       </button>
@@ -264,7 +264,7 @@ function AddressPromotionBanner({ payload, onSave, onDismiss, status, error }: A
         onClick={onDismiss}
         disabled={saving}
         aria-label="Dismiss"
-        className="px-1.5 py-0.5 border-none bg-transparent text-slate-400 text-base leading-none cursor-pointer"
+        className="px-1.5 py-0.5 border-none bg-transparent text-[var(--text-tertiary)] text-base leading-none cursor-pointer"
       >
         ×
       </button>

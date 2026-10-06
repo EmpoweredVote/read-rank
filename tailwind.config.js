@@ -14,7 +14,7 @@ export default {
         'ev-muted-blue': '#00657c',
         'ev-light-blue': '#59b0c4',
         'ev-yellow': '#fed12e',
-        'ev-yellow-dark': '#eab308',
+        'ev-yellow-dark': '#D0A301',
         'ev-teal': '#00657c',
         'ev-dark-blue': '#00657c',
       },
