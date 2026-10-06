@@ -32,7 +32,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [starting, setStarting] = useState<string | null>(null);
+  const [startError, setStartError] = useState(false);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
 
   const m = useMotion();
@@ -60,6 +63,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   useEffect(() => {
     setLoading(true);
+    setLoadError(false);
     // Inline geometry for cards shown immediately so their motif doesn't flash: the
     // featured default race on the no-location landing, or the user's own ("Your races")
     // isLocal races on a located ballot.
@@ -67,9 +71,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     const embedLocal = locationFilter != null;
     fetchRaces(politicianIds, jurisdiction, embed, embedLocal)
       .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
+      // Production throws instead of serving mock races; show a real error state.
+      .catch(() => { setRaces([]); setLoadError(true); })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [politicianIds, setCounties, jurisdictionKey]);
+  }, [politicianIds, setCounties, jurisdictionKey, reloadKey]);
 
   // Warm boundary geometry for the cards this view will show, so their map motifs
   // resolve without the dot-field placeholder flashing. Browse renders its own (large)
@@ -93,6 +99,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
+    setStartError(false);
     // Capture resume state BEFORE selectRace mutates the store. Read fresh state
     // (not the render-closure `raceProgress`) since this callback isn't recreated
     // when progress changes. Drives the `resumed` funnel property below.
@@ -118,6 +125,9 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         resumed,
         resumed_completed: resumed ? isRaceComplete(existingProgress, race.rankableTopicCount ?? race.topicCount) : false,
       });
+    } catch {
+      // Production throws instead of serving mock quotes; tell the user and stay on the hub.
+      setStartError(true);
     } finally {
       setStarting(null);
     }
@@ -179,7 +189,21 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   let content: React.ReactNode = null;
 
-  if (races.length === 0) {
+  if (loadError) {
+    // The race list failed to load. Say so — never imply the area simply has no races.
+    content = (
+      <motion.div className="max-w-2xl mx-auto text-center py-12" role="alert"
+        {...m.enter({ y: 8 })} transition={m.transition(DUR.base, EASE.settle)}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+          We couldn&apos;t load races
+        </p>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1rem' }}>
+          Something went wrong on our end. Please try again in a moment.
+        </p>
+        <button className="ev-button-secondary" onClick={() => setReloadKey((k) => k + 1)}>Try again</button>
+      </motion.div>
+    );
+  } else if (races.length === 0) {
     // No races at all — nothing to browse or locate.
     content = (
       <motion.div className="max-w-2xl mx-auto text-center py-12"
@@ -335,6 +359,14 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       <div className="max-w-2xl mx-auto">
         {!hideFilter && <AddressFilterInput />}
       </div>
+
+      {startError && (
+        <p role="alert" className="max-w-2xl mx-auto text-center mb-2" style={{
+          fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-heading)',
+        }}>
+          We couldn&apos;t open that race. Please try again in a moment.
+        </p>
+      )}
 
       {content}
     </div>
