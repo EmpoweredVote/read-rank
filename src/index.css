@@ -34,21 +34,21 @@
    ============================================ */
 
 :root {
-  --surface-page: #faf7f2;
-  --surface-card: #fffefb;
-  --surface-raised: #f5f0e8;
-  --surface-sunken: #faf7f2;
+  --surface-page: #F0F8FA;
+  --surface-card: #FFFFFF;
+  --surface-raised: #F5F9FA;
+  --surface-sunken: #F7F7F8;
 
-  --text-ink: #1a1a2e;
-  --text-heading: #1a1a2e;
-  --text-strong: #2d2d44;
-  --text-secondary: #525c6b; /* ~6.3:1 on card — AA normal */
-  --text-tertiary: #5f6877;  /* ~5.6:1 on card — AA normal (was #94a3b8 ~2.7:1, failed) */
-  --text-link: #00657c;      /* ~6.5:1 on light surfaces */
+  --text-ink: #212326;
+  --text-heading: #212326;
+  --text-strong: #2F3237;
+  --text-secondary: #535964; /* ev-ui gray-600 — 6.55:1 on page */
+  --text-tertiary: #5F6570;  /* between gray-500/600 — 5.45:1 on page (gray-500 #6B7280 is 4.49:1, fails AA) */
+  --text-link: #00657C;      /* ev-ui teal-500 — 6.19:1 on page */
 
-  --border-subtle: #e8e2d9;
-  --border-medium: #d4cdc3;
-  --border-faint: #f0ebe3;
+  --border-subtle: #E2EBEF;
+  --border-medium: #D3D7DE;
+  --border-faint: #EBEDEF;
 
   /* Agree / Disagree */
   --agree: #0e7490;
@@ -92,8 +92,8 @@
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   /* Action / primary (replaces coral on interactive elements) */
-  --action-primary: #00657c;
-  --action-primary-hover: #004d5c;
+  --action-primary: #005366;       /* ev-ui buttonPrimary */
+  --action-primary-hover: #003E4D; /* ev-ui buttonPrimary hover */
   --action-primary-ink: #ffffff;
 
   --progress-fill: var(--color-ev-muted-blue);
@@ -114,21 +114,21 @@
 }
 
 .dark {
-  --surface-page: #0f1419;
-  --surface-card: #1a212b;
-  --surface-raised: #222b37;
-  --surface-sunken: #141a21;
+  --surface-page: #131416;   /* ev-ui gray-950 — matches Financials/Compass */
+  --surface-card: #212326;   /* gray-900 */
+  --surface-raised: #2F3237; /* gray-800 */
+  --surface-sunken: #1A1B1E;
 
-  --text-ink: #e8e6e1;
-  --text-heading: #f4f2ee;
-  --text-strong: #d8d6d1;
-  --text-secondary: #aab4c0; /* ~8:1 on dark card */
-  --text-tertiary: #8b95a4;  /* ~5.3:1 on dark card (was #6b7684 ~3.2:1, failed) */
-  --text-link: #6cc6db;      /* ~8:1 on dark surfaces */
+  --text-ink: #EBEDEF;
+  --text-heading: #F7F7F8;
+  --text-strong: #D3D7DE;
+  --text-secondary: #B3BBCC; /* gray-300 — 8.17:1 on dark card */
+  --text-tertiary: #8F9EBC;  /* gray-400 — 5.84:1 on dark card */
+  --text-link: #59B0C4;      /* skyblue-500 — 6.33:1 on dark card */
 
-  --border-subtle: #2a323d;
-  --border-medium: #38424f;
-  --border-faint: #232b35;
+  --border-subtle: #2F3237;
+  --border-medium: #41454E;
+  --border-faint: #262729;
 
   --agree: #38bdf8;
   --agree-bg: #0c2733;
@@ -166,7 +166,7 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
 
-  --action-primary: #59b0c4;
+  --action-primary: #59B0C4;
   --action-primary-hover: #7cc5d6;
   --action-primary-ink: #06303a;
 
