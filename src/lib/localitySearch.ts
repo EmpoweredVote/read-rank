@@ -1,3 +1,4 @@
+import { fetchLocalities, type Locality } from '../data/api';
 import { getStateAbbrevFromFips, getStateAbbrevFromName, getStateFips } from '../utils/stateNames';
 
 /** Navigation intent derived from free text + the county-name index. */
@@ -13,12 +14,16 @@ function normalize(s: string): string {
     .replace(/[^a-z]/g, '');
 }
 
-/** Map free text to a navigation intent using only local data (state names + the
- *  county-name index). Pure; anything not clearly a state or county is an address. */
-export function routeFromQuery(query: string, counties: Record<string, string>): QueryRoute {
+type Parsed =
+  | { route: QueryRoute }
+  | { lookup: { place: string; qualifierState: string | null } };
+
+/** Shared local parsing. Returns a final route, or the place to look up as a city. */
+function parseQuery(query: string, counties: Record<string, string>): Parsed {
+  const address: Parsed = { route: { kind: 'address' } };
   const q = (query ?? '').trim();
-  if (!q) return { kind: 'address' };
-  if (/\d/.test(q)) return { kind: 'address' };
+  if (!q) return address;
+  if (/\d/.test(q)) return address;
 
   let place = q;
   let qualifierState: string | null = null;
@@ -28,11 +33,11 @@ export function routeFromQuery(query: string, counties: Record<string, string>):
     if (qualifierState) place = q.slice(0, comma).trim();
   } else {
     const whole = getStateAbbrevFromName(q);
-    if (whole) return { kind: 'browse-state', state: whole };
+    if (whole) return { route: { kind: 'browse-state', state: whole } };
   }
 
   const target = normalize(place);
-  if (!target) return { kind: 'address' };
+  if (!target) return address;
   const stateFips = qualifierState ? getStateFips(qualifierState) : null;
   const hits = Object.entries(counties).filter(
     ([geoid, name]) =>
@@ -41,20 +46,52 @@ export function routeFromQuery(query: string, counties: Record<string, string>):
   if (hits.length === 1) {
     const [geoid] = hits[0];
     const state = getStateAbbrevFromFips(geoid.slice(0, 2));
-    if (state) return { kind: 'browse-county', geoid, state };
-  } else if (hits.length === 0 && qualifierState) {
-    return { kind: 'browse-state', state: qualifierState };
+    return state ? { route: { kind: 'browse-county', geoid, state } } : address;
   }
+  if (hits.length === 0) return { lookup: { place, qualifierState } };
+  return address;
+}
+
+/** Map free text to a navigation intent using only local data (state names + the
+ *  county-name index). Pure; anything not clearly a state or county is an address. */
+export function routeFromQuery(query: string, counties: Record<string, string>): QueryRoute {
+  const parsed = parseQuery(query, counties);
+  return 'route' in parsed ? parsed.route : { kind: 'address' };
+}
+
+/** Decide a route from city-lookup results. Pure. */
+export function routeFromLocalities(
+  localities: Locality[],
+  counties: Record<string, string>,
+  qualifierState: string | null,
+): QueryRoute {
+  if (localities.length === 0) {
+    return qualifierState ? { kind: 'browse-state', state: qualifierState } : { kind: 'address' };
+  }
+  const countyGeoids = new Set(localities.map((l) => l.countyGeoid));
+  if (countyGeoids.size === 1) {
+    const [geoid] = [...countyGeoids];
+    if (geoid in counties) {
+      return { kind: 'browse-county', geoid, state: localities[0].state.toUpperCase() };
+    }
+  }
+  const states = new Set(localities.map((l) => l.state.toUpperCase()));
+  if (states.size === 1) return { kind: 'browse-state', state: [...states][0] };
   return { kind: 'address' };
 }
 
-/** Async wrapper kept for callers. Never throws — any failure resolves to address. */
+/** Async resolver. Local state/county match first; a city lookup only when no county
+ *  matches. Never throws — any failure resolves to address. */
 export async function resolveQueryRoute(
   query: string,
   counties: Record<string, string>,
 ): Promise<QueryRoute> {
   try {
-    return routeFromQuery(query, counties);
+    const parsed = parseQuery(query, counties);
+    if ('route' in parsed) return parsed.route;
+    const { place, qualifierState } = parsed.lookup;
+    const localities = await fetchLocalities(place, qualifierState);
+    return routeFromLocalities(localities, counties, qualifierState);
   } catch {
     return { kind: 'address' };
   }
