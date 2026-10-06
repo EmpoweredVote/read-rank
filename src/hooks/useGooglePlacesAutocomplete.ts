@@ -15,6 +15,8 @@ function ensureConfigured(): void {
 
 interface UseGooglePlacesAutocompleteOptions {
   onPlaceSelected: (formattedAddress: string) => void;
+  /** Change this value when the input element mounts/unmounts so autocomplete re-attaches. */
+  attachKey?: unknown;
 }
 
 /**
@@ -23,7 +25,7 @@ interface UseGooglePlacesAutocompleteOptions {
  */
 export default function useGooglePlacesAutocomplete(
   inputRef: React.RefObject<HTMLInputElement | null>,
-  { onPlaceSelected }: UseGooglePlacesAutocompleteOptions
+  { onPlaceSelected, attachKey }: UseGooglePlacesAutocompleteOptions
 ): { loadError: boolean } {
   const [loadError, setLoadError] = useState(false);
   const callbackRef = useRef(onPlaceSelected);
@@ -66,7 +68,7 @@ export default function useGooglePlacesAutocomplete(
         google.maps.event.clearInstanceListeners(autocomplete);
       }
     };
-  }, [inputRef]);
+  }, [inputRef, attachKey]);
 
   return { loadError };
 }
