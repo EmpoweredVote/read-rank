@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CountyIndex, JurisdictionGeoIds } from '../data/api';
+import type { BoundaryRef, CountyIndex, JurisdictionGeoIds } from '../data/api';
+import type { Tier, Scope } from '../utils/raceTier';
 import { isRaceComplete, isTopicDone, isTopicScorable } from '../utils/raceProgressState';
 import { buildVerdictsForTopic } from '../utils/verdictFragment';
 
@@ -71,6 +72,18 @@ export interface TopicProgress {
   rankedCount?: number;
 }
 
+export interface RaceMeta {
+  office: string;
+  seat: string | null;
+  state: string | null;
+  rankableTopicCount?: number;
+  electionDate?: string | null;
+  tier?: Tier;
+  scope?: Scope;
+  boundaryRef?: BoundaryRef | null;
+  frameRef?: BoundaryRef | null;
+}
+
 export interface RaceProgress {
   raceId: string;
   positionName: string;
@@ -79,6 +92,14 @@ export interface RaceProgress {
   office?: string;
   seat?: string | null;
   state?: string | null;
+  /** Race-chip display fields captured from the RaceSummary at selection (optional:
+   *  cold deep links and older persisted races do not have them). Boundary refs are
+   *  stored WITHOUT geojson to keep localStorage small; Motif lazy-loads geometry. */
+  electionDate?: string | null;
+  tier?: Tier;
+  scope?: Scope;
+  boundaryRef?: BoundaryRef | null;
+  frameRef?: BoundaryRef | null;
   /** Keyed by CARD key (TopicProgress.key), not topicKey — one topic can host
    *  several cards. */
   topics: Record<string, TopicProgress>;
@@ -207,7 +228,7 @@ interface ReadRankState {
 
   // Race actions
   setPhase: (phase: Phase) => void;
-  selectRace: (payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null; rankableTopicCount?: number }) => void;
+  selectRace: (payload: RacePayload, meta?: RaceMeta) => void;
   setCurrentTopic: (topicKey: string) => void;
   nextTopic: () => void;
   agree: (quote: BlindQuote) => void;
@@ -253,7 +274,24 @@ interface ReadRankState {
 // Helpers
 // ============================================
 
-function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: string | null; state: string | null; rankableTopicCount?: number }): RaceProgress {
+function stripGeometry(ref: BoundaryRef | null | undefined): BoundaryRef | null | undefined {
+  if (!ref) return ref;
+  const { geojson: _geojson, ...rest } = ref;
+  return rest;
+}
+
+function chipFields(meta?: RaceMeta): Partial<RaceProgress> {
+  if (!meta) return {};
+  const out: Partial<RaceProgress> = {};
+  if (meta.electionDate !== undefined) out.electionDate = meta.electionDate;
+  if (meta.tier !== undefined) out.tier = meta.tier;
+  if (meta.scope !== undefined) out.scope = meta.scope;
+  if (meta.boundaryRef !== undefined) out.boundaryRef = stripGeometry(meta.boundaryRef);
+  if (meta.frameRef !== undefined) out.frameRef = stripGeometry(meta.frameRef);
+  return out;
+}
+
+function buildRaceProgress(payload: RacePayload, meta?: RaceMeta): RaceProgress {
   const topics: Record<string, TopicProgress> = {};
   const topicOrder: string[] = [];
   for (const t of payload.topics) {
@@ -286,6 +324,7 @@ function buildRaceProgress(payload: RacePayload, meta?: { office: string; seat: 
     completed: false,
     selectedTopicKeys: topicOrder,
     rankableTopicCount: meta?.rankableTopicCount,
+    ...chipFields(meta),
   };
 }
 
@@ -362,6 +401,7 @@ export const useReadRankStore = create<ReadRankState>()(
               { ...existing,
                 ...(meta ? { office: meta.office, seat: meta.seat, state: meta.state } : {}),
                 ...(meta?.rankableTopicCount !== undefined ? { rankableTopicCount: meta.rankableTopicCount } : {}),
+                ...chipFields(meta),
               },
               payload,
             )

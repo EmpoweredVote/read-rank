@@ -122,7 +122,13 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         ...payload,
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
-      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state, rankableTopicCount: race.rankableTopicCount ?? race.topicCount });
+      const { tier, scope } = deriveTierScope(race);
+      selectRace(shuffled, {
+        office: race.office, seat: race.seat ?? null, state: race.state,
+        rankableTopicCount: race.rankableTopicCount ?? race.topicCount,
+        electionDate: race.electionDate ?? null, tier, scope,
+        boundaryRef: race.boundaryRef ?? null, frameRef: race.frameRef ?? null,
+      });
       track('readrank_race_started', {
         race_id: race.raceId,
         office: race.office,
