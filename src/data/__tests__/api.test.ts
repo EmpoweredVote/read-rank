@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, RacesUnavailableError, RaceQuotesUnavailableError, RACES_ID_BATCH_SIZE, searchPoliticians } from '../api';
+import { fetchLocalities, fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, RacesUnavailableError, RaceQuotesUnavailableError, RACES_ID_BATCH_SIZE, searchPoliticians } from '../api';
 import { MOCK_RACE_ID } from '../mockData';
 import type { VerdictRecord } from '../../store/useReadRankStore';
 
@@ -288,6 +288,40 @@ describe('fetchRaces query string', () => {
     await fetchRaces(['p1'], null, undefined, true);
     const url = fetchMock.mock.calls[0][0] as string;
     expect(new URLSearchParams(url.split('?')[1]).get('embed_local')).toBe('1');
+  });
+});
+
+describe('fetchLocalities', () => {
+  const good = { name: 'Irvine', state: 'CA', placeGeoid: '0636770', countyGeoid: '06059' };
+  it('returns valid localities and drops malformed items', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ localities: [good, { name: 'X', state: 'CA' }, null, { ...good, placeGeoid: 5 }] }),
+    }));
+    expect(await fetchLocalities('Irvine')).toEqual([good]);
+  });
+  it('returns [] on 404', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('returns [] on network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('returns [] on a malformed body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ localities: 'nope' }) }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => null }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('sends state only when given and URL-encodes q', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ localities: [] }) });
+    vi.stubGlobal('fetch', f);
+    await fetchLocalities('St. Paul & Co');
+    expect(f.mock.calls[0][0]).toContain('/readrank/localities?q=St.%20Paul%20%26%20Co');
+    expect(f.mock.calls[0][0]).not.toContain('state=');
+    await fetchLocalities('Irvine', 'CA');
+    expect(f.mock.calls[1][0]).toContain('q=Irvine&state=CA');
   });
 });
 

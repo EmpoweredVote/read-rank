@@ -497,3 +497,39 @@ export async function searchPoliticians(query: string): Promise<SearchPolitician
     return { status: 'error', data: [], error: (error as Error).message, formattedAddress: '', county: null, jurisdiction: null };
   }
 }
+
+export interface Locality {
+  name: string;
+  state: string;
+  placeGeoid: string;
+  countyGeoid: string;
+}
+
+const LOCALITIES_TIMEOUT_MS = 2500;
+
+/** City/place lookup for the landing search. Never throws; [] on any failure. */
+export async function fetchLocalities(q: string, state?: string | null): Promise<Locality[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LOCALITIES_TIMEOUT_MS);
+  try {
+    let qs = `q=${encodeURIComponent(q)}`;
+    if (state) qs += `&state=${encodeURIComponent(state)}`;
+    const res = await fetch(`${API_BASE}/readrank/localities?${qs}`, { signal: controller.signal });
+    if (!res.ok) return [];
+    const body = await res.json();
+    const list: unknown = body?.localities;
+    if (!Array.isArray(list)) return [];
+    return list.filter(
+      (l): l is Locality =>
+        !!l &&
+        typeof l.name === 'string' &&
+        typeof l.state === 'string' &&
+        typeof l.placeGeoid === 'string' &&
+        typeof l.countyGeoid === 'string',
+    ).map((l) => ({ name: l.name, state: l.state, placeGeoid: l.placeGeoid, countyGeoid: l.countyGeoid }));
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
