@@ -164,43 +164,112 @@ export interface JurisdictionGeoIds {
   school_district: string | null;
 }
 
+/**
+ * Max politician ids per /readrank/races request. A UUID costs ~39 URL chars once
+ * its comma is encoded, so 80 ids keep the query near 3 KB. An LA address resolves
+ * ~500 ids (~19 KB), which the edge rejects outright (no CORS headers -> the
+ * browser reports a CORS failure). Bloomington's 4.4 KB URL is known to work.
+ */
+export const RACES_ID_BATCH_SIZE = 80;
+
+/** Thrown in production when the race list can't be loaded (no mock fallback). */
+export class RacesUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super('Races are unavailable right now', { cause });
+    this.name = 'RacesUnavailableError';
+  }
+}
+
+interface RacesResponse { races: RaceSummary[]; counties: CountyIndex }
+
+/** Prefer whichever copy of a boundary ref carries embedded geometry. */
+function richerRef(a?: BoundaryRef | null, b?: BoundaryRef | null): BoundaryRef | null | undefined {
+  if (a?.geojson) return a;
+  if (b?.geojson) return b;
+  return a ?? b;
+}
+
+/**
+ * Merge per-batch race lists. The backend returns every playable race on each call;
+ * the politician ids only drive `isLocal` (and embed_local geometry), so a race is
+ * local if any batch matched it.
+ */
+function mergeRaceResponses(responses: RacesResponse[]): RacesResponse {
+  const byId = new Map<string, RaceSummary>();
+  const counties: CountyIndex = {};
+  for (const { races, counties: c } of responses) {
+    Object.assign(counties, c);
+    for (const r of races) {
+      const prev = byId.get(r.raceId);
+      byId.set(r.raceId, prev
+        ? {
+            ...prev,
+            isLocal: prev.isLocal || r.isLocal,
+            boundaryRef: richerRef(prev.boundaryRef, r.boundaryRef),
+            frameRef: richerRef(prev.frameRef, r.frameRef),
+          }
+        : r);
+    }
+  }
+  return { races: [...byId.values()], counties };
+}
+
 /** List races that have enough de-identified quote data to play. */
 export async function fetchRaces(
   politicianIds?: string[],
   jurisdiction?: JurisdictionGeoIds | null,
   embedRaceIds?: string[],
   embedLocal?: boolean,
-): Promise<{ races: RaceSummary[]; counties: CountyIndex }> {
+): Promise<RacesResponse> {
   try {
-    const params = new URLSearchParams();
-    if (politicianIds && politicianIds.length) {
-      params.set('politician_ids', politicianIds.join(','));
-    }
+    const base = new URLSearchParams();
     if (jurisdiction) {
-      if (jurisdiction.congressional) params.set('cd', jurisdiction.congressional);
-      if (jurisdiction.state_senate) params.set('sldu', jurisdiction.state_senate);
-      if (jurisdiction.state_house) params.set('sldl', jurisdiction.state_house);
-      if (jurisdiction.county) params.set('county', jurisdiction.county);
-      if (jurisdiction.school_district) params.set('school', jurisdiction.school_district);
+      if (jurisdiction.congressional) base.set('cd', jurisdiction.congressional);
+      if (jurisdiction.state_senate) base.set('sldu', jurisdiction.state_senate);
+      if (jurisdiction.state_house) base.set('sldl', jurisdiction.state_house);
+      if (jurisdiction.county) base.set('county', jurisdiction.county);
+      if (jurisdiction.school_district) base.set('school', jurisdiction.school_district);
     }
     // Ask the backend to inline boundary geometry for these races (cards rendered
     // immediately, e.g. the featured landing card) so their motif skips the lazy fetch.
-    if (embedRaceIds && embedRaceIds.length) params.set('embed', embedRaceIds.join(','));
+    if (embedRaceIds && embedRaceIds.length) base.set('embed', embedRaceIds.join(','));
     // On a located fetch, inline geometry for the user's own ("Your races") isLocal
     // races so the top of the ballot paints its motif with no lazy-load flash.
-    if (embedLocal) params.set('embed_local', '1');
-    const qsString = params.toString();
-    const qs = qsString ? `?${qsString}` : '';
-    const res = await fetch(`${API_BASE}/readrank/races${qs}`);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = await res.json();
+    if (embedLocal) base.set('embed_local', '1');
+
+    // Split the roster into URL-safe batches (one request with no ids if empty).
+    const ids = politicianIds ?? [];
+    const batches: string[][] = [];
+    for (let i = 0; i < ids.length; i += RACES_ID_BATCH_SIZE) batches.push(ids.slice(i, i + RACES_ID_BATCH_SIZE));
+    if (batches.length === 0) batches.push([]);
+
+    const responses = await Promise.all(batches.map(async (batch) => {
+      const params = new URLSearchParams();
+      if (batch.length) params.set('politician_ids', batch.join(','));
+      base.forEach((v, k) => params.append(k, v));
+      const qsString = params.toString();
+      const qs = qsString ? `?${qsString}` : '';
+      const res = await fetch(`${API_BASE}/readrank/races${qs}`);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      return {
+        races: (data.races ?? []) as RaceSummary[],
+        counties: (data.counties ?? {}) as CountyIndex,
+      };
+    }));
+    const merged = mergeRaceResponses(responses);
     return {
       // Content lockdown: restrict live races to the allowlist (src/config/liveContent.ts).
-      races: ((data.races ?? []) as RaceSummary[]).filter((r) => isRaceAllowed(r.raceId)),
-      counties: (data.counties ?? {}) as CountyIndex,
+      races: merged.races.filter((r) => isRaceAllowed(r.raceId)),
+      counties: merged.counties,
     };
   } catch (err) {
-    console.error('Failed to fetch races, falling back to mock', err);
+    // Production must never pass mock races off as real ones — surface the failure.
+    if (import.meta.env.PROD) {
+      console.error('Failed to fetch races', err);
+      throw new RacesUnavailableError(err);
+    }
+    console.error('Failed to fetch races, falling back to mock (dev only)', err);
     const { mockRaceSummary } = await import('./mockData');
     return { races: [mockRaceSummary], counties: {} };
   }

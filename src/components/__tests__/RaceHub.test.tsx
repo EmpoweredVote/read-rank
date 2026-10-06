@@ -25,6 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 /** Minimal RaceSummary — only the fields the hub/grouping read. */
@@ -133,5 +134,27 @@ describe('RaceHub browse wiring', () => {
     expect(useReadRankStore.getState().browseTarget).toBeNull();
     await userEvent.click(browseBtn);
     expect(useReadRankStore.getState().browseTarget).toEqual({ state: '', geoid: null });
+  });
+});
+
+describe('RaceHub load failure', () => {
+  it('shows an error with a retry (not "no races" or mock data) when production fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    expect(await screen.findByText(/couldn.t load races/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no upcoming races/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no races available/i)).not.toBeInTheDocument();
+
+    // Retry recovers once the API answers.
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' })], { '06037': 'Los Angeles' });
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
   });
 });
