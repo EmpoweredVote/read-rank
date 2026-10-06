@@ -177,3 +177,39 @@ describe('getRaceVerdicts', () => {
     expect(rankById.get('d')).toBe(2);
   });
 });
+
+describe('selectRace race-chip meta', () => {
+  const p = {
+    raceId: 'race-chip', positionName: 'US Representative',
+    topics: [{ topicKey: 'k', title: 'Housing', question: 'Q', quotes: [
+      { id: 'q1', text: 'a', candidateToken: 't1', topicKey: 'k' },
+      { id: 'q2', text: 'b', candidateToken: 't2', topicKey: 'k' },
+    ] }],
+  };
+  const geo = { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] };
+
+  it('stores chip fields and strips geometry from boundary refs', () => {
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace(p as never, {
+      office: 'US Representative', seat: 'District 7', state: 'IN', rankableTopicCount: 1,
+      electionDate: '2026-11-03', tier: 'federal', scope: 'district',
+      boundaryRef: { layer: 'G5200', geoid: '1807', bbox: [0, 0, 1, 1], geojson: geo as never },
+      frameRef: { layer: 'G4000', geoid: '18', geojson: geo as never },
+    });
+    const r = useReadRankStore.getState().raceProgress['race-chip'];
+    expect(r.electionDate).toBe('2026-11-03');
+    expect(r.tier).toBe('federal');
+    expect(r.scope).toBe('district');
+    expect(r.boundaryRef).toEqual({ layer: 'G5200', geoid: '1807', bbox: [0, 0, 1, 1] });
+    expect(r.frameRef).toEqual({ layer: 'G4000', geoid: '18' });
+  });
+
+  it('updates chip fields when an existing race is re-selected with meta', () => {
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace(p as never);
+    useReadRankStore.getState().selectRace(p as never, {
+      office: 'US Representative', seat: null, state: 'IN', electionDate: '2026-11-03',
+    });
+    expect(useReadRankStore.getState().raceProgress['race-chip'].electionDate).toBe('2026-11-03');
+  });
+});
