@@ -2756,7 +2756,7 @@ button.rank-num:focus-visible .rank-num-badge {
 .rr-issues__note svg { flex-shrink: 0; margin-top: 0.125rem; }
 .rr-issues__panel {
   background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 1rem;
-  padding: 1.75rem; box-shadow: var(--shadow-card);
+  padding: 1.75rem; box-shadow: var(--shadow-card); container-type: inline-size;
 }
 .rr-issues__panel-head {
   display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;
@@ -2794,12 +2794,14 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .rr-pill--done { background: var(--surface-raised); color: var(--text-link); border-color: transparent; }
 .rr-issues__cta {
-  display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-top: 1.5rem;
+  display: flex; align-items: center; justify-content: center; gap: 0; width: 100%; margin-top: 1.5rem;
   font-family: 'Manrope', sans-serif; font-size: 1.125rem; font-weight: 700;
   padding: 1rem 1.5rem; border-radius: 0.75rem; border: none; cursor: pointer;
   background: var(--action-primary); color: var(--action-primary-ink);
   transition: background-color var(--dur-fast) var(--ease-standard);
 }
+.rr-issues__cta > span { white-space: nowrap; }
+.rr-issues__cta > svg { margin-left: 0.5rem; }
 .rr-issues__cta:hover:not(:disabled) { background: var(--action-primary-hover); }
 .rr-issues__cta:disabled { opacity: 0.55; cursor: not-allowed; }
 .rr-issues__cta:focus-visible { outline: 2px solid var(--text-link); outline-offset: 3px; }
@@ -2813,7 +2815,9 @@ button.rank-num:focus-visible .rank-num-badge {
   }
   .rr-issue__tile { grid-row: span 2; margin-top: 0.125rem; }
   .rr-issue .rr-pill { grid-column: 2; justify-self: start; }
+}
+@container (max-width: 30rem) {
   .rr-issues__cta { flex-wrap: wrap; row-gap: 0.125rem; font-size: 1rem; padding: 0.75rem 1rem; }
-  .rr-issues__cta-meta { order: 3; flex-basis: 100%; font-size: 0.8125rem; font-weight: 600; opacity: 0.9; }
+  .rr-issues__cta-meta { order: 3; flex-basis: 100%; font-size: 0.8125rem; font-weight: 600; opacity: 0.9; white-space: normal; }
   .rr-issues__cta-sep { display: none; }
 }

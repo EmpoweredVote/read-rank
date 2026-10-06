@@ -179,7 +179,7 @@ export const IssueSelection: React.FC = () => {
             {selectedUndone.length === 0
               ? 'Select at least one issue'
               : <><span>Start reading</span>
-                  <span className="rr-issues__cta-meta"><span className="rr-issues__cta-sep"> · </span>{totalSelectedQuotes} quotes · about {estimatedMinutes} min</span>
+                  <span className="rr-issues__cta-meta"><span className="rr-issues__cta-sep">&nbsp;·&nbsp;</span>{totalSelectedQuotes} quotes · about {estimatedMinutes} min</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg></>}
           </button>
