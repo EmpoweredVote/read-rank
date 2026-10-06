@@ -31,6 +31,12 @@ describe('QuoteCard blind-trust affordance', () => {
   it('hides the info button when showTrustFooter is false', () => {
     render(<QuoteCard quote={quote} showTrustFooter={false} />);
     expect(screen.queryByRole('button', { name: /how we source quotes/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Speaker and source are shown/)).not.toBeInTheDocument();
+  });
+
+  it('shows the blind line when showTrustFooter is true (default)', () => {
+    render(<QuoteCard quote={quote} />);
+    expect(screen.getByText(/Speaker and source are shown/)).toBeInTheDocument();
   });
 
   it('stops info-button pointer events from reaching the drag surface', () => {

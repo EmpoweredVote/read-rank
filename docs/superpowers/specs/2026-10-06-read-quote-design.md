@@ -32,7 +32,7 @@ Shared by the race (`EvaluationPhase`) and the pizza warm-up (`PracticeRound`), 
   `line-height: 1.2`, `text-wrap: balance`, `--text-heading`.
 - Keep the yellow highlight behind the text (`.question-banner-hl`), drawn as a marker band under
   the lower ~45% of each line (`box-decoration-break: clone`) rather than a full block — the prototype look.
-  Highlight colour stays the existing yellow token; text stays `--text-heading` (no yellow text).
+  Highlight colour stays the existing yellow token; light = ink text (`--text-heading`) over a yellow marker band; dark = yellow text, no band (unchanged from before).
 
 ### 2. Eyebrow (`TopicStepper.tsx`)
 

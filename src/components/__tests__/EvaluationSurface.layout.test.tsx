@@ -73,4 +73,42 @@ describe('evaluation layout', () => {
       expect(el).toHaveAccessibleName('Disagree with this quote');
     });
   });
+
+  it('desktop: judging the last quote with a button does not steal focus on the next topic', async () => {
+    forcePointer(true);
+    useReadRankStore.getState().reset();
+    useReadRankStore.getState().selectRace({
+      raceId: 'race-two', positionName: 'Governor',
+      topics: [
+        { topicKey: 'housing', title: 'Housing', question: 'How to fix housing?', quotes: [
+          { id: 'h1', text: 'Housing one.', candidateToken: 'tok-h1', topicKey: 'housing' },
+          { id: 'h2', text: 'Housing two.', candidateToken: 'tok-h2', topicKey: 'housing' },
+        ] },
+        { topicKey: 'transit', title: 'Transit', question: 'How to fix transit?', quotes: [
+          { id: 't1', text: 'Transit one.', candidateToken: 'tok-t1', topicKey: 'transit' },
+          { id: 't2', text: 'Transit two.', candidateToken: 'tok-t2', topicKey: 'transit' },
+        ] },
+      ],
+    });
+    useReadRankStore.getState().completeCoachMarks();
+    render(<EvaluationPhase />);
+    for (const text of ['Housing one.', 'Housing two.']) {
+      await screen.findByText(text);
+      const btn = await screen.findByRole('button', { name: 'Disagree with this quote' });
+      btn.focus();
+      fireEvent.click(btn);
+      if (text === 'Housing one.') {
+        await screen.findByText('Housing two.');
+        // refocus fires once the verdict animation ends
+        await waitFor(() => expect(document.activeElement).toHaveAccessibleName('Disagree with this quote'));
+      }
+    }
+    fireEvent.click(await screen.findByRole('button', { name: /Next topic/ }));
+    await screen.findByText('Transit one.');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Agree with this quote' })).toBeInTheDocument());
+    // let the last verdict's animation finish (that is when refocus would fire)
+    await new Promise((r) => setTimeout(r, 600));
+    const el = document.activeElement as HTMLElement;
+    expect(el.className).not.toMatch(/action-button/);
+  });
 });

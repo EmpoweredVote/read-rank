@@ -116,7 +116,8 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
   // remember which one had focus and restore it on the next card.
   const refocusVerdictRef = useRef<'agree' | 'disagree' | null>(null);
   useEffect(() => {
-    if (!currentQuote || isAnimating || !refocusVerdictRef.current) return;
+    if (!currentQuote) { refocusVerdictRef.current = null; return; }
+    if (isAnimating || !refocusVerdictRef.current) return;
     const which = refocusVerdictRef.current;
     refocusVerdictRef.current = null;
     quoteCardRef.current?.querySelector<HTMLElement>(`.action-button-${which}`)?.focus();

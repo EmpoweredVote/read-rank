@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import type { BlindQuote } from '../store/useReadRankStore';
 import { SourceInfoButton } from './SourceExplainer';
 
+/** Shared with the flight clone so its text matches the card at landing. */
+export const QUOTE_TEXT_FONT = 'clamp(1.125rem, 2.4vw, 1.375rem)';
+
 interface QuoteCardProps {
   quote: BlindQuote;
   isStacked?: boolean;
@@ -51,7 +54,7 @@ export const QuoteCard = React.forwardRef<HTMLDivElement, QuoteCardProps>(
         {/* Quote Text */}
         <div
           className="ev-quote-text"
-          style={{ fontSize: 'clamp(1.125rem, 2.4vw, 1.375rem)' }}
+          style={{ fontSize: QUOTE_TEXT_FONT }}
         >
           {quote.text}
         </div>

@@ -317,6 +317,7 @@ dialog::backdrop {
 }
 
 .ev-quote-card::before {
+  content: '\201C';
   content: '\201C' / '';
   display: block;
   font-family: 'Manrope', sans-serif;
@@ -348,6 +349,7 @@ dialog::backdrop {
 }
 
 /* The verdict flight clone — lifted off the page while it travels to the dock. */
+.flying-card-connected::before { display: none; }
 .flying-card-connected {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 6px 14px rgba(0, 0, 0, 0.10);
 }
@@ -548,7 +550,7 @@ dialog::backdrop {
   font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 1rem;
   letter-spacing: 0.06em; text-transform: uppercase;
   border-radius: 0; cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-standard), filter 0.15s ease;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), filter 0.15s ease;
 }
 .action-button-disagree {
   background-color: var(--surface-card);
@@ -611,8 +613,7 @@ dialog::backdrop {
 }
 
 /* Yellow through-line: the question is "yellow" in both themes.
-   Light = black-on-yellow highlighter (the one approved yellow surface, §5 #7).
-   Dark  = yellow text on the dark banner. */
+   Light = marker band under ink text; Dark = yellow text, no band. */
 .question-banner-hl {
   background: linear-gradient(transparent 55%, color-mix(in srgb, var(--color-ev-yellow) 70%, transparent) 55%);
   color: var(--text-heading);
