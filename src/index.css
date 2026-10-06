@@ -2822,3 +2822,18 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .rr-timeline__title { font-weight: 700; font-size: 1rem; color: var(--text-heading); margin-bottom: 0.25rem; }
 .rr-timeline__body { font-size: 0.875rem; line-height: 1.5; color: var(--text-secondary); }
+
+/* Race chip (issue screen) */
+.rr-chip {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface-raised); border-radius: 0.75rem; padding: 1rem 1.25rem;
+}
+.rr-chip__motif { width: 3rem; height: 3rem; flex-shrink: 0; }
+.rr-chip__text { min-width: 0; }
+.rr-chip__eyebrow {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 0.125rem;
+}
+.rr-chip__title { font-size: 1.125rem; color: var(--text-heading); }
+.rr-chip__title strong { font-weight: 700; }
+.rr-chip__seat { color: var(--text-secondary); font-weight: 400; }
