@@ -2814,3 +2814,13 @@ button.rank-num:focus-visible .rank-num-badge {
   .rr-issues__cta-meta { order: 3; flex-basis: 100%; font-size: 0.8125rem; font-weight: 600; opacity: 0.9; white-space: normal; }
   .rr-issues__cta-sep { display: none; }
 }
+/* Quote progress (evaluation) */
+.rr-qprogress { display: flex; align-items: center; gap: 0.875rem; }
+.rr-qprogress__label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+.rr-qprogress__track { flex: 1; display: flex; gap: 4px; min-width: 0; }
+.rr-qprogress__seg { flex: 1; height: 6px; border-radius: 9999px; background: var(--border-subtle); }
+.rr-qprogress__seg--done { background: var(--action-primary); }
+.rr-qprogress__seg--current { background: color-mix(in srgb, var(--action-primary) 45%, var(--border-subtle)); }
+.rr-qprogress__bar { flex: 1; height: 6px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; }
+.rr-qprogress__fill { height: 100%; background: var(--action-primary); border-radius: 9999px; transition: width var(--dur-base) var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) { .rr-qprogress__fill { transition: none; } }
