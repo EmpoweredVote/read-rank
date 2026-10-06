@@ -126,7 +126,7 @@ export const PhaseContainer: React.FC = () => {
           error={promoteVerdictsError}
         />
       )}
-      {(phase === 'issue-selection' || phase === 'evaluation' || phase === 'results') && currentRaceId && (
+      {(phase === 'evaluation' || phase === 'results') && currentRaceId && (
         <RaceBreadcrumb />
       )}
       <AnimatePresence mode="wait">
