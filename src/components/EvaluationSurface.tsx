@@ -112,8 +112,22 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     onCoachComplete();
   }, [onCoachComplete]);
 
+  // Verdict buttons live inside the keyed card, so each verdict remounts them;
+  // remember which one had focus and restore it on the next card.
+  const refocusVerdictRef = useRef<'agree' | 'disagree' | null>(null);
+  useEffect(() => {
+    if (!currentQuote || isAnimating || !refocusVerdictRef.current) return;
+    const which = refocusVerdictRef.current;
+    refocusVerdictRef.current = null;
+    quoteCardRef.current?.querySelector<HTMLElement>(`.action-button-${which}`)?.focus();
+  }, [currentQuote?.id, isAnimating]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
+    const active = document.activeElement as HTMLElement | null;
+    refocusVerdictRef.current = active?.closest('.action-buttons-incard')
+      ? (active.closest('.action-button-agree') ? 'agree' : active.closest('.action-button-disagree') ? 'disagree' : null)
+      : null;
     setIsAnimating(true);
 
     // Agree → fly the card into the pile (desktop: sidebar, mobile: dock).
@@ -245,14 +259,12 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
                     quote={currentQuote}
                     showTrustFooter={showTrustFooter}
                   >
-                    <div data-no-drag onPointerDownCapture={(e) => e.stopPropagation()}>
-                      <ActionButtons
-                        onAgree={() => handleButtonSwipe('agree')}
-                        onDisagree={() => handleButtonSwipe('disagree')}
-                        disabled={isAnimating}
-                        inCard
-                      />
-                    </div>
+                    <ActionButtons
+                      onAgree={() => handleButtonSwipe('agree')}
+                      onDisagree={() => handleButtonSwipe('disagree')}
+                      disabled={isAnimating}
+                      inCard
+                    />
                   </QuoteCard>
                 </AnimatePresence>
               ) : (

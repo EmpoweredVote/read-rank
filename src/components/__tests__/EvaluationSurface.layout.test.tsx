@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EvaluationPhase } from '../EvaluationPhase';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
@@ -58,5 +58,19 @@ describe('evaluation layout', () => {
     const agree = await screen.findByRole('button', { name: 'Agree with this quote' });
     expect(agree.closest('.ev-quote-card')).toBeNull();
     expect(screen.queryByText('Shortcut:')).not.toBeInTheDocument();
+  });
+
+  it('desktop: keyboard focus returns to the matching verdict button after a verdict', async () => {
+    forcePointer(true);
+    render(<EvaluationPhase />);
+    const disagree = await screen.findByRole('button', { name: 'Disagree with this quote' });
+    disagree.focus();
+    fireEvent.click(disagree);
+    await screen.findByText('Layout quote two.');
+    await waitFor(() => {
+      const el = document.activeElement as HTMLElement;
+      expect(el.tagName).toBe('BUTTON');
+      expect(el).toHaveAccessibleName('Disagree with this quote');
+    });
   });
 });
