@@ -166,7 +166,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--surface-raised)]">
               <svg
                 width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="var(--text-link)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                stroke="currentColor" className="text-[var(--text-link)]" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 aria-hidden="true"
               >
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -178,7 +178,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
               <button
                 onClick={() => clearLocationFilter()}
                 aria-label="Clear filter"
-                className="flex items-center justify-center w-5 h-5 rounded-full border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-800 transition-colors text-base leading-none p-0"
+                className="flex items-center justify-center w-5 h-5 rounded-full border-none bg-transparent cursor-pointer text-[var(--text-tertiary)] hover:text-[var(--text-ink)] transition-colors text-base leading-none p-0"
               >
                 &times;
               </button>
@@ -200,7 +200,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit(inputValue)}
-                className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-white dark:bg-gray-900 dark:text-white dark:placeholder-gray-400 shadow-sm"
+                className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-[var(--surface-card)] text-[var(--text-ink)] placeholder:text-[var(--text-tertiary)] shadow-sm"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
               />
               <button
@@ -264,7 +264,7 @@ function AddressPromotionBanner({ payload, onSave, onDismiss, status, error }: A
         onClick={onDismiss}
         disabled={saving}
         aria-label="Dismiss"
-        className="px-1.5 py-0.5 border-none bg-transparent text-slate-400 text-base leading-none cursor-pointer"
+        className="px-1.5 py-0.5 border-none bg-transparent text-[var(--text-tertiary)] text-base leading-none cursor-pointer"
       >
         ×
       </button>

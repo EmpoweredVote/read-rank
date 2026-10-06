@@ -81,7 +81,7 @@ Values come from `@empoweredvote/ev-ui` `src/tokens.js` (`colorScales`, brand co
   `#eab308` use of that name.
 - **Hard-coded colours** in components move to tokens:
   `AddressFilterInput.tsx` (`#e8f4f6`, `#00657c`, `#1a1a2e`, `#003E4D`) → `--surface-raised`,
-  `--text-link`, `--text-ink`, teal-700. `PracticeRound.tsx` / `PracticeResultsScreen.tsx`
+  `--text-link` (also for the promotion banner text, because a fixed `#003E4D` fails contrast on the dark raised surface), `--text-ink`. `PracticeRound.tsx` / `PracticeResultsScreen.tsx`
   warm yellows stay — they are the pizza warm-up's own playful palette, not app chrome.
   `practiceData.ts` avatar backgrounds stay for the same reason.
 - **Not changed:** agree/disagree tokens, banner tokens (already cool), podium and tier-frame

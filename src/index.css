@@ -98,7 +98,7 @@
 
   --progress-fill: var(--color-ev-muted-blue);
   --progress-fill-ink: #ffffff;       /* label over the filled (dark teal) region */
-  --progress-track-ink: var(--text-secondary); /* label over the unfilled (cream) track */
+  --progress-track-ink: var(--text-secondary); /* label over the unfilled track */
 
   /* Motion tokens (mirror of src/motion.ts — keep in sync) */
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
@@ -2152,7 +2152,7 @@ button.rank-num:focus-visible .rank-num-badge {
 
 /* Reveal band (spec §1) — merged gate, persistent hero */
 .reveal-band { background-color: var(--color-ev-black, #1c1c1c); border-radius: 0.75rem; padding: 1.625rem 1.375rem; text-align: center; margin-bottom: 1rem; }
-.dark .reveal-band { background-color: #232c38; border: 1px solid #313d4c; }
+.dark .reveal-band { background-color: var(--surface-raised); border: 1px solid var(--border-medium); }
 .reveal-band-eyebrow { font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.72); margin: 0 0 0.5rem; }
 .reveal-band-headline { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 1.375rem; color: #fff; margin: 0; letter-spacing: -0.01em; }
 /* ev-yellow accent — approved placement #5 (decorative; the text carries) */
