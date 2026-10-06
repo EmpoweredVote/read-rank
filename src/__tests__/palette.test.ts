@@ -99,3 +99,16 @@ describe('ev-ui palette tokens', () => {
     expect(contrast(token(dark, '--action-primary-ink'), DARK['--action-primary'])).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe('palette cleanup', () => {
+  const css = readCss();
+
+  it('has no paper-grain overlay', () => {
+    expect(css).not.toMatch(/--grain-opacity/);
+    expect(css).not.toMatch(/body::before/);
+  });
+
+  it('defines ev-yellow-dark as the ev-ui value in @theme', () => {
+    expect(block(css, '@theme')).toMatch(/--color-ev-yellow-dark:\s*#D0A301;/i);
+  });
+});

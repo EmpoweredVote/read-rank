@@ -15,6 +15,7 @@
   --color-ev-muted-blue: #00657c;
   --color-ev-light-blue: #59b0c4;
   --color-ev-yellow: #fed12e;
+  --color-ev-yellow-dark: #D0A301; /* ev-ui yellowDark — hover for yellow buttons */
   --color-ev-teal: #00657c;
   --color-ev-dark-blue: #004d5c;
 
@@ -87,7 +88,6 @@
   --tier-disagreed-border: #8a939c;
   --tier-disagreed-ink: var(--text-tertiary);
 
-  --grain-opacity: 0.025;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
@@ -162,7 +162,6 @@
   --tier-bronze-ink: #e8d8c8;
   --tier-disagreed-border: #6b7480;
 
-  --grain-opacity: 0.04;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
 
@@ -193,19 +192,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Subtle paper grain texture via pseudo-element */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
 }
 
 /* Custom scrollbar */
