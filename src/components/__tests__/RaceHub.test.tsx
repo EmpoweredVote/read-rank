@@ -134,4 +134,16 @@ describe('RaceHub browse wiring', () => {
     await userEvent.click(browseBtn);
     expect(useReadRankStore.getState().browseTarget).toEqual({ state: '', geoid: null });
   });
+
+  it('uses a controlled time filter and can hide its own switch', async () => {
+    useReadRankStore.getState().setLocationFilter({
+      address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+      jurisdiction: null,
+    });
+    const onTimeFilterChange = vi.fn();
+    render(<RaceHub timeFilter="past" onTimeFilterChange={onTimeFilterChange} hideTimeFilter />);
+    // Controlled "past": the 2024 demo race shows without clicking a tab.
+    expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /filter by election timing/i })).not.toBeInTheDocument();
+  });
 });

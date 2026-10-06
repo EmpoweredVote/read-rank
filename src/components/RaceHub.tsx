@@ -7,6 +7,7 @@ import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
 import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
+import { TimeFilterSwitch } from './TimeFilterSwitch';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
 import { raceCardProgress, isRaceComplete } from '../utils/raceProgressState';
@@ -18,6 +19,11 @@ import { DEFAULT_RACE_ID } from '../config/liveContent';
 interface RaceHubProps {
   hideHeader?: boolean;
   hideFilter?: boolean;
+  /** Controlled time filter. When omitted, RaceHub keeps its own state. */
+  timeFilter?: TimeFilter;
+  onTimeFilterChange?: (next: TimeFilter) => void;
+  /** Hide RaceHub's own switch (the parent renders it, e.g. Landing's header row). */
+  hideTimeFilter?: boolean;
 }
 
 function todayISO(): string {
@@ -25,7 +31,7 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
+export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false, timeFilter: timeFilterProp, onTimeFilterChange, hideTimeFilter = false }) => {
   const {
     raceProgress, selectRace, locationFilter, clearLocationFilter,
     counties, setCounties, browseTarget, setBrowseTarget,
@@ -33,7 +39,12 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string | null>(null);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
+  const [timeFilterState, setTimeFilterState] = useState<TimeFilter>('upcoming');
+  const timeFilter = timeFilterProp ?? timeFilterState;
+  const setTimeFilter = (next: TimeFilter) => {
+    if (timeFilterProp === undefined) setTimeFilterState(next);
+    onTimeFilterChange?.(next);
+  };
 
   const m = useMotion();
   const politicianIds = locationFilter?.politicianIds;
@@ -220,29 +231,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     });
     content = (
       <div className="w-full">
-        {/* Time filter chips */}
-        <div className="flex gap-2 justify-start mt-2 mb-1" role="group" aria-label="Filter by election timing">
-          {(['upcoming', 'past'] as const).map((tf) => {
-            const active = timeFilter === tf;
-            return (
-              <button
-                key={tf}
-                onClick={() => setTimeFilter(tf)}
-                aria-pressed={active}
-                className="rounded-full px-4 py-1.5 text-sm transition-colors"
-                style={{
-                  fontFamily: "'Manrope', sans-serif", fontWeight: active ? 700 : 500,
-                  border: active ? 'none' : '1px solid var(--border-subtle)',
-                  background: active ? 'var(--color-ev-muted-blue)' : 'transparent',
-                  color: active ? '#fff' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                }}
-              >
-                {tf === 'upcoming' ? 'Upcoming' : 'Past'}
-              </button>
-            );
-          })}
-        </div>
+        {!hideTimeFilter && (
+          <div className="mt-2 mb-1">
+            <TimeFilterSwitch value={timeFilter} onChange={setTimeFilter} />
+          </div>
+        )}
 
         {/* No-exact-match note — point at the county if we have one, else the state */}
         {noExactMatch && sections.some((s) => s.kind === 'county' || s.kind === 'state') && (
