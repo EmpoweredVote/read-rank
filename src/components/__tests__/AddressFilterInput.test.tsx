@@ -100,3 +100,69 @@ describe('AddressFilterInput smart-search routing', () => {
     expect(setBrowseTarget).not.toHaveBeenCalled();
   });
 });
+
+describe('AddressFilterInput known-address line', () => {
+  const located = {
+    address: '100 W Kirkwood Ave, Bloomington, IN 47404',
+    politicianIds: ['p1'], state: 'IN', county: null, countyName: null, jurisdiction: null,
+  };
+
+  it('shows "Races for" with the address and a Change button, and no textbox', () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    expect(screen.getByText(/races for/i)).toHaveTextContent('100 W Kirkwood Ave');
+    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('Change opens a focused search box with Cancel and Clear address', async () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    expect(await screen.findByRole('textbox')).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear address' })).toBeInTheDocument();
+  });
+
+  it('Cancel and Escape return to the line without changing the filter', async () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await screen.findByRole('textbox');
+    await userEvent.keyboard('{Escape}');
+    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(setLocationFilter).not.toHaveBeenCalled();
+    expect(clearLocationFilter).not.toHaveBeenCalled();
+  });
+
+  it('Clear address clears the location filter', async () => {
+    storeSlice.locationFilter = located;
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Clear address' }));
+    expect(clearLocationFilter).toHaveBeenCalledTimes(1);
+  });
+
+  it('a successful new address search closes the edit state', async () => {
+    storeSlice.locationFilter = located;
+    resolveQueryRoute.mockResolvedValue({ kind: 'address' });
+    searchPoliticians.mockResolvedValueOnce({ data: [{ id: 'p2' }], county: null });
+    render(<AddressFilterInput />);
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await userEvent.type(await screen.findByRole('textbox'), '1 Main St, Salt Lake City, UT');
+    await userEvent.click(screen.getByRole('button', { name: /search/i }));
+    await waitFor(() => expect(setLocationFilter).toHaveBeenCalled());
+    expect(await screen.findByRole('button', { name: 'Change' })).toBeInTheDocument();
+  });
+
+  it('with no address, shows the search box and no "Races for" line', () => {
+    storeSlice.locationFilter = null;
+    render(<AddressFilterInput />);
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
+  });
+});

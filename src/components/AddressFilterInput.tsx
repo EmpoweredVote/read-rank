@@ -34,6 +34,8 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [noMatchWarning, setNoMatchWarning] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const showInput = locationFilter === null || editing;
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handlePlaceSelected = useCallback(async (formattedAddress: string, opts?: { track?: boolean }) => {
@@ -63,6 +65,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         jurisdiction: result.jurisdiction ?? null,
       });
       writeAddressToContext(formattedAddress, isLoggedIn ? userId : null);
+      setEditing(false);
     } else {
       setNoMatchWarning(true);
       setTimeout(() => setNoMatchWarning(false), 3000);
@@ -72,7 +75,11 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     onFilterApplied?.(politicianIds);
   }, [setLocationFilter, onFilterApplied, isLoggedIn, userId]);
 
-  useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected });
+  useGooglePlacesAutocomplete(inputRef, { onPlaceSelected: handlePlaceSelected, attachKey: showInput });
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
   // Manual submit (Search button / Enter). Classify the free text first: place names
   // (state/county/city) route into browse; anything else — and any failure — falls through
@@ -83,8 +90,8 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
     setSearching(true);
     const route = await resolveQueryRoute(value, counties);
     setSearching(false);
-    if (route.kind === 'browse-state') { setBrowseTarget({ state: route.state, geoid: null }); return; }
-    if (route.kind === 'browse-county') { setBrowseTarget({ state: route.state, geoid: route.geoid }); return; }
+    if (route.kind === 'browse-state') { setEditing(false); setBrowseTarget({ state: route.state, geoid: null }); return; }
+    if (route.kind === 'browse-county') { setEditing(false); setBrowseTarget({ state: route.state, geoid: route.geoid }); return; }
     await handlePlaceSelected(value);
   }, [handlePlaceSelected, setBrowseTarget, counties]);
 
@@ -155,35 +162,26 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
         />
       )}
       <AnimatePresence mode="wait">
-        {locationFilter !== null ? (
-          <motion.div
-            key="chip"
-            initial={m.reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={m.reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+        {!showInput ? (
+          <motion.p
+            key="line"
+            className="rr-address-line"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={m.transition(DUR.base)}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--surface-raised)]">
-              <svg
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" className="text-[var(--text-link)]" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <span className="text-sm font-medium" style={{ color: 'var(--text-ink)', fontFamily: "'Manrope', sans-serif" }}>
-                {truncatedAddress}
-              </span>
-              <button
-                onClick={() => clearLocationFilter()}
-                aria-label="Clear filter"
-                className="flex items-center justify-center w-5 h-5 rounded-full border-none bg-transparent cursor-pointer text-[var(--text-tertiary)] hover:text-[var(--text-ink)] transition-colors text-base leading-none p-0"
-              >
-                &times;
-              </button>
-            </div>
-          </motion.div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+              className="rr-address-line__pin">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span>Races for <strong>{truncatedAddress}</strong></span>
+            <button type="button" className="rr-text-btn" onClick={() => setEditing(true)}>
+              Change
+            </button>
+          </motion.p>
         ) : (
           <motion.div
             key="input"
@@ -191,6 +189,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
             animate={{ opacity: 1, y: 0 }}
             exit={m.reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             transition={m.transition(DUR.base)}
+            onAnimationStart={() => { if (editing) inputRef.current?.focus(); }}
           >
             <div className="flex gap-2">
               <input
@@ -199,7 +198,10 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 placeholder="If you reside in an Alpha Community, enter your street address"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSubmit(inputValue)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSubmit(inputValue);
+                  if (e.key === 'Escape' && editing) setEditing(false);
+                }}
                 className="flex-1 min-w-0 px-3 py-4 text-sm border-2 border-ev-yellow rounded-xl focus:outline-none focus:ring-2 focus:ring-ev-yellow bg-[var(--surface-card)] text-[var(--text-ink)] placeholder:text-[var(--text-tertiary)] shadow-sm"
                 style={{ fontFamily: "'Manrope', sans-serif" }}
               />
@@ -212,6 +214,20 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
                 {searching ? 'Searching…' : 'Search'}
               </button>
             </div>
+            {editing && (
+              <div className="flex gap-4 mt-2">
+                <button type="button" className="rr-text-btn" onClick={() => setEditing(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rr-text-btn rr-text-btn--muted"
+                  onClick={() => { setEditing(false); clearLocationFilter(); }}
+                >
+                  Clear address
+                </button>
+              </div>
+            )}
             {noMatchWarning && (
               <p className="mt-2 text-sm text-red-500" style={{ fontFamily: "'Manrope', sans-serif" }}>
                 No representatives found with quotes for this address.

@@ -2792,3 +2792,20 @@ button.rank-num:focus-visible .rank-num-badge {
   background: var(--action-primary); color: var(--action-primary-ink); font-weight: 700;
 }
 .rr-segmented__btn:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+
+/* Known-address line under "Choose an election" */
+.rr-address-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem;
+  font-family: 'Manrope', sans-serif; font-size: 0.9375rem;
+  color: var(--text-secondary); margin: 0;
+}
+.rr-address-line strong { color: var(--text-ink); font-weight: 700; }
+.rr-address-line__pin { color: var(--text-link); flex-shrink: 0; }
+.rr-text-btn {
+  font-family: 'Manrope', sans-serif; font-size: 0.9375rem; font-weight: 700;
+  color: var(--text-link); background: none; border: none; padding: 0.25rem 0.125rem;
+  cursor: pointer; min-height: 2.75rem;
+}
+.rr-text-btn:hover { text-decoration: underline; }
+.rr-text-btn:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; border-radius: 0.25rem; }
+.rr-text-btn--muted { color: var(--text-tertiary); font-weight: 600; }
