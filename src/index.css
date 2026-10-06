@@ -2724,10 +2724,13 @@ button.rank-num:focus-visible .rank-num-badge {
 
 /* Choose your issues */
 .rr-issues {
-  max-width: 1512px; margin: 0 auto; padding: 2rem 1.5rem 4rem;
+  padding: 0 0 2rem;
   display: grid; grid-template-columns: 1fr; gap: 3rem; align-items: start;
 }
 @media (min-width: 1024px) {
+  .rr-issues { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 3rem; }
+}
+@media (min-width: 1280px) {
   .rr-issues { grid-template-columns: minmax(0, 1fr) minmax(0, 32rem); gap: 6rem; }
 }
 .rr-issues__back {
@@ -2760,6 +2763,7 @@ button.rank-num:focus-visible .rank-num-badge {
   font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--text-tertiary);
 }
+.rr-issues__panel-head h2 { margin: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
 .rr-issues__panel-head span:last-child { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 0.875rem; }
 .rr-issues__list { display: grid; gap: 0.75rem; }
 .rr-issue {
@@ -2800,3 +2804,16 @@ button.rank-num:focus-visible .rank-num-badge {
 .rr-issues__cta:disabled { opacity: 0.55; cursor: not-allowed; }
 .rr-issues__cta:focus-visible { outline: 2px solid var(--text-link); outline-offset: 3px; }
 .rr-issues__ballot-link { display: block; margin: 0.5rem auto 0; }
+@media (max-width: 639px) {
+  .rr-issues { gap: 2rem; }
+  .rr-issues__panel { padding: 1.25rem 1rem; }
+  .rr-issue {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.875rem; row-gap: 0.5rem;
+    align-items: start; padding: 0.875rem 1rem;
+  }
+  .rr-issue__tile { grid-row: span 2; margin-top: 0.125rem; }
+  .rr-issue .rr-pill { grid-column: 2; justify-self: start; }
+  .rr-issues__cta { flex-wrap: wrap; row-gap: 0.125rem; font-size: 1rem; padding: 0.75rem 1rem; }
+  .rr-issues__cta-meta { order: 3; flex-basis: 100%; font-size: 0.8125rem; font-weight: 600; opacity: 0.9; }
+  .rr-issues__cta-sep { display: none; }
+}

@@ -58,7 +58,7 @@ describe('IssueSelection', () => {
     expect(screen.getByRole('button', { name: /environment/i })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('marks single-candidate topics as NOT SCORED and non-interactive', () => {
+  it('marks single-candidate topics as Not scored and non-interactive', () => {
     render(<IssueSelection />);
     expect(screen.getByText(/not scored/i)).toBeInTheDocument();
     expect(screen.getByText(/1 quote · one candidate/i)).toBeInTheDocument();

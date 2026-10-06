@@ -276,7 +276,8 @@ interface ReadRankState {
 
 function stripGeometry(ref: BoundaryRef | null | undefined): BoundaryRef | null | undefined {
   if (!ref) return ref;
-  const { geojson: _geojson, ...rest } = ref;
+  const rest = { ...ref };
+  delete rest.geojson;
   return rest;
 }
 

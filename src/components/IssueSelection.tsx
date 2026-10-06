@@ -69,6 +69,7 @@ export const IssueSelection: React.FC = () => {
   return (
     <div className="rr-issues">
       <div className="rr-issues__intro">
+        <nav aria-label="Breadcrumb">
         <button type="button" className="rr-issues__back" onClick={goToHub}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -76,6 +77,7 @@ export const IssueSelection: React.FC = () => {
           </svg>
           All races
         </button>
+        </nav>
         <RaceChip
           office={race.office ?? race.positionName}
           seat={race.seat} state={race.state} electionDate={race.electionDate}
@@ -94,7 +96,8 @@ export const IssueSelection: React.FC = () => {
               <span>Welcome back</span>
             </div>
             <div className="rr-issues__bar" role="progressbar" aria-label="Issues ranked"
-              aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={scorable.length}>
+              aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={scorable.length}
+              aria-valuetext={`${doneCount} of ${scorable.length} issues ranked`}>
               <div className="rr-issues__bar-fill" style={{ width: `${(doneCount / Math.max(1, scorable.length)) * 100}%` }} />
             </div>
           </div>
@@ -112,7 +115,7 @@ export const IssueSelection: React.FC = () => {
 
       <div className="rr-issues__panel">
         <div className="rr-issues__panel-head">
-          <span>Issues in this race</span>
+          <h2>Issues in this race</h2>
           <span>{scorable.length} available</span>
         </div>
         <div className="rr-issues__list">
@@ -149,7 +152,6 @@ export const IssueSelection: React.FC = () => {
                 className={`rr-issue rr-issue--toggle${isSelected ? ' rr-issue--selected' : ''}`}
                 onClick={() => toggleTopic(topic.key)}
                 aria-pressed={isSelected}
-                aria-label={`${topic.title}, ${topic.quoteCount} quotes`}
               >
                 <motion.span className={`rr-issue__tile${isSelected ? ' rr-issue__tile--on' : ''}`} aria-hidden="true"
                   animate={m.reduced ? undefined : { scale: isSelected ? [1, 1.18, 1] : 1 }}
@@ -171,10 +173,13 @@ export const IssueSelection: React.FC = () => {
             See your ballot
           </button>
         ) : (
-          <button type="button" className="rr-issues__cta" disabled={selectedUndone.length === 0} onClick={handleConfirm}>
+          <button type="button" className="rr-issues__cta" disabled={selectedUndone.length === 0} onClick={handleConfirm}
+            aria-label={selectedUndone.length === 0 ? undefined
+              : `Start reading · ${totalSelectedQuotes} quotes · about ${estimatedMinutes} min`}>
             {selectedUndone.length === 0
               ? 'Select at least one issue'
-              : <>Start reading · {totalSelectedQuotes} quotes · about {estimatedMinutes} min
+              : <><span>Start reading</span>
+                  <span className="rr-issues__cta-meta"><span className="rr-issues__cta-sep"> · </span>{totalSelectedQuotes} quotes · about {estimatedMinutes} min</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg></>}
           </button>
