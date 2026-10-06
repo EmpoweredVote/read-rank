@@ -245,7 +245,7 @@ body {
   font-family: 'Manrope', sans-serif;
   font-style: normal;
   font-weight: 500; /* medium: light-on-dark reads thinner than dark-on-light; 500 firms up the stroke */
-  line-height: 1.6;
+  line-height: 1.5;
   max-width: 66ch; /* cap line length ≤ ~80 chars (WCAG 1.4.8 measure) for readability */
   color: var(--text-ink);
 }
@@ -307,10 +307,10 @@ dialog::backdrop {
   will-change: transform;
   transform-origin: center;
   background-color: var(--surface-card);
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
-  padding: 2rem 2rem 1.75rem;
+  padding: 2rem 2rem 1.5rem;
   color: var(--text-ink);
   position: relative;
   transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
@@ -318,15 +318,29 @@ dialog::backdrop {
 
 .ev-quote-card::before {
   content: '\201C';
+  content: '\201C' / '';
+  display: block;
   font-family: 'Manrope', sans-serif;
-  font-size: 5rem;
-  line-height: 1;
+  font-weight: 800;
+  font-size: 3.5rem;
+  line-height: 0.6;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
   color: var(--color-ev-yellow);
-  opacity: 1;
-  position: absolute;
-  top: 0.25rem;
-  left: 0.75rem;
   pointer-events: none;
+}
+
+.rr-blind-line {
+  display: flex; align-items: center; gap: 0.5rem; margin: 1rem 0 0;
+  font-size: 0.8125rem; color: var(--text-tertiary);
+}
+.rr-shortcut-hint {
+  margin: 0.75rem 0 0; text-align: center; font-size: 0.8125rem; color: var(--text-tertiary);
+}
+.rr-shortcut-hint kbd {
+  display: inline-block; font-family: inherit; font-size: 0.75rem; line-height: 1.4;
+  padding: 0 0.375rem; border: 1px solid var(--border-medium); border-radius: 4px;
+  background: var(--surface-card); color: var(--text-secondary);
 }
 
 .ev-quote-card-dragging {
@@ -335,6 +349,7 @@ dialog::backdrop {
 }
 
 /* The verdict flight clone — lifted off the page while it travels to the dock. */
+.flying-card-connected::before { display: none; }
 .flying-card-connected {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 6px 14px rgba(0, 0, 0, 0.10);
 }
@@ -531,32 +546,38 @@ dialog::backdrop {
 
 .action-button {
   flex: 1;
-  border: none;
-  border-radius: 0;
-  font-family: 'Manrope', sans-serif;
-  font-weight: 800;
-  font-size: 1.1875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: filter 0.15s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 1rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  border-radius: 0; cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), filter 0.15s ease;
 }
+.action-button-disagree {
+  background-color: var(--surface-card);
+  color: var(--text-heading);
+  border: 1.5px solid var(--text-heading);
+}
+.action-button-agree {
+  background-color: var(--action-primary);
+  color: var(--action-primary-ink);
+  border: 1.5px solid var(--action-primary);
+  position: relative; overflow: hidden;
+}
+.action-button-disagree:hover:not(:disabled),
+.action-button-disagree:active:not(:disabled),
+.action-button-disagree.keyboard-active { background-color: var(--surface-sunken); }
+.action-button-agree:hover:not(:disabled),
+.action-button-agree:active:not(:disabled),
+.action-button-agree.keyboard-active { background-color: var(--action-primary-hover); border-color: var(--action-primary-hover); }
+.action-button:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+
+/* Desktop: inside the quote card */
+.action-buttons-incard { height: auto; gap: 0.75rem; margin-top: 1.25rem; }
+.action-buttons-incard .action-button { border-radius: 0.75rem; min-height: 3.25rem; }
 
 .action-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.action-button-disagree {
-  background-color: #1a1a1a;
-  color: #ffffff;
-}
-
-.action-button-agree {
-  background-color: var(--action-primary);
-  color: var(--action-primary-ink);
-  position: relative;
-  overflow: hidden;
 }
 
 .action-button-sweep {
@@ -566,19 +587,6 @@ dialog::backdrop {
   transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
-
-.action-button-disagree:hover:not(:disabled),
-.action-button-disagree:active:not(:disabled) {
-  filter: brightness(1.2);
-}
-
-.action-button-agree:hover:not(:disabled),
-.action-button-agree:active:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-.action-button-disagree.keyboard-active { filter: brightness(1.2); }
-.action-button-agree.keyboard-active { filter: brightness(1.1); }
 
 /* Extra bottom clearance for the fixed verdict stack (paddles + dock) on mobile */
 .has-fixed-paddles {
@@ -596,39 +604,26 @@ dialog::backdrop {
    Question Banner
    ============================================ */
 
-.question-banner {
-  background: linear-gradient(135deg, var(--banner-from) 0%, var(--banner-to) 100%);
-  border: 1px solid var(--banner-border);
-  border-radius: 0.5rem;
-  padding: 1rem 1.5rem;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-}
+.question-banner { margin: 0.25rem 0 1rem; }
 
 .question-banner h2 {
-  margin: 0;
-  font-family: 'Manrope', sans-serif;
-  font-weight: 800;
-  font-size: 1.375rem; /* 22px — the question is the hero of the card */
-  line-height: 1.32;
-  text-align: center;
-  color: var(--banner-heading); /* fallback only; the text lives in .question-banner-hl */
+  margin: 0; font-family: 'Manrope', sans-serif; font-weight: 800;
+  font-size: clamp(1.625rem, 3.2vw, 2.25rem); line-height: 1.2;
+  text-align: left; text-wrap: balance; color: var(--text-heading);
 }
 
 /* Yellow through-line: the question is "yellow" in both themes.
-   Light = black-on-yellow highlighter (the one approved yellow surface, §5 #7).
-   Dark  = yellow text on the dark banner. */
+   Light = marker band under ink text; Dark = yellow text, no band. */
 .question-banner-hl {
-  background-color: var(--color-ev-yellow);
-  color: var(--color-ev-black, #1c1c1c);
-  padding: 0.06em 0.3em;
-  border-radius: 3px;
+  background: linear-gradient(transparent 55%, color-mix(in srgb, var(--color-ev-yellow) 70%, transparent) 55%);
+  color: var(--text-heading);
+  padding: 0 0.1em; border-radius: 0;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
 .dark .question-banner-hl {
+  background: none;
   background-color: transparent;
   color: var(--color-ev-yellow);
   padding: 0;
@@ -693,13 +688,15 @@ dialog::backdrop {
   background: none;
   border: none;
   cursor: pointer;
+  justify-content: flex-start;
+  text-align: left;
   font-family: 'Manrope', sans-serif;
   padding: 0.1rem 0.125rem 0.6rem;
   margin-bottom: 0.25rem;
 }
 
 .issue-eyebrow-kicker {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -710,9 +707,9 @@ dialog::backdrop {
 .issue-eyebrow-sep { color: var(--text-tertiary); }
 
 .issue-eyebrow-topic {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-link);
   overflow: hidden;
@@ -2821,3 +2818,13 @@ button.rank-num:focus-visible .rank-num-badge {
   .rr-issues__cta-meta { order: 3; flex-basis: 100%; font-size: 0.8125rem; font-weight: 600; opacity: 0.9; white-space: normal; }
   .rr-issues__cta-sep { display: none; }
 }
+/* Quote progress (evaluation) */
+.rr-qprogress { display: flex; align-items: center; gap: 0.875rem; }
+.rr-qprogress__label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+.rr-qprogress__track { flex: 1; display: flex; gap: 4px; min-width: 0; }
+.rr-qprogress__seg { flex: 1; height: 6px; border-radius: 9999px; background: var(--border-subtle); }
+.rr-qprogress__seg--done { background: var(--action-primary); }
+.rr-qprogress__seg--current { background: color-mix(in srgb, var(--action-primary) 45%, var(--border-subtle)); }
+.rr-qprogress__bar { flex: 1; height: 6px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; }
+.rr-qprogress__fill { height: 100%; background: var(--action-primary); border-radius: 9999px; transition: width var(--dur-base) var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) { .rr-qprogress__fill { transition: none; } }

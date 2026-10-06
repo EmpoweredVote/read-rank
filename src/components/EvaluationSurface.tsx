@@ -6,6 +6,7 @@ import type { BlindQuote } from '../store/useReadRankStore';
 import { DUR } from '../motion';
 import { QuoteCard } from './QuoteCard';
 import { ActionButtons } from './ActionButtons';
+import { QuoteProgress } from './QuoteProgress';
 import { RankedListSidebar } from './AgreedQuotesSidebar';
 import { useDeviceType } from '../hooks/useDeviceType';
 import CoachMark from './CoachMark';
@@ -62,12 +63,6 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
 }) => {
   const agreed = source.agreed;
 
-  const shownCount = currentQuote ? progress.current : progress.total;
-  const progressPercent =
-    progress.total > 0
-      ? Math.round(((currentQuote ? progress.current - 1 : progress.total) / progress.total) * 100)
-      : 0;
-
   const deviceType = useDeviceType();
   const isMouseDevice = deviceType === 'mouse' || deviceType === 'unknown';
 
@@ -117,8 +112,23 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     onCoachComplete();
   }, [onCoachComplete]);
 
+  // Verdict buttons live inside the keyed card, so each verdict remounts them;
+  // remember which one had focus and restore it on the next card.
+  const refocusVerdictRef = useRef<'agree' | 'disagree' | null>(null);
+  useEffect(() => {
+    if (!currentQuote) { refocusVerdictRef.current = null; return; }
+    if (isAnimating || !refocusVerdictRef.current) return;
+    const which = refocusVerdictRef.current;
+    refocusVerdictRef.current = null;
+    quoteCardRef.current?.querySelector<HTMLElement>(`.action-button-${which}`)?.focus();
+  }, [currentQuote?.id, isAnimating]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleButtonSwipe = async (direction: 'agree' | 'disagree') => {
     if (isAnimating || !currentQuote) return;
+    const active = document.activeElement as HTMLElement | null;
+    refocusVerdictRef.current = active?.closest('.action-buttons-incard')
+      ? (active.closest('.action-button-agree') ? 'agree' : active.closest('.action-button-disagree') ? 'disagree' : null)
+      : null;
     setIsAnimating(true);
 
     // Agree → fly the card into the pile (desktop: sidebar, mobile: dock).
@@ -224,36 +234,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
 
   const triageContent = (
     <>
-      {/* Per-topic quote progress — the "N of M" count lives inside the bar. */}
-      <div
-        className="relative w-full rounded-full overflow-hidden"
-        style={{ height: '1.375rem', backgroundColor: 'var(--border-subtle)' }}
-      >
-        {/* Fill sweep */}
-        <div
-          className="absolute inset-y-0 left-0 transition-all duration-300"
-          style={{ width: `${progressPercent}%`, backgroundColor: 'var(--progress-fill)' }}
-        />
-        {/* Label over the unfilled track */}
-        <span
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--progress-track-ink)' }}
-        >
-          {`${shownCount} of ${progress.total}`}
-        </span>
-        {/* Same label clipped to the filled region, in the fill-contrast ink */}
-        <span
-          className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300"
-          style={{
-            fontFamily: "'Manrope', sans-serif", fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.02em',
-            color: 'var(--progress-fill-ink)',
-            clipPath: `inset(0 ${100 - progressPercent}% 0 0)`,
-          }}
-          aria-hidden="true"
-        >
-          {`${shownCount} of ${progress.total}`}
-        </span>
-      </div>
+      <QuoteProgress current={progress.current} total={progress.total} done={!currentQuote} />
 
       <div ref={swipeAreaRef}>
         {currentQuote ? (
@@ -278,7 +259,14 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
                     key={currentQuote.id}
                     quote={currentQuote}
                     showTrustFooter={showTrustFooter}
-                  />
+                  >
+                    <ActionButtons
+                      onAgree={() => handleButtonSwipe('agree')}
+                      onDisagree={() => handleButtonSwipe('disagree')}
+                      disabled={isAnimating}
+                      inCard
+                    />
+                  </QuoteCard>
                 </AnimatePresence>
               ) : (
                 <motion.div
@@ -305,16 +293,12 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
           completeState
         )}
 
-        {/* Desktop: paddles sit in the flow under the card. Mobile renders them
-            in the fixed bottom stack (with the dock) so the dock is no longer
-            hidden behind them. */}
+        {/* Desktop: verdict buttons live inside the card; a hint covers the keys.
+            Mobile renders the buttons in the fixed bottom stack (with the dock). */}
         {currentQuote && isMouseDevice && (
-          <ActionButtons
-            onAgree={() => handleButtonSwipe('agree')}
-            onDisagree={() => handleButtonSwipe('disagree')}
-            disabled={isAnimating}
-            fixed={false}
-          />
+          <p className="rr-shortcut-hint">
+            <span>Shortcut:</span> <kbd>←</kbd> disagree · <kbd>→</kbd> agree
+          </p>
         )}
       </div>
     </>
