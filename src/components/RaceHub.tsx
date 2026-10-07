@@ -1,4 +1,3 @@
-import { BrowseHeader } from './BrowseHeader';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
@@ -6,6 +5,7 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaces, fetchRaceQuotes, prefetchBoundaries, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
+import { BrowseHeader } from './BrowseHeader';
 import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
 import { TimeFilterSwitch } from './TimeFilterSwitch';

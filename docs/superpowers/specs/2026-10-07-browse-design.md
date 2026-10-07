@@ -53,8 +53,8 @@ keeping the current `RaceCard` unchanged and the existing search/filter behaviou
 - Filter row (`.rr-browse-filters`): flex, wrap, gap 0.5rem, margin-top 0.75rem. Pills on the
   left; the state control pushed right with `margin-left: auto`.
 - Pills: 14 px, weight 700, radius full, 1 px `--border-medium`, `--surface-card` bg,
-  `--text-strong` text; active pill `--action-primary` bg and border, `--on-dark-ink` text
-  (replaces the hard-coded `#fff`).
+  `--text-strong` text; active pill `--action-primary` bg and border, `--action-primary-ink` text
+  (replaces the hard-coded `#fff`; `--on-dark-ink` fails contrast on the light dark-mode teal).
 - State control: the existing `<select>` inside `<label className="rr-browse-state">` with a
   pin icon (SVG, `aria-hidden`) before it; same height and radius as the pills; min-width 11rem.
   `aria-label="Filter by state"` stays on the select.
