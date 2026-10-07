@@ -2828,3 +2828,25 @@ button.rank-num:focus-visible .rank-num-badge {
 .rr-qprogress__bar { flex: 1; height: 6px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; }
 .rr-qprogress__fill { height: 100%; background: var(--action-primary); border-radius: 9999px; transition: width var(--dur-base) var(--ease-standard); }
 @media (prefers-reduced-motion: reduce) { .rr-qprogress__fill { transition: none; } }
+
+/* Ranking panel layer */
+.rank-panel-title { margin: 0; font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 800; color: var(--text-heading); }
+.rank-panel-count {
+  font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.625rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-link); background: var(--surface-raised);
+  padding: 2px 8px; border-radius: 4px;
+}
+.rank-panel-sub { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-secondary); }
+.rank-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center;
+  border: 1.5px dashed var(--border-medium); border-radius: 0.75rem; padding: 1.5rem 1rem;
+  color: var(--text-tertiary);
+}
+.rank-empty p { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-secondary); }
+.rank-slip.rank-slip-first { border: 1.5px solid var(--action-primary); background: var(--surface-raised); }
+.rank-dis-recover { display: inline-flex; align-items: center; gap: 0.25rem; }
+.rank-privacy {
+  display: flex; align-items: flex-start; gap: 0.5rem; margin: 1rem 0 0; padding-top: 0.875rem;
+  border-top: 1px solid var(--border-subtle); font-size: 0.8125rem; line-height: 1.45; color: var(--text-tertiary);
+}
+.rank-privacy svg { flex-shrink: 0; margin-top: 0.125rem; }

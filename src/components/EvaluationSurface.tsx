@@ -375,7 +375,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
             <div className="evaluation-main-panel">{mainColumn}</div>
             <div className="evaluation-sidebar-panel">
               {agreed.length === 1 && <FirstAgreeCoach variant="desktop" />}
-              <RankedListSidebar ref={sidebarRef} landingId={landingId} />
+              <RankedListSidebar ref={sidebarRef} landingId={landingId} showPrivacyNote={showTrustFooter} />
             </div>
           </div>
           {coachMarkOverlay}
@@ -410,6 +410,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
         </div>
         <RankSheet
           open={sheetOpen}
+          showPrivacyNote={showTrustFooter}
           allDone={allDone}
           canReveal={reveal.enabled}
           resultsLabel={reveal.label}

@@ -11,9 +11,10 @@ import { useRankSource } from './RankSource';
 interface RankedListSidebarProps {
   /** Id of a row currently being landed on by a verdict flight (seamless handoff). */
   landingId?: string | null;
+  showPrivacyNote?: boolean;
 }
 
-export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSidebarProps>(({ landingId }, ref) => {
+export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSidebarProps>(({ landingId, showPrivacyNote = true }, ref) => {
   const { agreed } = useRankSource();
 
   const prefersReducedMotion = useReducedMotion();
@@ -32,26 +33,13 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
   return (
     <div ref={scope} className="agreed-quotes-sidebar">
       <div className="sidebar-header">
-        <span style={{
-          fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '0.75rem',
-          letterSpacing: '0.02em', color: 'var(--text-heading)',
-        }}>
-          Your ranking
-        </span>
-        {agreed.length > 0 && (
-          <span style={{
-            fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: '0.625rem',
-            letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-link)',
-            backgroundColor: 'var(--agree-bg)', padding: '2px 8px', borderRadius: '4px',
-          }}>
-            {agreed.length} agreed
-          </span>
-        )}
+        <h2 className="rank-panel-title">Your ranking</h2>
+        {agreed.length > 0 && <span className="rank-panel-count">{agreed.length} agreed</span>}
       </div>
 
       <div style={{ padding: '0.75rem' }}>
         <div ref={scrollRef} style={{ overflowY: 'auto', maxHeight: '58vh' }}>
-          <RankRail variant="sidebar" landingId={landingId} />
+          <RankRail variant="sidebar" landingId={landingId} showPrivacyNote={showPrivacyNote} />
         </div>
       </div>
     </div>

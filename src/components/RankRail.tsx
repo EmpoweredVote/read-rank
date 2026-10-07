@@ -9,9 +9,11 @@ export interface RankRailProps {
   variant: 'sidebar' | 'sheet';
   /** Id of a row currently being landed on by a verdict flight (seamless handoff). */
   landingId?: string | null;
+  /** Show the "names and parties stay hidden" footer (default true). */
+  showPrivacyNote?: boolean;
 }
 
-export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
+export const RankRail: React.FC<RankRailProps> = ({ variant, landingId, showPrivacyNote = true }) => {
   const { agreed, disagreed, reorder: reorderAgreed, toggleTie, reAgree, rankedCount, setRankedCount } = useRankSource();
   const [showDisagreed, setShowDisagreed] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
@@ -21,7 +23,7 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
 
   const handleRecover = (q: BlindQuote) => {
     const stub = q.text.length > 40 ? q.text.slice(0, 40) + '…' : q.text;
-    setRecoverMsg(`Moved "${stub}" back to agreed.`);
+    setRecoverMsg(`Moved "${stub}" to your ranking.`);
     reAgree(q);
   };
 
@@ -37,6 +39,11 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
 
   return (
     <div className="rank-rail">
+      {agreed.length < 2 && (
+        <p className="rank-panel-sub">
+          {agreed.length === 0 ? 'Quotes you agree with land here.' : 'Agree with more quotes to compare them here.'}
+        </p>
+      )}
       {agreed.length >= 2 && (
         <div className="rank-toolbar">
           <span className="rank-toolbar-hint">
@@ -66,9 +73,13 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
       />
 
       {agreed.length === 0 && (
-        <p className="sr-only">
-          Nothing ranked yet.&nbsp; Agree with quotes and they will file in here, ready to rank.
-        </p>
+        <div className="rank-empty">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          <p>Agree with a quote to add it here. Then put the one you trust most on top.</p>
+        </div>
       )}
 
       {!reorderMode && disagreed.length > 0 && (
@@ -114,7 +125,9 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
                   >
                     <span className="rank-dis-row-stub tier-disagreed-muted">{q.text}</span>
                     <button type="button" className="rank-dis-recover" onClick={() => handleRecover(q)}>
-                      Move to agreed
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
+                        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
+                      Move to my ranking
                     </button>
                   </motion.div>
                 ))}
@@ -122,6 +135,15 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId }) => {
             </div>
           )}
         </section>
+      )}
+      {showPrivacyNote && (
+        <p className="rank-privacy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+          Names and parties stay hidden until you see your full ballot.
+        </p>
       )}
       <div className="sr-only" role="status" aria-live="polite">{recoverMsg}</div>
     </div>
