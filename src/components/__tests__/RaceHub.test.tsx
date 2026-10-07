@@ -21,6 +21,7 @@ vi.mock('../../config/liveContent', () => ({
 beforeEach(() => {
   window.localStorage?.clear();
   useReadRankStore.getState().reset();
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 });
 
 afterEach(() => {
@@ -118,10 +119,33 @@ describe('RaceHub browse wiring', () => {
     );
     useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
     render(<RaceHub />);
-    // Browse view: "Back to my ballot" affordance + the search-first browse (search box + cards).
-    expect(await screen.findByRole('button', { name: /back to my ballot/i }, { timeout: 3000 })).toBeInTheDocument();
+    // Browse view: back link + H1 + the search-first browse (search box + cards).
+    expect(await screen.findByRole('heading', { level: 1, name: 'Choose an election' }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByLabelText('Search races')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+    // Its own header and address box are hidden in Browse.
+    expect(screen.queryByText(/pick a race\. read what the candidates said/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /address/i })).not.toBeInTheDocument();
+  });
+
+  it('browse back link reads "‹ Back" without a location and clears browseTarget', async () => {
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor' })], {});
+    useReadRankStore.getState().setBrowseTarget({ state: '', geoid: null });
+    render(<RaceHub />);
+    const back = await screen.findByRole('button', { name: '‹ Back' }, { timeout: 3000 });
+    await userEvent.click(back);
+    expect(useReadRankStore.getState().browseTarget).toBeNull();
+  });
+
+  it('browse back link reads "‹ Back to my ballot" with a location', async () => {
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor' })], {});
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA', politicianIds: [], state: 'CA',
+      county: null, countyName: null, jurisdiction: null,
+    });
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(await screen.findByRole('button', { name: '‹ Back to my ballot' }, { timeout: 3000 })).toBeInTheDocument();
   });
 
   it('clicking "Browse all races" on the LA example ballot sets the store browseTarget', async () => {

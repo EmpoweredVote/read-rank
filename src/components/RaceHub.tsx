@@ -1,3 +1,4 @@
+import { BrowseHeader } from './BrowseHeader';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
@@ -240,9 +241,10 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     // View 1 — explicit browse (Browse button, or a place-name smart search).
     content = (
       <div className="w-full">
-        <button className="ev-button-secondary" style={{ marginTop: '0.5rem' }} onClick={() => setBrowseTarget(null)}>
-          ‹ Back to my ballot
-        </button>
+        <BrowseHeader
+          backLabel={locationFilter !== null ? '‹ Back to my ballot' : '‹ Back'}
+          onBack={() => setBrowseTarget(null)}
+        />
         <RaceBrowse
           key={`${browseTarget.state}:${browseTarget.geoid ?? 'all'}`}
           races={races}
@@ -333,7 +335,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   return (
     <div className="pb-12">
-      {!hideHeader && (
+      {!hideHeader && !browseTarget && (
         <motion.div
           className="max-w-2xl mx-auto mb-4"
           {...m.enter({ y: 12 })}
@@ -356,7 +358,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       )}
 
       <div className="max-w-2xl mx-auto">
-        {!hideFilter && <AddressFilterInput />}
+        {!hideFilter && !browseTarget && <AddressFilterInput />}
       </div>
 
       {startError && (

@@ -2434,6 +2434,20 @@ button.rank-num:focus-visible .rank-num-badge {
 .rr-browse-banner--local { border-left-color: var(--color-ev-coral); }
 .rr-browse-empty { font-family: 'Manrope', sans-serif; font-size: 0.9rem; color: var(--text-secondary); text-align: center; padding: 2.5rem 1rem; }
 
+/* Browse view header (spec §1): text back link + page H1 */
+.rr-browse-header { padding-top: 0.25rem; }
+.rr-browse-back {
+  font-family: 'Manrope', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--text-link);
+  background: none; border: none; padding: 0.25rem 0; cursor: pointer;
+}
+.rr-browse-back:hover { text-decoration: underline; }
+.rr-browse-back:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; border-radius: 4px; }
+.rr-browse-title {
+  font-family: 'Manrope', sans-serif; font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 800;
+  color: var(--text-heading); letter-spacing: -0.02em; line-height: 1.1; margin: 0.5rem 0 1.25rem;
+}
+.rr-browse-title:focus { outline: none; }
+
 /* Example (default, no-location) ballot header */
 .rr-example-note {
   font-family: 'Manrope', sans-serif; font-size: 0.8125rem; color: var(--text-secondary);
