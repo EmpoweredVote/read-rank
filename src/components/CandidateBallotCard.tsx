@@ -131,7 +131,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
                   Agreed with <strong>{agreementCount} of {totalTopics}</strong>
                 </span>
                 {topPicks > 0 && (
-                  <span className="ballot-evidence__topk">· <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></span>
+                  <> <span className="ballot-evidence__topk">· <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></span></>
                 )}
               </>
             ) : (

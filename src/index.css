@@ -2635,9 +2635,10 @@ button.rank-num:focus-visible .rank-num-badge {
 .ballot-rankcol { display: flex; flex-direction: column; align-items: center; gap: 0.1875rem; flex-shrink: 0; padding-top: 1.375rem; }
 .ballot-tie { font-family: 'Manrope', sans-serif; font-size: 0.5625rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
 .ballot-outer { flex: 1; min-width: 0; border: 1px solid var(--border-subtle); border-radius: 0.75rem; overflow: hidden; background: var(--surface-card); }
-.ballot-strip { display: flex; flex-wrap: wrap; row-gap: 0.25rem; align-items: center; justify-content: space-between; gap: 0.625rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-subtle); }
-.ballot-evidence { display: inline-flex; flex-wrap: wrap; align-items: center; column-gap: 0.25rem; font-family: 'Manrope', sans-serif; font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
-.ballot-evidence__main, .ballot-evidence__topk { display: inline-flex; align-items: center; white-space: nowrap; }
+.ballot-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 0.625rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-subtle); }
+.ballot-evidence { font-family: 'Manrope', sans-serif; font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+/* Each clause stays whole; the line may break only between clauses. */
+.ballot-evidence__main, .ballot-evidence__topk { white-space: nowrap; }
 .ballot-evidence strong { color: var(--text-heading); }
 .ballot-topk { color: var(--text-link); font-weight: 700; white-space: nowrap; }
 .ballot-toggle { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; padding: 0.125rem 0; margin-left: auto; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-link); white-space: nowrap; }
