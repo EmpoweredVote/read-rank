@@ -2850,3 +2850,26 @@ button.rank-num:focus-visible .rank-num-badge {
   border-top: 1px solid var(--border-subtle); font-size: 0.8125rem; line-height: 1.45; color: var(--text-tertiary);
 }
 .rank-privacy svg { flex-shrink: 0; margin-top: 0.125rem; }
+
+/* Topic complete */
+.topic-done {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.75rem;
+  background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 1rem;
+  padding: 2rem 1.5rem; box-shadow: var(--shadow-card);
+}
+.topic-done__icon {
+  width: 3.5rem; height: 3.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised); color: var(--text-link);
+}
+.topic-done__title { margin: 0; font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text-heading); }
+.topic-done__title:focus { outline: none; }
+.topic-done__title:focus-visible { outline: 2px solid var(--text-link); outline-offset: 4px; border-radius: 0.25rem; }
+.topic-done__chips { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+.topic-done__chip {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.25rem 0.75rem; border-radius: 9999px;
+}
+.topic-done__chip--agreed { background: var(--surface-raised); color: var(--text-link); }
+.topic-done__chip--disagreed { background: var(--surface-sunken); color: var(--text-secondary); }
+.topic-done__text { margin: 0; max-width: 34ch; font-size: 0.9375rem; line-height: 1.5; color: var(--text-secondary); }
+.topic-done__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }

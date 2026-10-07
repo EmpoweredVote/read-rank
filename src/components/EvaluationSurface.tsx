@@ -320,7 +320,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     <div className="space-y-3">
       {header}
       {triageContent}
-      {isMouseDevice && revealCta}
+      {isMouseDevice && currentQuote && revealCta}
     </div>
   );
 
