@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { RaceHub } from './RaceHub';
 import { AddressFilterInput } from './AddressFilterInput';
@@ -21,6 +21,18 @@ export function Landing() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
   const pickerHeadingRef = useRef<HTMLHeadingElement>(null);
   const showSwitch = locationFilter !== null && !browseTarget;
+  const browsing = browseTarget !== null;
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const wasBrowsing = useRef(browsing);
+
+  // Leaving Browse: land back at the picker, not the top of the hero.
+  useEffect(() => {
+    if (wasBrowsing.current && !browsing) {
+      pickerRef.current?.scrollIntoView({ behavior: m.reduced ? 'auto' : 'smooth', block: 'start' });
+      pickerHeadingRef.current?.focus({ preventScroll: true });
+    }
+    wasBrowsing.current = browsing;
+  }, [browsing, m.reduced]);
 
   const enter = (i: number) => ({
     ...m.enter({ y: 12 }),
@@ -40,6 +52,7 @@ export function Landing() {
       {/* Bounded to line up with the ev-ui Header (1512px border-box, 24px inset). */}
       <div className="mx-auto px-6" style={{ maxWidth: '1512px' }}>
         {/* Hero */}
+        {!browsing && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16 lg:gap-24 items-center mb-12 lg:mb-16">
           <div>
             <motion.p className="text-xs font-bold uppercase tracking-widest mb-5"
@@ -94,9 +107,16 @@ export function Landing() {
             ))}
           </ol>
         </div>
+        )}
 
         {/* Picker */}
-        <div id="choose-election" className="scroll-mt-6 border-t pt-10" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div
+          id="choose-election"
+          ref={pickerRef}
+          className={browsing ? 'scroll-mt-6' : 'scroll-mt-6 border-t pt-10'}
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
+          {!browsing && (
           <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
             <div className="min-w-0 flex-1 basis-full sm:basis-auto">
               <h2
@@ -111,6 +131,7 @@ export function Landing() {
             </div>
             {showSwitch && <TimeFilterSwitch value={timeFilter} onChange={setTimeFilter} />}
           </div>
+          )}
           <RaceHub
             hideHeader
             hideFilter

@@ -154,14 +154,6 @@ describe('AddressFilterInput known-address line', () => {
     await waitFor(async () => expect(await screen.findByRole('button', { name: 'Change address' })).toHaveFocus());
   });
 
-  it('says "Your address" instead of "Races for" while a browse target is set', () => {
-    storeSlice.locationFilter = located;
-    storeSlice.browseTarget = { state: 'CA', geoid: null };
-    render(<AddressFilterInput />);
-    expect(screen.getByText(/your address/i)).toHaveTextContent('100 W Kirkwood Ave');
-    expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
-  });
-
   it('labels the search input "Street address"', () => {
     storeSlice.locationFilter = null;
     render(<AddressFilterInput />);

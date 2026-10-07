@@ -10,6 +10,8 @@ const CHROME_FILES = [
   'src/components/AlignmentMark.tsx',
   'src/components/RevealBand.tsx',
   'src/components/BallotLoader.tsx',
+  'src/components/RaceBrowse.tsx',
+  'src/components/BrowseHeader.tsx',
 ];
 
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), 'utf8');

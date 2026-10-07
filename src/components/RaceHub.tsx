@@ -5,6 +5,7 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaces, fetchRaceQuotes, prefetchBoundaries, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
+import { BrowseHeader } from './BrowseHeader';
 import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
 import { TimeFilterSwitch } from './TimeFilterSwitch';
@@ -181,18 +182,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     );
   }, [raceProgress, starting, handleSelect]);
 
-  if (loading) {
-    return (
-      <div className="text-center py-16">
-        <div className="inline-block w-6 h-6 border-2 rounded-full animate-spin"
-          style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--color-ev-muted-blue)' }} />
-        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-          Loading races…
-        </p>
-      </div>
-    );
-  }
-
   const located = locationFilter != null;
   const userState = locationFilter?.state ?? null;
   const userCounty = locationFilter?.county ?? null;
@@ -206,7 +195,17 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   let content: React.ReactNode = null;
 
-  if (loadError) {
+  if (loading) {
+    content = (
+      <div className="text-center py-16">
+        <div className="inline-block w-6 h-6 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--color-ev-muted-blue)' }} />
+        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
+          Loading races…
+        </p>
+      </div>
+    );
+  } else if (loadError) {
     // The race list failed to load. Say so — never imply the area simply has no races.
     content = (
       <motion.div className="max-w-2xl mx-auto text-center py-12" role="alert"
@@ -240,9 +239,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     // View 1 — explicit browse (Browse button, or a place-name smart search).
     content = (
       <div className="w-full">
-        <button className="ev-button-secondary" style={{ marginTop: '0.5rem' }} onClick={() => setBrowseTarget(null)}>
-          ‹ Back to my ballot
-        </button>
         <RaceBrowse
           key={`${browseTarget.state}:${browseTarget.geoid ?? 'all'}`}
           races={races}
@@ -333,7 +329,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   return (
     <div className="pb-12">
-      {!hideHeader && (
+      {!hideHeader && !browseTarget && (
         <motion.div
           className="max-w-2xl mx-auto mb-4"
           {...m.enter({ y: 12 })}
@@ -356,7 +352,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       )}
 
       <div className="max-w-2xl mx-auto">
-        {!hideFilter && <AddressFilterInput />}
+        {!hideFilter && !browseTarget && <AddressFilterInput />}
       </div>
 
       {startError && (
@@ -365,6 +361,13 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         }}>
           We couldn&apos;t open that race. Please try again in a moment.
         </p>
+      )}
+
+      {browseTarget && (
+        <BrowseHeader
+          backLabel={locationFilter !== null ? '‹ Back to my ballot' : '‹ Back'}
+          onBack={() => setBrowseTarget(null)}
+        />
       )}
 
       {content}
