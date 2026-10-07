@@ -126,10 +126,12 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
           <p className="ballot-evidence">
             {rank != null ? (
               <>
-                <AgreementBar agreed={agreementCount} total={totalTopics} />
-                Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                <span className="ballot-evidence__main">
+                  <AgreementBar agreed={agreementCount} total={totalTopics} />
+                  Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                </span>
                 {topPicks > 0 && (
-                  <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+                  <span className="ballot-evidence__topk">· <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></span>
                 )}
               </>
             ) : (

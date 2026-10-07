@@ -28,6 +28,11 @@ describe('CandidateBallotCard', () => {
     expect(ev.textContent).toContain('Agreed with 5 of 6');
     expect(ev.textContent).toContain('3 top picks');
   });
+  it('wraps each evidence clause in its own span so phones do not orphan the top-pick clause', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-evidence__main')!.textContent).toContain('Agreed with 5 of 6');
+    expect(document.querySelector('.ballot-evidence__topk')!.textContent).toContain('3 top picks');
+  });
   it('omits top picks when no quote is the user\'s #1', () => {
     render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={new Map()} />);
     expect(document.querySelector('.ballot-topk')).not.toBeInTheDocument();
