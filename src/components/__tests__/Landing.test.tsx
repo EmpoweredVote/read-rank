@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Landing } from '../Landing';
 import { useReadRankStore } from '../../store/useReadRankStore';
@@ -13,6 +13,7 @@ beforeEach(() => {
   window.localStorage?.clear();
   useReadRankStore.getState().reset();
   Element.prototype.scrollIntoView = vi.fn();
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 });
 
 describe('Landing', () => {
@@ -61,5 +62,26 @@ describe('Landing', () => {
     expect(await screen.findByText('Governor', undefined, { timeout: 3000 })).toBeInTheDocument();
     // Only one switch on the page (RaceHub's own is hidden).
     expect(screen.getAllByRole('group', { name: /filter by election timing/i })).toHaveLength(1);
+  });
+
+  it('in Browse: hides the hero, the picker heading, the address box and the switch', () => {
+    useReadRankStore.getState().setLocationFilter(located);
+    useReadRankStore.getState().setBrowseTarget({ state: 'IN', geoid: null });
+    render(<Landing />);
+    expect(screen.queryByText(/read candidates blind/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: /how it works/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: /choose an election/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/races for/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /filter by election timing/i })).not.toBeInTheDocument();
+  });
+
+  it('leaving Browse brings the hero back and scrolls to the picker', () => {
+    useReadRankStore.getState().setBrowseTarget({ state: '', geoid: null });
+    render(<Landing />);
+    expect(screen.queryByText(/read candidates blind/i)).not.toBeInTheDocument();
+    (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
+    act(() => { useReadRankStore.getState().setBrowseTarget(null); });
+    expect(screen.getByText(/read candidates blind/i)).toBeInTheDocument();
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 });
