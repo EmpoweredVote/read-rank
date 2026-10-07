@@ -83,5 +83,21 @@ describe('Landing', () => {
     act(() => { useReadRankStore.getState().setBrowseTarget(null); });
     expect(screen.getByText(/read candidates blind/i)).toBeInTheDocument();
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+    expect(screen.getByRole('heading', { level: 2, name: /choose an election/i })).toHaveFocus();
+  });
+
+  it('does not scroll on mount, with or without a browse target', () => {
+    const { unmount } = render(<Landing />);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    unmount();
+    useReadRankStore.getState().setBrowseTarget({ state: '', geoid: null });
+    render(<Landing />);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('in Browse: shows the "Choose an election" H1 once races load', async () => {
+    useReadRankStore.getState().setBrowseTarget({ state: '', geoid: null });
+    render(<Landing />);
+    expect(await screen.findByRole('heading', { level: 1, name: /choose an election/i }, { timeout: 3000 })).toBeInTheDocument();
   });
 });

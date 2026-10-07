@@ -28,7 +28,7 @@ interface AddressFilterInputProps {
 
 export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps) {
   const m = useMotion();
-  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget, browseTarget } = useReadRankStore();
+  const { locationFilter, setLocationFilter, clearLocationFilter, counties, setBrowseTarget } = useReadRankStore();
   const { isLoggedIn, userId } = useAuthState();
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -188,7 +188,7 @@ export function AddressFilterInput({ onFilterApplied }: AddressFilterInputProps)
               <circle cx="12" cy="10" r="3" />
             </svg>
             <span className="rr-address-line__text">
-              {browseTarget ? 'Your address: ' : 'Races for '}
+              {'Races for '}
               <strong className="rr-address-line__addr" title={locationFilter?.address}>{locationFilter?.address}</strong>
             </span>
             <button ref={focusChangeBtn} type="button" className="rr-text-btn" aria-label="Change address" onClick={() => setEditing(true)}>

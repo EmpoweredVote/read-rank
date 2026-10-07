@@ -158,7 +158,7 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
                 {CATEGORY_ICON[section.cat]}
               </svg>
             </span>
-            <span className="rr-browse-banner__label">{section.cat}</span>
+            <h2 className="rr-browse-banner__label">{section.cat}</h2>
             <span className="rr-browse-banner__count" aria-hidden="true">{section.races.length}</span>
             <span className="rr-browse-banner__rule" aria-hidden="true" />
           </div>

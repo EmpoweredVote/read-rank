@@ -42,6 +42,12 @@ describe('RaceBrowse — search-first', () => {
     expect(panel).toContainElement(screen.getByLabelText('Search races'));
     expect(panel).toContainElement(screen.getByRole('group', { name: 'Filter races' }));
     expect(panel).toContainElement(screen.getByLabelText('Filter by state'));
+    expect(screen.getByRole('group', { name: 'Filter races' })).toContainElement(screen.getByLabelText('Filter by state'));
+  });
+
+  it('tier labels are level-2 headings', () => {
+    setup();
+    expect(screen.getByRole('heading', { level: 2, name: 'Statewide' })).toBeInTheDocument();
   });
 
   it('section headers carry an icon, the label and a hidden count chip', () => {

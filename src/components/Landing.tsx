@@ -29,6 +29,7 @@ export function Landing() {
   useEffect(() => {
     if (wasBrowsing.current && !browsing) {
       pickerRef.current?.scrollIntoView({ behavior: m.reduced ? 'auto' : 'smooth', block: 'start' });
+      pickerHeadingRef.current?.focus({ preventScroll: true });
     }
     wasBrowsing.current = browsing;
   }, [browsing, m.reduced]);

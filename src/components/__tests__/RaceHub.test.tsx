@@ -214,3 +214,32 @@ describe('RaceHub race start failure', () => {
     expect(useReadRankStore.getState().currentRaceId).toBeNull();
   });
 });
+
+describe('RaceHub Browse header in every state', () => {
+  it('shows the Back link while races are loading', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(screen.getByText(/loading races/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBeInTheDocument();
+  });
+
+  it('shows the Back link when there are no races', async () => {
+    stubRacesFetch([], {});
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(await screen.findByText(/no races available yet/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBeInTheDocument();
+  });
+
+  it('does not remount the header when loading finishes', async () => {
+    stubRacesFetch([], {});
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    const h1 = screen.getByRole('heading', { level: 1, name: /choose an election/i });
+    await screen.findByText(/no races available yet/i);
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBe(h1);
+  });
+});
