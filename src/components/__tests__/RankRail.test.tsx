@@ -29,10 +29,11 @@ beforeEach(() => {
 });
 
 describe('RankRail', () => {
-  it('shows the empty state and the zero-agreed subtitle before anything is agreed', () => {
+  it('shows only the empty box (no subtitle) before anything is agreed', () => {
     render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(0);
-    expect(screen.getByText('Quotes you agree with land here.')).toBeInTheDocument();
+    expect(screen.queryByText('Quotes you agree with land here.')).not.toBeInTheDocument();
+    expect(document.querySelector('.rank-panel-sub')).toBeNull();
     expect(screen.getByText('Agree with a quote to add it here. Then put the one you trust most on top.')).toBeVisible();
   });
 

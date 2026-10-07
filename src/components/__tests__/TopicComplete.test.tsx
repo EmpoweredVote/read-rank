@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { EvaluationPhase } from '../EvaluationPhase';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
@@ -45,7 +46,19 @@ describe('topic-complete card', () => {
     expect(screen.getByText('1 DISAGREED')).toBeInTheDocument();
     expect(screen.getByText('Move on to the next topic, or keep arranging your ranking.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next topic →' })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /reveal ballot|see your full ballot/i })).toHaveLength(1);
+    const rev = screen.getAllByRole('button', { name: /reveal ballot|see your full ballot/i });
+    expect(rev).toHaveLength(1);
+    expect(rev[0]).toHaveClass('ev-button-secondary');
+  });
+
+  it('last by position but another topic unfinished: "Topic complete" and Next topic goes to the unfinished topic', async () => {
+    s().setCurrentTopic('k2');
+    finishTopic('k2');
+    render(<EvaluationPhase />);
+    expect(await screen.findByRole('heading', { level: 2, name: 'Topic complete' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'All topics done' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Next topic →' }));
+    expect(s().getCurrentRaceProgress()!.currentTopicKey).toBe('k1');
   });
 
   it('last topic: "All topics done" with the reveal as the main button', async () => {
@@ -53,6 +66,8 @@ describe('topic-complete card', () => {
     render(<EvaluationPhase />);
     expect(await screen.findByRole('heading', { level: 2, name: 'All topics done' })).toBeInTheDocument();
     expect(screen.getByText("Reveal your ballot when you're ready.")).toBeInTheDocument();
+    expect(screen.getByText('1 AGREED')).toBeInTheDocument();
+    expect(screen.getByText('1 DISAGREED')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Next topic →' })).not.toBeInTheDocument();
     const reveal = screen.getAllByRole('button', { name: /see your full ballot/i });
     expect(reveal).toHaveLength(1);

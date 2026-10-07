@@ -13,6 +13,16 @@ export interface RankRailProps {
   showPrivacyNote?: boolean;
 }
 
+export const PrivacyNote: React.FC = () => (
+  <p className="rank-privacy">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+    Names and parties stay hidden until you see your full ballot.
+  </p>
+);
+
 export const RankRail: React.FC<RankRailProps> = ({ variant, landingId, showPrivacyNote = true }) => {
   const { agreed, disagreed, reorder: reorderAgreed, toggleTie, reAgree, rankedCount, setRankedCount } = useRankSource();
   const [showDisagreed, setShowDisagreed] = useState(false);
@@ -39,10 +49,8 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId, showPriv
 
   return (
     <div className="rank-rail">
-      {agreed.length < 2 && (
-        <p className="rank-panel-sub">
-          {agreed.length === 0 ? 'Quotes you agree with land here.' : 'Agree with more quotes to compare them here.'}
-        </p>
+      {agreed.length === 1 && (
+        <p className="rank-panel-sub">Agree with more quotes to compare them here.</p>
       )}
       {agreed.length >= 2 && (
         <div className="rank-toolbar">
@@ -136,15 +144,7 @@ export const RankRail: React.FC<RankRailProps> = ({ variant, landingId, showPriv
           )}
         </section>
       )}
-      {showPrivacyNote && (
-        <p className="rank-privacy">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-          Names and parties stay hidden until you see your full ballot.
-        </p>
-      )}
+      {showPrivacyNote && <PrivacyNote />}
       <div className="sr-only" role="status" aria-live="polite">{recoverMsg}</div>
     </div>
   );

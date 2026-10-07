@@ -12,6 +12,7 @@ export const EvaluationPhase: React.FC = () => {
     disagree,
     revealBallot,
     nextTopic,
+    setCurrentTopic,
     getCurrentRaceProgress,
     getCurrentTopicProgress,
     coachMarksCompleted,
@@ -29,13 +30,28 @@ export const EvaluationPhase: React.FC = () => {
 
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
   const currentTopicIdx = race?.currentTopicKey ? activeTopicKeys.indexOf(race.currentTopicKey) : 0;
-  const isLastTopic = currentTopicIdx >= activeTopicKeys.length - 1;
+  const isLastPosition = currentTopicIdx >= activeTopicKeys.length - 1;
   const allTopicsDone = race
     ? activeTopicKeys.every((k) => {
         const t = race.topics[k];
         return t ? t.currentIndex >= t.quotesToEvaluate.length : true;
       })
     : false;
+  // The "last topic" variant means every topic is finished, not that the user
+  // happens to stand on the last one (they can jump around).
+  const isLastTopic = allTopicsDone;
+  const firstUnfinishedKey = race
+    ? activeTopicKeys.find((k) => {
+        const t = race.topics[k];
+        return t ? t.currentIndex < t.quotesToEvaluate.length : false;
+      })
+    : undefined;
+  // nextTopic is a no-op at the last position, so route to the first
+  // unfinished topic explicitly when we are there.
+  const goNext = () => {
+    if (isLastPosition && firstUnfinishedKey) setCurrentTopic(firstUnfinishedKey);
+    else nextTopic();
+  };
 
   const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
   const revealLabel = isRaceComplete(race ?? undefined, race?.rankableTopicCount) ? 'See your full ballot' : 'Reveal ballot';
@@ -92,7 +108,7 @@ export const EvaluationPhase: React.FC = () => {
       </p>
       <div className="topic-done__actions">
         {!isLastTopic && (
-          <button type="button" onClick={nextTopic} className="ev-button-primary">Next topic →</button>
+          <button type="button" onClick={goNext} className="ev-button-primary">Next topic →</button>
         )}
         {revealButton}
       </div>
@@ -109,6 +125,7 @@ export const EvaluationPhase: React.FC = () => {
       header={<TopicStepper />}
       completeState={completeState}
       reveal={{ label: revealLabel, onReveal: revealBallot, enabled: canReveal }}
+      revealInCompleteState
       showCoachMarks={!coachMarksCompleted}
       onCoachComplete={completeCoachMarks}
     />

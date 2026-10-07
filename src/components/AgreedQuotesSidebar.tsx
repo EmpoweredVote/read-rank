@@ -1,7 +1,7 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { useAnimate, useReducedMotion } from 'framer-motion';
 import { useScrollFade } from '../hooks/useScrollFade';
-import { RankRail } from './RankRail';
+import { RankRail, PrivacyNote } from './RankRail';
 import { useRankSource } from './RankSource';
 
 /**
@@ -39,8 +39,9 @@ export const RankedListSidebar = React.forwardRef<HTMLDivElement, RankedListSide
 
       <div style={{ padding: '0.75rem' }}>
         <div ref={scrollRef} style={{ overflowY: 'auto', maxHeight: '58vh' }}>
-          <RankRail variant="sidebar" landingId={landingId} showPrivacyNote={showPrivacyNote} />
+          <RankRail variant="sidebar" landingId={landingId} showPrivacyNote={false} />
         </div>
+        {showPrivacyNote && <PrivacyNote />}
       </div>
     </div>
   );

@@ -44,6 +44,8 @@ export interface EvaluationSurfaceProps {
   reveal: { label: string; onReveal: () => void; enabled: boolean };
   /** Run the coach-mark tour (resolved upstream, e.g. !coachMarksCompleted). */
   showCoachMarks: boolean;
+  /** Render the reveal CTA under the complete state too (race path). The practice round's complete state has no button of its own. */
+  revealInCompleteState?: boolean;
   /** Called when the tour finishes/dismisses. */
   onCoachComplete: () => void;
 }
@@ -60,6 +62,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
   reveal,
   showCoachMarks,
   onCoachComplete,
+  revealInCompleteState = false,
 }) => {
   const agreed = source.agreed;
 
@@ -320,7 +323,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     <div className="space-y-3">
       {header}
       {triageContent}
-      {isMouseDevice && currentQuote && revealCta}
+      {isMouseDevice && (currentQuote || !revealInCompleteState) && revealCta}
     </div>
   );
 
