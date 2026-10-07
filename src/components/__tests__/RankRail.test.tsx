@@ -16,6 +16,7 @@ const payload: RacePayload = {
       quotes: [
         { id: 'q1', text: 'Rail agreed quote.', candidateToken: 'a', topicKey: 'housing' },
         { id: 'q2', text: 'Rail disagreed quote.', candidateToken: 'b', topicKey: 'housing' },
+        { id: 'q3', text: 'Rail second agreed.', candidateToken: 'c', topicKey: 'housing' },
       ],
     },
   ],
@@ -28,10 +29,36 @@ beforeEach(() => {
 });
 
 describe('RankRail', () => {
-  it('shows a nothing-ranked hint and no ghost slots before anything is ranked', () => {
+  it('shows only the empty box (no subtitle) before anything is agreed', () => {
     render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
     expect(document.querySelectorAll('.tier-ghost')).toHaveLength(0);
-    expect(screen.getByText(/nothing ranked yet/i)).toBeInTheDocument();
+    expect(screen.queryByText('Quotes you agree with land here.')).not.toBeInTheDocument();
+    expect(document.querySelector('.rank-panel-sub')).toBeNull();
+    expect(screen.getByText('Agree with a quote to add it here. Then put the one you trust most on top.')).toBeVisible();
+  });
+
+  it('switches subtitle at one agreed and hides the empty state', () => {
+    useReadRankStore.getState().agree(payload.topics[0].quotes[0]);
+    render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
+    expect(screen.getByText('Agree with more quotes to compare them here.')).toBeInTheDocument();
+    expect(screen.queryByText(/agree with a quote to add it here/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the privacy footer by default and hides it on request', () => {
+    const { unmount } = render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
+    expect(screen.getByText('Names and parties stay hidden until you see your full ballot.')).toBeInTheDocument();
+    unmount();
+    render(<RaceRankSourceProvider><RankRail variant="sidebar" showPrivacyNote={false} /></RaceRankSourceProvider>);
+    expect(screen.queryByText(/names and parties stay hidden/i)).not.toBeInTheDocument();
+  });
+
+  it('drops the subtitle at two agreed (the toolbar hint takes over)', () => {
+    const [q1, , q3] = payload.topics[0].quotes;
+    useReadRankStore.getState().agree(q1);
+    useReadRankStore.getState().agree(q3);
+    render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
+    expect(screen.queryByText(/land here|compare them here/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/tap a number to place it/i)).toBeInTheDocument();
   });
 
   it('collapses disagreed behind a single line, with no divider', async () => {
@@ -61,7 +88,7 @@ describe('RankRail', () => {
     useReadRankStore.getState().disagree(q2);
     render(<RaceRankSourceProvider><RankRail variant="sheet" /></RaceRankSourceProvider>);
     await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
-    await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
+    await userEvent.click(screen.getByRole('button', { name: /move to my ranking/i }));
     expect(useReadRankStore.getState().getCurrentRaceProgress()!.topics.housing.agreed.map((q) => q.id)).toEqual(['q1', 'q2']);
     expect(screen.queryByRole('button', { name: /review or recover/i })).not.toBeInTheDocument();
   });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useReadRankStore, getActiveTopicKeys, getAllAgreedQuotes, type BlindQuote } from '../store/useReadRankStore';
 import { track } from '../lib/analytics';
 import { TopicStepper } from './TopicStepper';
@@ -12,6 +12,7 @@ export const EvaluationPhase: React.FC = () => {
     disagree,
     revealBallot,
     nextTopic,
+    setCurrentTopic,
     getCurrentRaceProgress,
     getCurrentTopicProgress,
     coachMarksCompleted,
@@ -29,13 +30,28 @@ export const EvaluationPhase: React.FC = () => {
 
   const activeTopicKeys = race ? getActiveTopicKeys(race) : [];
   const currentTopicIdx = race?.currentTopicKey ? activeTopicKeys.indexOf(race.currentTopicKey) : 0;
-  const isLastTopic = currentTopicIdx >= activeTopicKeys.length - 1;
+  const isLastPosition = currentTopicIdx >= activeTopicKeys.length - 1;
   const allTopicsDone = race
     ? activeTopicKeys.every((k) => {
         const t = race.topics[k];
         return t ? t.currentIndex >= t.quotesToEvaluate.length : true;
       })
     : false;
+  // The "last topic" variant means every topic is finished, not that the user
+  // happens to stand on the last one (they can jump around).
+  const isLastTopic = allTopicsDone;
+  const firstUnfinishedKey = race
+    ? activeTopicKeys.find((k) => {
+        const t = race.topics[k];
+        return t ? t.currentIndex < t.quotesToEvaluate.length : false;
+      })
+    : undefined;
+  // nextTopic is a no-op at the last position, so route to the first
+  // unfinished topic explicitly when we are there.
+  const goNext = () => {
+    if (isLastPosition && firstUnfinishedKey) setCurrentTopic(firstUnfinishedKey);
+    else nextTopic();
+  };
 
   const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
   const revealLabel = isRaceComplete(race ?? undefined, race?.rankableTopicCount) ? 'See your full ballot' : 'Reveal ballot';
@@ -59,20 +75,42 @@ export const EvaluationPhase: React.FC = () => {
     else disagree(quote);
   };
 
+  const topicAgreed = topic?.agreed.length ?? 0;
+  const topicDisagreed = topic?.disagreed.length ?? 0;
+  const doneHeadingRef = useRef<HTMLHeadingElement>(null);
+  const showingComplete = !currentQuote;
+  useEffect(() => {
+    if (showingComplete) doneHeadingRef.current?.focus({ preventScroll: true });
+  }, [showingComplete, race?.currentTopicKey]);
+
+  const revealButton = canReveal && (
+    <button type="button" onClick={revealBallot}
+      className={isLastTopic ? 'ev-button-primary' : 'ev-button-secondary'}>
+      {revealLabel}
+    </button>
+  );
+
   const completeState = (
-    <div className="evaluation-complete-card">
-      <div className="text-center py-8">
-        <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-link)', marginBottom: '0.5rem' }}>
-          {isLastTopic ? 'All topics done' : 'Topic complete'}
-        </div>
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-          {isLastTopic ? "Reveal your ballot when you're ready." : 'Move on, or keep ranking your pile.'}
-        </p>
+    <div className="topic-done">
+      <span className="topic-done__icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
+          strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+      </span>
+      <h2 ref={doneHeadingRef} tabIndex={-1} className="topic-done__title">
+        {isLastTopic ? 'All topics done' : 'Topic complete'}
+      </h2>
+      <div className="topic-done__chips">
+        <span className="topic-done__chip topic-done__chip--agreed">{topicAgreed} AGREED</span>
+        <span className="topic-done__chip topic-done__chip--disagreed">{topicDisagreed} DISAGREED</span>
+      </div>
+      <p className="topic-done__text">
+        {isLastTopic ? "Reveal your ballot when you're ready." : 'Move on to the next topic, or keep arranging your ranking.'}
+      </p>
+      <div className="topic-done__actions">
         {!isLastTopic && (
-          <button onClick={nextTopic} className="ev-button-primary" style={{ marginTop: '1rem', fontSize: '0.9375rem' }}>
-            Next topic →
-          </button>
+          <button type="button" onClick={goNext} className="ev-button-primary">Next topic →</button>
         )}
+        {revealButton}
       </div>
     </div>
   );
@@ -87,6 +125,7 @@ export const EvaluationPhase: React.FC = () => {
       header={<TopicStepper />}
       completeState={completeState}
       reveal={{ label: revealLabel, onReveal: revealBallot, enabled: canReveal }}
+      revealInCompleteState
       showCoachMarks={!coachMarksCompleted}
       onCoachComplete={completeCoachMarks}
     />

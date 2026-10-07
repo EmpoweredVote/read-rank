@@ -11,6 +11,17 @@ const items: AgreedQuote[] = [
 ];
 
 describe('RankList rows', () => {
+  it('marks only the first ranked slip as first place', () => {
+    render(<RankList items={items} onReorder={vi.fn()} />);
+    expect(screen.getByText('Alpha quote.').closest('.rank-slip')).toHaveClass('rank-slip-first');
+    expect(screen.getByText('Bravo quote.').closest('.rank-slip')).not.toHaveClass('rank-slip-first');
+  });
+
+  it('never marks an unranked ("also agreed") slip as first place', () => {
+    render(<RankList items={items} onReorder={vi.fn()} rankedCount={0} onSetRankedCount={vi.fn()} />);
+    document.querySelectorAll('.rank-slip').forEach((el) => expect(el).not.toHaveClass('rank-slip-first'));
+  });
+
   it('renders no ▲▼ move buttons — reorder is drag or tap-to-assign', () => {
     render(<RankList items={items} onReorder={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /move up/i })).not.toBeInTheDocument();

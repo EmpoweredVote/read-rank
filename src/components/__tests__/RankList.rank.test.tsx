@@ -80,6 +80,12 @@ describe('RankList tie-with-above control', () => {
     const aSlip = screen.getByText('Alpha quote.').closest('.rank-slip');
     expect(aSlip?.className).not.toMatch(/rank-slip-tied/);
   });
+
+  it('gives first-place treatment to every slip tied for first', () => {
+    render(<RankList items={items} onReorder={vi.fn()} onToggleTie={vi.fn()} />);
+    expect(screen.getByText('Alpha quote.').closest('.rank-slip')).toHaveClass('rank-slip-first');
+    expect(screen.getByText('Bravo quote.').closest('.rank-slip')).toHaveClass('rank-slip-first');
+  });
 });
 
 describe('RankList truncation control (place the rest as agreed)', () => {

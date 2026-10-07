@@ -44,6 +44,8 @@ export interface EvaluationSurfaceProps {
   reveal: { label: string; onReveal: () => void; enabled: boolean };
   /** Run the coach-mark tour (resolved upstream, e.g. !coachMarksCompleted). */
   showCoachMarks: boolean;
+  /** Render the reveal CTA under the complete state too (race path). The practice round's complete state has no button of its own. */
+  revealInCompleteState?: boolean;
   /** Called when the tour finishes/dismisses. */
   onCoachComplete: () => void;
 }
@@ -60,6 +62,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
   reveal,
   showCoachMarks,
   onCoachComplete,
+  revealInCompleteState = false,
 }) => {
   const agreed = source.agreed;
 
@@ -320,7 +323,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     <div className="space-y-3">
       {header}
       {triageContent}
-      {isMouseDevice && revealCta}
+      {isMouseDevice && (currentQuote || !revealInCompleteState) && revealCta}
     </div>
   );
 
@@ -375,7 +378,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
             <div className="evaluation-main-panel">{mainColumn}</div>
             <div className="evaluation-sidebar-panel">
               {agreed.length === 1 && <FirstAgreeCoach variant="desktop" />}
-              <RankedListSidebar ref={sidebarRef} landingId={landingId} />
+              <RankedListSidebar ref={sidebarRef} landingId={landingId} showPrivacyNote={showTrustFooter} />
             </div>
           </div>
           {coachMarkOverlay}
@@ -410,6 +413,7 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
         </div>
         <RankSheet
           open={sheetOpen}
+          showPrivacyNote={showTrustFooter}
           allDone={allDone}
           canReveal={reveal.enabled}
           resultsLabel={reveal.label}

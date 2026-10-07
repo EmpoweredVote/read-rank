@@ -129,7 +129,13 @@ export const PhaseContainer: React.FC = () => {
       {(phase === 'evaluation' || phase === 'results') && currentRaceId && (
         <RaceBreadcrumb />
       )}
-      <AnimatePresence mode="wait">
+      <AnimatePresence
+        mode="wait"
+        // Reset scroll once the outgoing phase has finished exiting, just before the new
+        // phase mounts. Scrolling earlier would visibly jolt the fading-out view. Not
+        // called on initial mount, so a refresh / restore keeps the browser's own scroll.
+        onExitComplete={() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' })}
+      >
         <motion.div key={phase} {...getPageTransition(phase, prefersReducedMotion)}>
           {renderPhase()}
         </motion.div>
