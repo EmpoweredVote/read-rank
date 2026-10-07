@@ -4,6 +4,7 @@ import { useMotion, EASE, DUR } from '../motion';
 import { computeRevealTimeline } from '../utils/revealTimeline';
 import { useReadRankStore, getAllAgreedQuotes, getActiveTopicKeys } from '../store/useReadRankStore';
 import { fetchRaceReveal, type RevealResult } from '../data/api';
+import { BallotLoader } from './BallotLoader';
 import { AlignmentSection } from './AlignmentSection';
 import { CandidateBallotCard } from './CandidateBallotCard';
 import { RevealBand } from './RevealBand';
@@ -17,7 +18,7 @@ import { isRaceComplete } from '../utils/raceProgressState';
 export const ResultsPhase: React.FC = () => {
   const { goToHub, setPhase, currentRaceId, getRaceVerdicts, getCurrentRaceProgress } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadStep, setLoadStep] = useState<'matching' | 'revealing' | null>('matching');
   // The reveal call failed. Kept separate from "the ballot is empty": the user's
   // verdicts are safe in the store, so this is a retryable outage, not a verdict
   // on their choices.
@@ -28,15 +29,20 @@ export const ResultsPhase: React.FC = () => {
   const complete = race ? isRaceComplete(race, race.rankableTopicCount) : false;
 
   useEffect(() => {
-    if (!currentRaceId) { setLoading(false); return; }
+    if (!currentRaceId) { setLoadStep(null); return; }
     let cancelled = false;
-    setLoading(true);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    setLoadStep('matching');
     setFailed(false);
     fetchRaceReveal(currentRaceId, getRaceVerdicts(currentRaceId))
-      .then((result) => { if (!cancelled) setReveal(result); })
-      .catch(() => { if (!cancelled) setFailed(true); })
-      .finally(() => setTimeout(() => { if (!cancelled) setLoading(false); }, 600));
-    return () => { cancelled = true; };
+      .then((result) => {
+        if (cancelled) return;
+        setReveal(result);
+        setLoadStep('revealing');
+        timer = setTimeout(() => { if (!cancelled) setLoadStep(null); }, 400);
+      })
+      .catch(() => { if (!cancelled) { setFailed(true); setLoadStep(null); } });
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [currentRaceId, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const agreedList = race ? getAllAgreedQuotes(race) : [];
@@ -97,17 +103,8 @@ export const ResultsPhase: React.FC = () => {
     [filledCells, m.reduced]
   );
 
-  if (loading) {
-    return (
-      <div className="text-center py-16">
-        <motion.div className="inline-block w-6 h-6 border-2 rounded-full"
-          style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--color-ev-muted-blue)' }}
-          animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
-        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 500, color: 'var(--text-secondary)', fontSize: '1rem' }}>
-          Tallying your ballot…
-        </p>
-      </div>
-    );
+  if (loadStep) {
+    return <BallotLoader step={loadStep} />;
   }
 
   // Nothing judged: there is nothing to reveal, and that stays true whether or

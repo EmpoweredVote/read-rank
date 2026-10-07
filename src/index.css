@@ -2873,3 +2873,29 @@ button.rank-num:focus-visible .rank-num-badge {
 .topic-done__chip--disagreed { background: var(--surface-sunken); color: var(--text-secondary); }
 .topic-done__text { margin: 0; max-width: 34ch; font-size: 0.9375rem; line-height: 1.5; color: var(--text-secondary); }
 .topic-done__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }
+
+/* Ballot loader */
+.ballot-loader { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 4rem 1rem; text-align: center; }
+.ballot-loader__cards { position: relative; width: 8rem; height: 5.5rem; margin-bottom: 1rem; }
+.ballot-loader__card {
+  position: absolute; inset: 0; border-radius: 0.75rem; background: var(--surface-card);
+  border: 1px solid var(--border-medium);
+}
+.ballot-loader__card--back { transform: rotate(4deg) translate(6px, -4px); }
+.ballot-loader__card--front {
+  border-color: var(--action-primary); box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1rem;
+}
+.ballot-loader__line { display: block; height: 6px; width: 55%; border-radius: 9999px; background: var(--border-subtle); }
+.ballot-loader__line--accent { width: 85%; background: var(--color-ev-yellow); }
+.ballot-loader__title { margin: 0; font-family: 'Manrope', sans-serif; font-size: 1.125rem; font-weight: 800; color: var(--text-heading); }
+.ballot-loader__step { margin: 0; font-size: 0.875rem; color: var(--text-secondary); }
+.ballot-loader__track { width: 16rem; max-width: 80%; height: 4px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; margin-top: 0.75rem; }
+.ballot-loader__fill { height: 100%; border-radius: 9999px; background: var(--action-primary); }
+.ballot-loader__fill--matching { width: 70%; animation: ballot-loader-fill 1.2s var(--ease-settle) both; }
+.ballot-loader__fill--revealing { width: 100%; transition: width var(--dur-base) var(--ease-standard); }
+@keyframes ballot-loader-fill { from { width: 0; } to { width: 70%; } }
+@media (prefers-reduced-motion: reduce) {
+  .ballot-loader__fill--matching { animation: none; }
+  .ballot-loader__fill--revealing { transition: none; }
+}
