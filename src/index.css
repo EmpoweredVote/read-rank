@@ -91,6 +91,7 @@
   --tier-disagreed-ink: var(--text-tertiary);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
+  --focus-ring: rgba(0, 83, 102, 0.18);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   /* Action / primary (replaces coral on interactive elements) */
@@ -167,6 +168,7 @@
   --tier-disagreed-border: #6b7480;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --focus-ring: rgba(89, 176, 196, 0.28);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
 
   --action-primary: #59B0C4;
@@ -2395,43 +2397,61 @@ button.rank-num:focus-visible .rank-num-badge {
 .race-browse-row__count { font-size: 0.8rem; font-weight: 700; color: var(--text-tertiary); }
 
 /* Search-first Browse (RaceBrowse) — essentials-style search + filter strip + tier sections */
-.rr-browse-search { position: relative; margin: 0.75rem 0; }
+.rr-browse-panel {
+  background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 16px;
+  padding: 1rem; box-shadow: var(--shadow-card);
+}
+.rr-browse-search { position: relative; }
 .rr-browse-search__icon {
   position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%);
   color: var(--text-tertiary); pointer-events: none;
 }
 .rr-browse-search__input {
-  width: 100%; font-family: 'Manrope', sans-serif; font-size: 0.95rem;
-  padding: 0.7rem 1rem 0.7rem 2.6rem; border-radius: 0.75rem;
-  border: 1px solid var(--border-subtle); background: var(--surface-card); color: var(--text-heading); outline: none;
+  width: 100%; height: 3rem; font-family: 'Manrope', sans-serif; font-size: 0.9375rem;
+  padding: 0 1rem 0 2.6rem; border-radius: 12px; border: 1px solid var(--border-subtle);
+  background: var(--surface-sunken); color: var(--text-heading); outline: none;
 }
-.rr-browse-search__input:focus { border-color: var(--color-ev-muted-blue); box-shadow: 0 0 0 3px rgba(0,101,124,0.15); }
-.rr-browse-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
+.rr-browse-search__input:focus { border-color: var(--action-primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+.rr-browse-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; }
 .rr-browse-pill {
-  font-family: 'Manrope', sans-serif; font-size: 0.8125rem; font-weight: 600; padding: 0.4rem 0.85rem;
-  border-radius: 999px; cursor: pointer; border: 1px solid var(--border-subtle);
-  background: transparent; color: var(--text-secondary); transition: all 0.12s;
+  font-family: 'Manrope', sans-serif; font-size: 0.875rem; font-weight: 700; padding: 0.45rem 0.95rem;
+  border-radius: 9999px; cursor: pointer; border: 1px solid var(--border-medium);
+  background: var(--surface-card); color: var(--text-strong); transition: border-color 0.12s, color 0.12s, background-color 0.12s;
 }
 .rr-browse-pill:hover { border-color: var(--text-link); color: var(--text-link); }
-.rr-browse-pill.is-active { background: var(--color-ev-muted-blue); border-color: var(--color-ev-muted-blue); color: #fff; font-weight: 800; }
+.rr-browse-pill:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+.rr-browse-pill.is-active { background: var(--action-primary); border-color: var(--action-primary); color: var(--on-dark-ink); }
+.rr-browse-state {
+  display: inline-flex; align-items: center; gap: 0.375rem; margin-left: auto; min-width: 11rem;
+  padding: 0 0.75rem; border: 1px solid var(--border-medium); border-radius: 9999px;
+  background: var(--surface-card); color: var(--text-link);
+}
+.rr-browse-state:focus-within { border-color: var(--action-primary); box-shadow: 0 0 0 3px var(--focus-ring); }
 .rr-browse-select {
-  font-family: 'Manrope', sans-serif; font-size: 0.8125rem; font-weight: 600; padding: 0.4rem 0.7rem;
-  border-radius: 999px; cursor: pointer; border: 1px solid var(--border-subtle);
-  background: var(--surface-card); color: var(--text-secondary);
+  flex: 1; font-family: 'Manrope', sans-serif; font-size: 0.875rem; font-weight: 700; padding: 0.45rem 0;
+  border: none; background: transparent; color: var(--text-strong); cursor: pointer; outline: none;
 }
-.rr-browse-count { font-family: 'Manrope', sans-serif; font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 0.75rem; }
+@media (max-width: 639px) {
+  .rr-browse-state { flex-basis: 100%; margin-left: 0; }
+}
+.rr-browse-count { font-family: 'Manrope', sans-serif; font-size: 0.875rem; color: var(--text-secondary); margin: 1.25rem 0 0.75rem; }
+.rr-browse-count strong { color: var(--text-heading); }
 .rr-browse-section { margin-bottom: 1.5rem; }
-.rr-browse-banner {
-  display: flex; align-items: center; gap: 0.5rem; font-family: 'Manrope', sans-serif; font-weight: 800;
-  font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-heading);
-  padding: 0.4rem 0.75rem; margin: 0 0 0.6rem; border-radius: 0.5rem;
-  background: var(--surface-raised); border-left: 3px solid var(--color-ev-muted-blue);
+.rr-browse-banner { display: flex; align-items: center; gap: 0.625rem; margin: 1.5rem 0 0.875rem; }
+.rr-browse-banner__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 1.75rem; height: 1.75rem; border-radius: 8px; background: var(--surface-raised); color: var(--text-link);
 }
-.rr-browse-banner__count { font-weight: 600; color: var(--text-secondary); letter-spacing: 0; text-transform: none; }
-.rr-browse-banner--statewide { border-left-color: var(--color-ev-muted-blue); }
-.rr-browse-banner--ushouse { border-left-color: var(--color-ev-dark-blue); }
-.rr-browse-banner--statelegislature { border-left-color: var(--color-ev-light-blue); }
-.rr-browse-banner--local { border-left-color: var(--color-ev-coral); }
+.rr-browse-banner__label {
+  font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-heading);
+}
+.rr-browse-banner__count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem;
+  padding: 0 0.375rem; border-radius: 9999px; border: 1px solid var(--border-subtle);
+  font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
+}
+.rr-browse-banner__rule { flex: 1; height: 1px; background: var(--border-subtle); }
 .rr-browse-empty { font-family: 'Manrope', sans-serif; font-size: 0.9rem; color: var(--text-secondary); text-align: center; padding: 2.5rem 1rem; }
 
 /* Browse view header (spec §1): text back link + page H1 */

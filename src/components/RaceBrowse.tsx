@@ -63,6 +63,14 @@ function matchesQuery(hay: string, q: string): boolean {
   return q.toLowerCase().split(/\s+/).filter(Boolean).every((t) => hay.includes(t));
 }
 
+// Section-header icons (16px, stroke = currentColor). aria-hidden: the label carries the meaning.
+const CATEGORY_ICON: Record<Category, React.ReactNode> = {
+  'Statewide': <path d="M5 21V4m0 0h11l-2 4 2 4H5" />,
+  'U.S. House': <><path d="M4 21h16M6 21v-7m12 7v-7M4 14h16" /><path d="M7 14a5 5 0 0 1 10 0" /><path d="M12 6v3M12 4.5v.01" /></>,
+  'State Legislature': <><path d="M3 21h18M5 21V11m4.67 10V11m4.66 10V11M19 21V11" /><path d="M3 11l9-6 9 6z" /></>,
+  'Local': <><path d="M4 21V10l8-6 8 6v11z" /><path d="M10 21v-6h4v6" /></>,
+};
+
 export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelect, initial, disabled, raceProgress }) => {
   const [query, setQuery] = useState('');
   const [office, setOffice] = useState<string | null>(null);
@@ -103,38 +111,56 @@ export const RaceBrowse: React.FC<RaceBrowseProps> = ({ races, counties, onSelec
 
   return (
     <div className="rr-browse">
-      <div className="rr-browse-search">
-        <svg className="rr-browse-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" strokeLinecap="round" />
-        </svg>
-        <input
-          className="rr-browse-search__input"
-          type="search"
-          placeholder="Search races — office, state, or place…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search races"
-        />
+      <div className="rr-browse-panel">
+        <div className="rr-browse-search">
+          <svg className="rr-browse-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" strokeLinecap="round" />
+          </svg>
+          <input
+            className="rr-browse-search__input"
+            type="search"
+            placeholder="Search races — office, state, or place…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search races"
+          />
+        </div>
+
+        <div className="rr-browse-filters" role="group" aria-label="Filter races">
+          <button className={pill(!office)} onClick={() => setOffice(null)} aria-pressed={!office}>All offices</button>
+          {OFFICE_FILTERS.map((o) => (
+            <button key={o.key} className={pill(office === o.key)} aria-pressed={office === o.key}
+              onClick={() => setOffice(office === o.key ? null : o.key)}>{o.label}</button>
+          ))}
+          <label className="rr-browse-state">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <select className="rr-browse-select" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} aria-label="Filter by state">
+              <option value="">All states</option>
+              {stateOptions.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
-      <div className="rr-browse-filters" role="group" aria-label="Filter races">
-        <button className={pill(!office)} onClick={() => setOffice(null)} aria-pressed={!office}>All offices</button>
-        {OFFICE_FILTERS.map((o) => (
-          <button key={o.key} className={pill(office === o.key)} aria-pressed={office === o.key}
-            onClick={() => setOffice(office === o.key ? null : o.key)}>{o.label}</button>
-        ))}
-        <select className="rr-browse-select" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} aria-label="Filter by state">
-          <option value="">All states</option>
-          {stateOptions.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
-        </select>
-      </div>
-
-      <p className="rr-browse-count">{total} race{total !== 1 ? 's' : ''}</p>
+      <p className="rr-browse-count"><strong>{total}</strong> race{total !== 1 ? 's' : ''}</p>
 
       {sections.map((section) => (
-        <section key={section.cat} className="rr-browse-section">
-          <div className={`rr-browse-banner rr-browse-banner--${section.cat.replace(/[^a-z]/gi, '').toLowerCase()}`}>
-            {section.cat}<span className="rr-browse-banner__count">· {section.races.length}</span>
+        <section
+          key={section.cat}
+          className="rr-browse-section"
+          aria-label={`${section.cat}, ${section.races.length} race${section.races.length !== 1 ? 's' : ''}`}
+        >
+          <div className="rr-browse-banner">
+            <span className="rr-browse-banner__icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {CATEGORY_ICON[section.cat]}
+              </svg>
+            </span>
+            <span className="rr-browse-banner__label">{section.cat}</span>
+            <span className="rr-browse-banner__count" aria-hidden="true">{section.races.length}</span>
+            <span className="rr-browse-banner__rule" aria-hidden="true" />
           </div>
           <div className="race-grid">
             {section.races.map((r, i) => {

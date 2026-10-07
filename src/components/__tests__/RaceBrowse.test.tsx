@@ -24,15 +24,35 @@ const setup = (initial: Parameters<typeof RaceBrowse>[0]['initial'] = null) =>
   render(<RaceBrowse races={races} counties={{}} onSelect={vi.fn()} initial={initial} />);
 
 describe('RaceBrowse — search-first', () => {
-  it('groups races into tier sections with a total count', () => {
+  it('groups races into labelled tier sections with a bold total count', () => {
     const { container } = setup();
-    expect(screen.getByText('4 races')).toBeInTheDocument();
-    const banners = [...container.querySelectorAll('.rr-browse-banner')].map((b) => b.textContent ?? '');
-    expect(banners.some((t) => /Statewide/.test(t))).toBe(true);
-    expect(banners.some((t) => /U\.S\. House/.test(t))).toBe(true);
-    expect(banners.some((t) => /State Legislature/.test(t))).toBe(true);
-    expect(banners.some((t) => /Local/.test(t))).toBe(true);
+    const count = container.querySelector('.rr-browse-count')!;
+    expect(count.textContent).toBe('4 races');
+    expect(count.querySelector('strong')?.textContent).toBe('4');
+    expect(screen.getByRole('region', { name: 'Statewide, 1 race' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'U.S. House, 1 race' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'State Legislature, 1 race' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Local, 1 race' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+  });
+
+  it('puts the search box and the filter row in one panel', () => {
+    const { container } = setup();
+    const panel = container.querySelector('.rr-browse-panel')!;
+    expect(panel).toContainElement(screen.getByLabelText('Search races'));
+    expect(panel).toContainElement(screen.getByRole('group', { name: 'Filter races' }));
+    expect(panel).toContainElement(screen.getByLabelText('Filter by state'));
+  });
+
+  it('section headers carry an icon, the label and a hidden count chip', () => {
+    const { container } = setup();
+    const banner = container.querySelector('.rr-browse-banner')!;
+    expect(banner.querySelector('.rr-browse-banner__icon svg')).not.toBeNull();
+    expect(banner.querySelector('.rr-browse-banner__label')?.textContent).toBe('Statewide');
+    const chip = banner.querySelector('.rr-browse-banner__count')!;
+    expect(chip.textContent).toBe('1');
+    expect(chip).toHaveAttribute('aria-hidden', 'true');
+    expect(banner.querySelector('.rr-browse-banner__rule')).not.toBeNull();
   });
 
   it('live-filters by the search box', async () => {
@@ -63,7 +83,7 @@ describe('RaceBrowse — search-first', () => {
   });
 
   it('excludes races with no rankable topics', () => {
-    render(
+    const { container } = render(
       <RaceBrowse
         races={[
           race({ raceId: 'ca-gov', office: 'Governor', state: 'CA', tier: 'state', scope: 'statewide', rankableTopicCount: 5 }),
@@ -72,7 +92,7 @@ describe('RaceBrowse — search-first', () => {
         counties={{}} onSelect={vi.fn()} initial={null}
       />,
     );
-    expect(screen.getByText('1 race')).toBeInTheDocument();
+    expect(container.querySelector('.rr-browse-count')?.textContent).toBe('1 race');
     expect(screen.getByRole('button', { name: /open governor race/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /open u\.s\. senate race/i })).not.toBeInTheDocument();
   });
