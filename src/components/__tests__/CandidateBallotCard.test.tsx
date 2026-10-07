@@ -28,6 +28,11 @@ describe('CandidateBallotCard', () => {
     expect(ev.textContent).toContain('Agreed with 5 of 6');
     expect(ev.textContent).toContain('3 top picks');
   });
+  it('wraps each evidence clause in its own span so phones do not orphan the top-pick clause', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-evidence__main')!.textContent).toContain('Agreed with 5 of 6');
+    expect(document.querySelector('.ballot-evidence__topk')!.textContent).toContain('3 top picks');
+  });
   it('omits top picks when no quote is the user\'s #1', () => {
     render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={new Map()} />);
     expect(document.querySelector('.ballot-topk')).not.toBeInTheDocument();
@@ -50,5 +55,28 @@ describe('CandidateBallotCard', () => {
     expect(screen.queryByText(/Edited housing/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /see what they said/i }));
     expect(screen.getByText(/Edited housing/)).toBeInTheDocument();
+  });
+  it('emphasises the first-place card', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-outer')).toHaveClass('ballot-outer--first');
+  });
+  it('does not emphasise other ranks', () => {
+    render(<CandidateBallotCard entry={{ ...entry, rank: 2 }} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-outer')).not.toHaveClass('ballot-outer--first');
+  });
+  it('shows a segmented agreement bar: total segments, agreed filled', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    const segs = document.querySelectorAll('.agree-bar__seg');
+    expect(segs).toHaveLength(6);
+    expect(document.querySelectorAll('.agree-bar__seg--on')).toHaveLength(5);
+  });
+  it('uses a continuous bar above 8 topics', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={10} rankMap={rankMap} />);
+    expect(document.querySelectorAll('.agree-bar__seg')).toHaveLength(0);
+    expect((document.querySelector('.agree-bar__fill') as HTMLElement).style.width).toBe('50%');
+  });
+  it('shows no agreement bar for an unranked entry', () => {
+    render(<CandidateBallotCard entry={{ ...entry, rank: null }} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.agree-bar')).not.toBeInTheDocument();
   });
 });

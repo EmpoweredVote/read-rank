@@ -5,7 +5,12 @@ import { resolve } from 'node:path';
 
 // App-chrome components must take colour from the semantic tokens in index.css,
 // so a palette change is a token change. (The pizza warm-up keeps its own colours.)
-const CHROME_FILES = ['src/components/AddressFilterInput.tsx'];
+const CHROME_FILES = [
+  'src/components/AddressFilterInput.tsx',
+  'src/components/AlignmentMark.tsx',
+  'src/components/RevealBand.tsx',
+  'src/components/BallotLoader.tsx',
+];
 
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), 'utf8');
 
