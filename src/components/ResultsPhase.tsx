@@ -99,8 +99,8 @@ export const ResultsPhase: React.FC = () => {
     [alignmentTopics.length, ballot.length]
   );
   const timeline = useMemo(
-    () => computeRevealTimeline({ filledCells, reduced: m.reduced }),
-    [filledCells, m.reduced]
+    () => computeRevealTimeline({ filledCells, cards: ballot.length, reduced: m.reduced }),
+    [filledCells, ballot.length, m.reduced]
   );
 
   if (loadStep) {
@@ -230,7 +230,7 @@ export const ResultsPhase: React.FC = () => {
 
       <motion.div className="flex flex-col items-center gap-3 pt-6"
         {...m.enter({ y: 12 })}
-        transition={m.transition(DUR.moderate, EASE.settle, { delay: (timeline.cardDelay(ballot.length) + DUR.moderate) / 1000 })}>
+        transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.actionsDelay / 1000 })}>
         {!complete && (
           <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
             ← Back to your topics
