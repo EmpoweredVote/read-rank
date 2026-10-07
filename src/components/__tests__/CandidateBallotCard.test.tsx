@@ -51,4 +51,27 @@ describe('CandidateBallotCard', () => {
     await user.click(screen.getByRole('button', { name: /see what they said/i }));
     expect(screen.getByText(/Edited housing/)).toBeInTheDocument();
   });
+  it('emphasises the first-place card', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-outer')).toHaveClass('ballot-outer--first');
+  });
+  it('does not emphasise other ranks', () => {
+    render(<CandidateBallotCard entry={{ ...entry, rank: 2 }} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.ballot-outer')).not.toHaveClass('ballot-outer--first');
+  });
+  it('shows a segmented agreement bar: total segments, agreed filled', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={6} rankMap={rankMap} />);
+    const segs = document.querySelectorAll('.agree-bar__seg');
+    expect(segs).toHaveLength(6);
+    expect(document.querySelectorAll('.agree-bar__seg--on')).toHaveLength(5);
+  });
+  it('uses a continuous bar above 8 topics', () => {
+    render(<CandidateBallotCard entry={entry} totalTopics={10} rankMap={rankMap} />);
+    expect(document.querySelectorAll('.agree-bar__seg')).toHaveLength(0);
+    expect((document.querySelector('.agree-bar__fill') as HTMLElement).style.width).toBe('50%');
+  });
+  it('shows no agreement bar for an unranked entry', () => {
+    render(<CandidateBallotCard entry={{ ...entry, rank: null }} totalTopics={6} rankMap={rankMap} />);
+    expect(document.querySelector('.agree-bar')).not.toBeInTheDocument();
+  });
 });

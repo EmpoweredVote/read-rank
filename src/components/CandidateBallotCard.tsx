@@ -8,6 +8,25 @@ import { QuoteDrawer } from './QuoteDrawer';
 import { RankNumber } from './RankNumber';
 import { track } from '../lib/analytics';
 
+const MAX_SEGMENTS = 8;
+
+/** Small "agreed N of M" meter for the evidence strip (decorative; the text carries the numbers). */
+function AgreementBar({ agreed, total }: { agreed: number; total: number }) {
+  if (total <= 0) return null;
+  const n = Math.max(0, Math.min(agreed, total));
+  return (
+    <span className="agree-bar" aria-hidden="true">
+      {total > MAX_SEGMENTS ? (
+        <span className="agree-bar__track"><span className="agree-bar__fill" style={{ width: `${(n / total) * 100}%` }} /></span>
+      ) : (
+        Array.from({ length: total }, (_, i) => (
+          <span key={i} className={`agree-bar__seg${i < n ? ' agree-bar__seg--on' : ''}`} />
+        ))
+      )}
+    </span>
+  );
+}
+
 export interface CandidateBallotCardProps {
   entry: BallotEntry;
   /** Denominator for "agreed with X of Y". */
@@ -97,7 +116,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
         )}
       </div>
 
-      <div className="ballot-outer">
+      <div className={`ballot-outer${rank === 1 ? ' ballot-outer--first' : ''}`}>
         <PoliticianIdentityCard
           name={entry.name} photo={entry.photo} essentialsUrl={entry.essentialsUrl}
           office={entry.office} title={entry.title} chamber={entry.chamber} district={entry.district}
@@ -107,6 +126,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
           <p className="ballot-evidence">
             {rank != null ? (
               <>
+                <AgreementBar agreed={agreementCount} total={totalTopics} />
                 Agreed with <strong>{agreementCount} of {totalTopics}</strong>
                 {topPicks > 0 && (
                   <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>

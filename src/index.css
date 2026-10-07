@@ -2905,3 +2905,10 @@ button.rank-num:focus-visible .rank-num-badge {
   .ballot-loader__fill--matching { animation: none; }
   .ballot-loader__fill--revealing { transition: none; }
 }
+
+.ballot-outer.ballot-outer--first { border: 1.5px solid var(--action-primary); }
+.agree-bar { display: inline-flex; align-items: center; gap: 2px; margin-right: 0.5rem; vertical-align: middle; }
+.agree-bar__seg { width: 14px; height: 4px; border-radius: 9999px; background: var(--border-subtle); }
+.agree-bar__seg--on { background: var(--action-primary); }
+.agree-bar__track { width: 4.5rem; height: 4px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; display: inline-block; }
+.agree-bar__fill { display: block; height: 100%; border-radius: 9999px; background: var(--action-primary); }
