@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import type { BallotEntry } from '../data/api';
@@ -41,24 +41,23 @@ export interface CandidateBallotCardProps {
 
 interface Particle { dx: number; dy: number; size: number; delay: number; isLarge: boolean; }
 
+/** The burst pattern is fixed (derived from the index alone), so it is computed once. */
+const PARTICLES: Particle[] = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i / 16) * 360;
+  const dist = 40 + ((i * 37) % 70);
+  return {
+    dx: Math.cos((angle * Math.PI) / 180) * dist,
+    dy: Math.sin((angle * Math.PI) / 180) * dist,
+    size: 2 + ((i * 13) % 5), delay: (i % 5) * 0.03, isLarge: i % 4 === 0,
+  };
+});
+
 /** Celebratory burst on the #1 card — the one earned celebration (spec §7). */
 const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
-  const ref = useRef<Particle[]>([]);
-  if (ref.current.length === 0) {
-    ref.current = Array.from({ length: 16 }, (_, i) => {
-      const angle = (i / 16) * 360;
-      const dist = 40 + ((i * 37) % 70);
-      return {
-        dx: Math.cos((angle * Math.PI) / 180) * dist,
-        dy: Math.sin((angle * Math.PI) / 180) * dist,
-        size: 2 + ((i * 13) % 5), delay: (i % 5) * 0.03, isLarge: i % 4 === 0,
-      };
-    });
-  }
   if (!active) return null;
   return (
     <div style={{ position: 'absolute', inset: -20, pointerEvents: 'none', zIndex: 20 }}>
-      {ref.current.map((p, i) => (
+      {PARTICLES.map((p, i) => (
         <div key={i} style={{
           position: 'absolute', width: p.isLarge ? p.size * 2 : p.size, height: p.isLarge ? p.size * 2 : p.size,
           borderRadius: '50%',

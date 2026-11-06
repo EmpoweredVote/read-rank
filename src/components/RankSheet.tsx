@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useMotion } from '../motion';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail } from './RankRail';
-import { useRankSource } from './RankSource';
+import { useRankSource } from './rankSourceContext';
 
 export interface RankSheetProps {
   open: boolean;

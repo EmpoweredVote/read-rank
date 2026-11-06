@@ -11,7 +11,8 @@ import { useRaceRouteSync } from './hooks/useRaceRouteSync';
 import { useReadRankStore } from './store/useReadRankStore';
 import { searchPoliticians } from './data/api';
 import { extractHashToken, AUTH_HUB_URL } from './lib/auth';
-import { ThemeProvider, useTheme } from './ThemeProvider';
+import { ThemeProvider } from './ThemeProvider';
+import { useTheme } from './themeContext';
 import { parseStateFromAddress } from './utils/parseStateFromAddress';
 
 // Manual SPA pageview tracking — fires on every route change.
