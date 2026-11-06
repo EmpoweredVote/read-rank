@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
 
-const localEvUi = path.resolve(__dirname, '../ev-ui/dist')
+const localEvUi = path.resolve(import.meta.dirname, '../ev-ui/dist')
 const useLocalEvUi = fs.existsSync(localEvUi)
 
 // Local dev reads the LIVE public API by default, so a fresh clone with no .env
