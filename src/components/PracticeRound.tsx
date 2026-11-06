@@ -6,7 +6,7 @@ import { PRACTICE_QUOTES, PRACTICE_ISSUE } from '../data/practiceData';
 import { EvaluationSurface } from './EvaluationSurface';
 import { QuestionBanner } from './QuestionBanner';
 import { PracticeResultsScreen } from './PracticeResultsScreen';
-import type { RankSource } from './RankSource';
+import type { RankSource } from './rankSourceContext';
 
 export const PracticeRound: React.FC = () => {
   const m = useMotion();

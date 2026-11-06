@@ -14,7 +14,7 @@ import { RankDock } from './RankDock';
 import { RankSheet } from './RankSheet';
 import { FirstAgreeCoach } from './FirstAgreeCoach';
 import { tierForIndex, TIER_META } from '../utils/tiers';
-import { RankSourceProvider, type RankSource } from './RankSource';
+import { RankSourceProvider, type RankSource } from './rankSourceContext';
 
 function delay(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 function toFlyRect(r: DOMRect): FlyRect { return { top: r.top, left: r.left, width: r.width, height: r.height }; }
@@ -82,7 +82,6 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
   const agreePeekOpacity = useTransform(dragX, [12, SWIPE_THRESHOLD], [0, 1]);
   const disagreePeekOpacity = useTransform(dragX, [-SWIPE_THRESHOLD, -12], [1, 0]);
   const cardRotate = useTransform(dragX, [-240, 240], [-5, 5]);
-  const autoOpenedRef = useRef(false);
   const dockRef = useRef<HTMLButtonElement>(null);
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -102,13 +101,13 @@ export const EvaluationSurface: React.FC<EvaluationSurfaceProps> = ({
     return () => clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-expand sheet on completion (mobile only, once)
-  useEffect(() => {
-    if (!isMouseDevice && allDone && !autoOpenedRef.current) {
-      autoOpenedRef.current = true;
-      setSheetOpen(true);
-    }
-  }, [isMouseDevice, allDone]);
+  // Auto-expand sheet on completion (mobile only, once). Adjusted during render,
+  // not in an effect, so the sheet opens in the same commit instead of a second pass.
+  const [autoOpened, setAutoOpened] = useState(false);
+  if (!isMouseDevice && allDone && !autoOpened) {
+    setAutoOpened(true);
+    setSheetOpen(true);
+  }
 
   const finishTour = useCallback(() => {
     setTourStep(null);

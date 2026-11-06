@@ -18,22 +18,34 @@ import { isRaceComplete } from '../utils/raceProgressState';
 export const ResultsPhase: React.FC = () => {
   const { goToHub, setPhase, currentRaceId, getRaceVerdicts, getCurrentRaceProgress } = useReadRankStore();
   const [reveal, setReveal] = useState<RevealResult | null>(null);
-  const [loadStep, setLoadStep] = useState<'matching' | 'revealing' | null>('matching');
+  const [loadStep, setLoadStep] = useState<'matching' | 'revealing' | null>(currentRaceId ? 'matching' : null);
   // The reveal call failed. Kept separate from "the ballot is empty": the user's
   // verdicts are safe in the store, so this is a retryable outage, not a verdict
   // on their choices.
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  // Reset the loader when the race changes. Done during render (React's "adjust state
+  // when a prop changes" pattern) rather than at the top of the fetch effect.
+  const [loadedRaceId, setLoadedRaceId] = useState(currentRaceId);
+  if (loadedRaceId !== currentRaceId) {
+    setLoadedRaceId(currentRaceId);
+    setLoadStep(currentRaceId ? 'matching' : null);
+    setFailed(false);
+  }
   const m = useMotion();
+  // Retry: show the loader again and re-run the fetch effect.
+  const retry = () => {
+    setLoadStep('matching');
+    setFailed(false);
+    setAttempt((n) => n + 1);
+  };
   const race = getCurrentRaceProgress();
   const complete = race ? isRaceComplete(race, race.rankableTopicCount) : false;
 
   useEffect(() => {
-    if (!currentRaceId) { setLoadStep(null); return; }
+    if (!currentRaceId) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    setLoadStep('matching');
-    setFailed(false);
     fetchRaceReveal(currentRaceId, getRaceVerdicts(currentRaceId))
       .then((result) => {
         if (cancelled) return;
@@ -145,7 +157,7 @@ export const ResultsPhase: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-col items-center gap-3 pt-2">
-          <button onClick={() => setAttempt((n) => n + 1)} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+          <button onClick={retry} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
             Try again
           </button>
           <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>

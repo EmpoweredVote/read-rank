@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { BlindQuote } from '../store/useReadRankStore';
 import { useMotion, EASE, DUR } from '../motion';
 import { RankList } from './RankList';
-import { useRankSource } from './RankSource';
+import { useRankSource } from './rankSourceContext';
 
 export interface RankRailProps {
   variant: 'sidebar' | 'sheet';

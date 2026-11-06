@@ -1,11 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ThemeContext } from './themeContext';
 
-interface ThemeContextValue {
-  isDark: boolean;
-  toggle: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue>({ isDark: true, toggle: () => {} });
 const KEY = 'ev:color-scheme';
 const COOKIE_NAME = 'ev_theme';
 
@@ -69,8 +64,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return <ThemeContext.Provider value={{ isDark, toggle }}>{children}</ThemeContext.Provider>;
-}
-
-export function useTheme() {
-  return useContext(ThemeContext);
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { useAnimate, useReducedMotion } from 'framer-motion';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { RankRail, PrivacyNote } from './RankRail';
-import { useRankSource } from './RankSource';
+import { useRankSource } from './rankSourceContext';
 
 /**
  * Desktop rank surface — the race-wide agreed pile as a draggable podium.

@@ -3,7 +3,7 @@ import { useReadRankStore, getActiveTopicKeys, getAllAgreedQuotes, type BlindQuo
 import { track } from '../lib/analytics';
 import { TopicStepper } from './TopicStepper';
 import { EvaluationSurface } from './EvaluationSurface';
-import { useRaceRankSource } from './RankSource';
+import { useRaceRankSource } from './rankSourceContext';
 import { isRaceComplete } from '../utils/raceProgressState';
 
 export const EvaluationPhase: React.FC = () => {
