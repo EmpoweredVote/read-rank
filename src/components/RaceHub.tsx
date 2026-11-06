@@ -149,7 +149,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     } finally {
       setStarting(null);
     }
-  }, [selectRace]);
+  }, [selectRace, locationFilter]);
 
   const renderCard = useCallback((race: RaceSummary, enterIndex?: number) => {
     const { progress, label } = raceCardProgress(raceProgress[race.raceId], race.rankableTopicCount);
