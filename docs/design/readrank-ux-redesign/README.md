@@ -19,6 +19,7 @@ This folder holds a clickable HTML prototype of a visual/UX refresh of the Read 
 | 4 | Read a quote: agree / disagree, arrow-key shortcuts | `05-read-quote.png` |
 | 5 | After answering: ranking panel (reorderable), disagreed tray, topic complete | `06-topic-complete-ranking.png` |
 | 6 | Your rankings (full ballot): loading step, then staged reveal; a "Preview with 8 issues and 4 candidates" switch fills it with fictional sample data to check the many-issues layout | `07-ballot-loading.png`, `08-full-ballot.png` |
+| 6b | Your rankings, for a user who already has a calibrated compass (`#ballot-compass`): a "Your compass" card with a candidate overlay replaces the Calibrate prompt. Reached from "See your matches" at the end of Compass; the ballot screen's notice links switch between the two versions | `13-ballot-compass.png`, `14-ballot-compass-phone.png` |
 | 7 | Compass step 1: choose topics (3–8) | `09-compass-choose-topics.png` |
 | 8 | Compass step 2: your stances, with a 2-step guide pop-up | `10-stances-guide.png`, `11-stances.png` |
 | 9 | Compass step 3: compass ready, compare animation | `12-compass-ready-compared.png` |
@@ -39,6 +40,7 @@ Margins, borders and spacing follow the ev-ui values Treasury Tracker uses: head
 - On Compass step 1, the category name "Economy and housing" and the questions for Housing, Childcare and Data Centers (these were hidden in the reference screenshot).
 - Immigration quotes on the full ballot ("See what they said") show `[Immigration quote from the ballot]`.
 - The Candidate A / Candidate B outlines in the compare animation are illustrative only.
+- On the "Your compass" card, the candidates' compasses are made-up sample shapes, and without a Compass run in this session the user's compass is a sample on the eight topics the live Compass uses.
 - Reading-time estimates (about 15 seconds per quote).
 - Upcoming races District 2, 3 and 8 open the full flow but use bracketed placeholders for the topic name, question, both quotes and candidate names (`[Candidate 1 name]`, etc.). The prototype's shared race data (`window.RR` in `landing.html`) is where real content goes.
 
@@ -55,5 +57,5 @@ Margins, borders and spacing follow the ev-ui values Treasury Tracker uses: head
 - `prototype/index.html` — the combined, clickable prototype (open this).
 - `prototype/*.html` — one file per screen (landing, browse, issues, read, ballot, compass, stances, ready).
 - `prototype/build_flow.py` — combines the screen files into `index.html` (`python3 build_flow.py`). It emits a complete HTML document, so the regenerated `index.html` opens directly in a browser; edit the per-screen files and re-run it rather than editing `index.html` by hand.
-- `prototype/assets/` — the official Empowered Vote and Read & Rank logos, unchanged, and `ballot-figure.png`, the ballot-casting figure from the empowered.vote homepage (`ev-landing/icons/Sticks/noun_ballot_3139174.png`, a Noun Project icon — confirm the team's license covers reuse here). It is recolored with a CSS mask on the ballot loading step, the Topic complete card and the full-ballot banner. `leremy-rig.js` and `ev-anim-extras.js` are copied unchanged from `ev-landing`; they draw and animate the landing page's Bobit (body widths slimmed slightly through the rig's config).
+- `prototype/assets/` — the official Empowered Vote and Read & Rank logos, unchanged, and `ballot-figure.png`, the ballot-casting figure from the empowered.vote homepage (`ev-landing/icons/Sticks/noun_ballot_3139174.png`, a Noun Project icon — confirm the team's license covers reuse here). It is recolored with a CSS mask on the ballot loading step, the Topic complete card and the full-ballot banner. `compass-symbol-light.svg` / `compass-symbol-dark.svg` are the Compass symbol from `ev-landing/icons`, used unchanged on the "Your compass" card. `leremy-rig.js` and `ev-anim-extras.js` are copied unchanged from `ev-landing`; they draw and animate the landing page's Bobit (body widths slimmed slightly through the rig's config).
 - `screenshots/` — desktop captures at 1280px wide. They were captured without network access, so text renders in a fallback font instead of Manrope.
