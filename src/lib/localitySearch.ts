@@ -1,78 +1,11 @@
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
-import { getStateFips } from '../utils/stateNames';
+import { fetchLocalities, type Locality } from '../data/api';
+import { getStateAbbrevFromFips, getStateAbbrevFromName, getStateFips } from '../utils/stateNames';
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
-
-/** Result of classifying free text via the Google geocoder. */
-export interface Classification {
-  kind: 'address' | 'city' | 'county' | 'state' | 'unknown';
-  stateAbbrev?: string;
-  countyName?: string;
-  cityName?: string;
-}
-
-/** Navigation intent derived from a classification + the county-name index. */
+/** Navigation intent derived from free text + the county-name index. */
 export type QueryRoute =
   | { kind: 'address' }
   | { kind: 'browse-state'; state: string }
   | { kind: 'browse-county'; geoid: string; state: string };
-
-function comp(
-  components: google.maps.GeocoderAddressComponent[] | undefined,
-  type: string,
-): google.maps.GeocoderAddressComponent | null {
-  return components?.find((c) => c.types.includes(type)) || null;
-}
-
-function ensureConfigured(): void {
-  // Only call setOptions if importLibrary hasn't been installed yet.
-  // Prevents duplicate-call warning during Vite HMR.
-  if (API_KEY && !window.google?.maps?.importLibrary) {
-    // Use 'key' not 'apiKey' — the loader converts camelCase to snake_case
-    // for URL params, so 'apiKey' becomes 'api_key' which Google rejects.
-    setOptions({ key: API_KEY });
-  }
-}
-
-/** Classify free text via the Google geocoder. Throws when the geocoder is unavailable
- *  or returns nothing — callers treat a throw as "fall back to address search". */
-export async function classifyQuery(query: string): Promise<Classification> {
-  if (!API_KEY) throw new Error('no maps key');
-  ensureConfigured();
-  const { Geocoder } = (await importLibrary('geocoding')) as google.maps.GeocodingLibrary;
-  const geocoder = new Geocoder();
-  const { results } = await geocoder.geocode({
-    address: query,
-    componentRestrictions: { country: 'US' },
-  });
-  const top = results?.[0];
-  if (!top) throw new Error('no geocode result');
-
-  const types = top.types || [];
-  const components = top.address_components || [];
-  const stateComp = comp(components, 'administrative_area_level_1');
-  const countyComp = comp(components, 'administrative_area_level_2');
-  const localityComp =
-    comp(components, 'locality') || comp(components, 'postal_town') || comp(components, 'sublocality');
-
-  const out: Classification = {
-    kind: 'unknown',
-    stateAbbrev: stateComp?.short_name || undefined,
-    countyName: countyComp?.long_name || undefined,
-    cityName: localityComp?.long_name || undefined,
-  };
-
-  const hasStreet =
-    !!comp(components, 'street_number') ||
-    types.some((t) => ['street_address', 'premise', 'subpremise', 'route'].includes(t));
-
-  if (hasStreet || types.includes('postal_code')) out.kind = 'address';
-  else if (types.includes('locality') || types.includes('postal_town') || types.includes('sublocality')) out.kind = 'city';
-  else if (types.includes('administrative_area_level_2')) out.kind = 'county';
-  else if (types.includes('administrative_area_level_1')) out.kind = 'state';
-
-  return out;
-}
 
 function normalize(s: string): string {
   return s
@@ -81,37 +14,84 @@ function normalize(s: string): string {
     .replace(/[^a-z]/g, '');
 }
 
-/** Map a classification to a navigation intent using the county-name index for GEOID lookup.
- *  Pure — unit-tested without the geocoder. */
-export function routeFromClassification(
-  c: Classification,
-  counties: Record<string, string>,
-  _query: string,
-): QueryRoute {
-  if (c.kind === 'address') return { kind: 'address' };
-  if (!c.stateAbbrev) return { kind: 'address' };
-  if (c.kind === 'state') return { kind: 'browse-state', state: c.stateAbbrev };
-  if ((c.kind === 'county' || c.kind === 'city') && c.countyName) {
-    const target = normalize(c.countyName);
-    const stateFips = getStateFips(c.stateAbbrev);
-    const hit = stateFips
-      ? Object.entries(counties).find(
-          ([geoid, name]) => geoid.startsWith(stateFips) && normalize(name) === target,
-        )
-      : undefined;
-    if (hit) return { kind: 'browse-county', geoid: hit[0], state: c.stateAbbrev };
-    return { kind: 'browse-state', state: c.stateAbbrev };
+type Parsed =
+  | { route: QueryRoute }
+  | { lookup: { place: string; qualifierState: string | null } };
+
+/** Shared local parsing. Returns a final route, or the place to look up as a city. */
+function parseQuery(query: string, counties: Record<string, string>): Parsed {
+  const address: Parsed = { route: { kind: 'address' } };
+  const q = (query ?? '').trim();
+  if (!q) return address;
+  if (/\d/.test(q)) return address;
+
+  let place = q;
+  let qualifierState: string | null = null;
+  const comma = q.lastIndexOf(',');
+  if (comma >= 0) {
+    qualifierState = getStateAbbrevFromName(q.slice(comma + 1));
+    if (qualifierState) place = q.slice(0, comma).trim();
+  } else {
+    const whole = getStateAbbrevFromName(q);
+    if (whole) return { route: { kind: 'browse-state', state: whole } };
   }
+
+  const target = normalize(place);
+  if (!target) return address;
+  const stateFips = qualifierState ? getStateFips(qualifierState) : null;
+  const hits = Object.entries(counties).filter(
+    ([geoid, name]) =>
+      normalize(name) === target && (!stateFips || geoid.startsWith(stateFips)),
+  );
+  if (hits.length === 1) {
+    const [geoid] = hits[0];
+    const state = getStateAbbrevFromFips(geoid.slice(0, 2));
+    return state ? { route: { kind: 'browse-county', geoid, state } } : address;
+  }
+  if (hits.length === 0) return { lookup: { place, qualifierState } };
+  return address;
+}
+
+/** Map free text to a navigation intent using only local data (state names + the
+ *  county-name index). Pure; anything not clearly a state or county is an address. */
+export function routeFromQuery(query: string, counties: Record<string, string>): QueryRoute {
+  const parsed = parseQuery(query, counties);
+  return 'route' in parsed ? parsed.route : { kind: 'address' };
+}
+
+/** Decide a route from city-lookup results. Pure. */
+export function routeFromLocalities(
+  localities: Locality[],
+  counties: Record<string, string>,
+  qualifierState: string | null,
+): QueryRoute {
+  if (localities.length === 0) {
+    return qualifierState ? { kind: 'browse-state', state: qualifierState } : { kind: 'address' };
+  }
+  const countyGeoids = new Set(localities.map((l) => l.countyGeoid));
+  if (countyGeoids.size === 1) {
+    const [geoid] = [...countyGeoids];
+    if (geoid in counties) {
+      return { kind: 'browse-county', geoid, state: localities[0].state.toUpperCase() };
+    }
+  }
+  const states = new Set(localities.map((l) => l.state.toUpperCase()));
+  if (states.size === 1) return { kind: 'browse-state', state: [...states][0] };
   return { kind: 'address' };
 }
 
-/** Full resolve: classify then route. Never throws — any failure resolves to address. */
+/** Async resolver. Local state/county match first; a city lookup only when no county
+ *  matches. Never throws — any failure resolves to address. */
 export async function resolveQueryRoute(
   query: string,
   counties: Record<string, string>,
 ): Promise<QueryRoute> {
   try {
-    return routeFromClassification(await classifyQuery(query), counties, query);
+    const parsed = parseQuery(query, counties);
+    if ('route' in parsed) return parsed.route;
+    const { place, qualifierState } = parsed.lookup;
+    const localities = await fetchLocalities(place, qualifierState);
+    return routeFromLocalities(localities, counties, qualifierState);
   } catch {
     return { kind: 'address' };
   }

@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useMotion, DUR, EASE } from '../motion';
+import { QUOTE_TEXT_FONT } from './QuoteCard';
 
 export interface FlyRect {
   top: number;
@@ -47,7 +48,7 @@ export function FlyingCard({ text, from, to }: FlyingCardProps) {
         overflow: 'hidden',
       }}
     >
-      <div className="ev-quote-text" style={{ fontSize: 'clamp(1.0625rem, 2.5vw, 1.25rem)' }}>
+      <div className="ev-quote-text" style={{ fontSize: QUOTE_TEXT_FONT }}>
         {text}
       </div>
     </motion.div>,

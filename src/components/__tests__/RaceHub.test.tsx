@@ -21,10 +21,12 @@ vi.mock('../../config/liveContent', () => ({
 beforeEach(() => {
   window.localStorage?.clear();
   useReadRankStore.getState().reset();
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 /** Minimal RaceSummary — only the fields the hub/grouping read. */
@@ -117,10 +119,33 @@ describe('RaceHub browse wiring', () => {
     );
     useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
     render(<RaceHub />);
-    // Browse view: "Back to my ballot" affordance + the search-first browse (search box + cards).
-    expect(await screen.findByRole('button', { name: /back to my ballot/i }, { timeout: 3000 })).toBeInTheDocument();
+    // Browse view: back link + H1 + the search-first browse (search box + cards).
+    expect(await screen.findByRole('heading', { level: 1, name: 'Choose an election' }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByLabelText('Search races')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+    // Its own header and address box are hidden in Browse.
+    expect(screen.queryByText(/pick a race\. read what the candidates said/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /address/i })).not.toBeInTheDocument();
+  });
+
+  it('browse back link reads "‹ Back" without a location and clears browseTarget', async () => {
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor' })], {});
+    useReadRankStore.getState().setBrowseTarget({ state: '', geoid: null });
+    render(<RaceHub />);
+    const back = await screen.findByRole('button', { name: '‹ Back' }, { timeout: 3000 });
+    await userEvent.click(back);
+    expect(useReadRankStore.getState().browseTarget).toBeNull();
+  });
+
+  it('browse back link reads "‹ Back to my ballot" with a location', async () => {
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor' })], {});
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA', politicianIds: [], state: 'CA',
+      county: null, countyName: null, jurisdiction: null,
+    });
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(await screen.findByRole('button', { name: '‹ Back to my ballot' }, { timeout: 3000 })).toBeInTheDocument();
   });
 
   it('clicking "Browse all races" on the LA example ballot sets the store browseTarget', async () => {
@@ -133,5 +158,88 @@ describe('RaceHub browse wiring', () => {
     expect(useReadRankStore.getState().browseTarget).toBeNull();
     await userEvent.click(browseBtn);
     expect(useReadRankStore.getState().browseTarget).toEqual({ state: '', geoid: null });
+  });
+
+  it('uses a controlled time filter and can hide its own switch', async () => {
+    useReadRankStore.getState().setLocationFilter({
+      address: 'Indianapolis, IN', politicianIds: [], state: 'IN', county: null, countyName: null,
+      jurisdiction: null,
+    });
+    const onTimeFilterChange = vi.fn();
+    render(<RaceHub timeFilter="past" onTimeFilterChange={onTimeFilterChange} hideTimeFilter />);
+    // Controlled "past": the 2024 demo race shows without clicking a tab.
+    expect(await screen.findByRole('button', { name: /open governor race/i })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /filter by election timing/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('RaceHub load failure', () => {
+  it('shows an error with a retry (not "no races" or mock data) when production fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    expect(await screen.findByText(/couldn.t load races/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no upcoming races/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no races available/i)).not.toBeInTheDocument();
+
+    // Retry recovers once the API answers.
+    stubRacesFetch([race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' })], { '06037': 'Los Angeles' });
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByRole('button', { name: /open mayor race/i })).toBeInTheDocument();
+  });
+});
+
+describe('RaceHub race start failure', () => {
+  it('shows an error and stays on the hub when production quote fetch fails', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mayor = race({ raceId: 'la-mayor', office: 'Mayor', isLocal: true, electionDate: '2099-11-03' });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) =>
+      url.includes('/quotes')
+        ? { ok: false, status: 500 }
+        : { ok: true, json: async () => ({ races: [mayor], counties: { '06037': 'Los Angeles' } }) }));
+    useReadRankStore.getState().setLocationFilter({
+      address: '200 N Spring St, Los Angeles, CA 90012', politicianIds: ['p1'], state: 'CA',
+      county: '06037', countyName: 'Los Angeles', jurisdiction: null,
+    });
+    render(<RaceHub />);
+    await userEvent.click(await screen.findByRole('button', { name: /open mayor race/i }));
+    expect(await screen.findByText(/couldn.t open that race/i)).toBeInTheDocument();
+    expect(useReadRankStore.getState().currentRaceId).toBeNull();
+  });
+});
+
+describe('RaceHub Browse header in every state', () => {
+  it('shows the Back link while races are loading', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(screen.getByText(/loading races/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBeInTheDocument();
+  });
+
+  it('shows the Back link when there are no races', async () => {
+    stubRacesFetch([], {});
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    expect(await screen.findByText(/no races available yet/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBeInTheDocument();
+  });
+
+  it('does not remount the header when loading finishes', async () => {
+    stubRacesFetch([], {});
+    useReadRankStore.getState().setBrowseTarget({ state: 'CA', geoid: null });
+    render(<RaceHub />);
+    const h1 = screen.getByRole('heading', { level: 1, name: /choose an election/i });
+    await screen.findByText(/no races available yet/i);
+    expect(screen.getByRole('heading', { level: 1, name: /choose an election/i })).toBe(h1);
   });
 });

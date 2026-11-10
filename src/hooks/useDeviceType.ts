@@ -6,35 +6,35 @@ export type DeviceType = 'touch' | 'mouse' | 'unknown';
  * Hook to detect whether the user is primarily using touch or mouse input.
  * Updates dynamically if the user switches input methods.
  */
+/** Initial detection based on device capabilities. */
+function detectDeviceType(): DeviceType {
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+
+  if (hasCoarsePointer && !hasFinePointer) {
+    // Pure touch device (phone/tablet without mouse)
+    return 'touch';
+  } else if (hasFinePointer && !hasTouch) {
+    // Pure mouse/trackpad device
+    return 'mouse';
+  } else if (hasFinePointer) {
+    // Has fine pointer (likely desktop/laptop, even if touch-capable)
+    return 'mouse';
+  } else if (hasTouch) {
+    // Has touch but no fine pointer
+    return 'touch';
+  }
+  // Default to mouse for unknown
+  return 'mouse';
+}
+
 export function useDeviceType(): DeviceType {
-  const [deviceType, setDeviceType] = useState<DeviceType>('unknown');
+  const [deviceType, setDeviceType] = useState<DeviceType>(detectDeviceType);
 
   useEffect(() => {
-    // Initial detection based on device capabilities
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
-
-    // Set initial device type
-    if (hasCoarsePointer && !hasFinePointer) {
-      // Pure touch device (phone/tablet without mouse)
-      setDeviceType('touch');
-    } else if (hasFinePointer && !hasTouch) {
-      // Pure mouse/trackpad device
-      setDeviceType('mouse');
-    } else if (hasFinePointer) {
-      // Has fine pointer (likely desktop/laptop, even if touch-capable)
-      setDeviceType('mouse');
-    } else if (hasTouch) {
-      // Has touch but no fine pointer
-      setDeviceType('touch');
-    } else {
-      // Default to mouse for unknown
-      setDeviceType('mouse');
-    }
-
     // Listen for actual input events to refine detection
-    let lastInputType: DeviceType = deviceType;
+    let lastInputType: DeviceType = 'unknown';
 
     const handleTouchStart = () => {
       if (lastInputType !== 'touch') {

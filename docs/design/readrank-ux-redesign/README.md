@@ -29,6 +29,11 @@ Margins, borders and spacing follow the ev-ui values Treasury Tracker uses: head
 
 ## Placeholder content (must be replaced with real data)
 
+- **All candidate names in the prototype are fictional** (Rosa Lindqvist, Dev Ramanathan) and the
+  office line reads "Sample District". This is deliberate and must stay that way: never pair a
+  placeholder quote with a real person's name, even in a design doc. The ballot screen carries an
+  on-page "sample content" notice for the same reason.
+
 - The second Housing quote ("Local zoning should allow more homes near jobs and transit…").
 - Border Security and Civil Rights stances on the stances screen; any other Compass topic shows `[Stance n for …]`.
 - On Compass step 1, the category name "Economy and housing" and the questions for Housing, Childcare and Data Centers (these were hidden in the reference screenshot).
@@ -49,6 +54,6 @@ Margins, borders and spacing follow the ev-ui values Treasury Tracker uses: head
 
 - `prototype/index.html` — the combined, clickable prototype (open this).
 - `prototype/*.html` — one file per screen (landing, browse, issues, read, ballot, compass, stances, ready).
-- `prototype/build_flow.py` — combines the screen files into `index.html` (`python3 build_flow.py`). Its output omits the `<!doctype html>` / `<head>` wrapper, which was added to the checked-in `index.html` so it opens directly in a browser.
+- `prototype/build_flow.py` — combines the screen files into `index.html` (`python3 build_flow.py`). It emits a complete HTML document, so the regenerated `index.html` opens directly in a browser; edit the per-screen files and re-run it rather than editing `index.html` by hand.
 - `prototype/assets/` — the official Empowered Vote and Read & Rank logos, unchanged, and `ballot-figure.png`, the ballot-casting figure from the empowered.vote homepage (`ev-landing/icons/Sticks/noun_ballot_3139174.png`, a Noun Project icon — confirm the team's license covers reuse here). It is recolored with a CSS mask on the ballot loading step, the Topic complete card and the full-ballot banner. `leremy-rig.js` and `ev-anim-extras.js` are copied unchanged from `ev-landing`; they draw and animate the landing page's Bobit (body widths slimmed slightly through the rig's config).
 - `screenshots/` — desktop captures at 1280px wide. They were captured without network access, so text renders in a fallback font instead of Manrope.

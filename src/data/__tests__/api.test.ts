@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, searchPoliticians } from '../api';
+import { fetchLocalities, fetchRaceQuotes, fetchRaces, fetchRaceReveal, RevealUnavailableError, RacesUnavailableError, RaceQuotesUnavailableError, RACES_ID_BATCH_SIZE, searchPoliticians } from '../api';
 import { MOCK_RACE_ID } from '../mockData';
 import type { VerdictRecord } from '../../store/useReadRankStore';
 
@@ -13,6 +13,7 @@ vi.mock('../../config/liveContent', () => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('fetchRaceQuotes structural blindness', () => {
@@ -287,5 +288,118 @@ describe('fetchRaces query string', () => {
     await fetchRaces(['p1'], null, undefined, true);
     const url = fetchMock.mock.calls[0][0] as string;
     expect(new URLSearchParams(url.split('?')[1]).get('embed_local')).toBe('1');
+  });
+});
+
+describe('fetchLocalities', () => {
+  const good = { name: 'Irvine', state: 'CA', placeGeoid: '0636770', countyGeoid: '06059' };
+  it('returns valid localities and drops malformed items', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ localities: [good, { name: 'X', state: 'CA' }, null, { ...good, placeGeoid: 5 }] }),
+    }));
+    expect(await fetchLocalities('Irvine')).toEqual([good]);
+  });
+  it('returns [] on 404', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('returns [] on network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('returns [] on a malformed body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ localities: 'nope' }) }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => null }));
+    expect(await fetchLocalities('Irvine')).toEqual([]);
+  });
+  it('sends state only when given and URL-encodes q', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ localities: [] }) });
+    vi.stubGlobal('fetch', f);
+    await fetchLocalities('St. Paul & Co');
+    expect(f.mock.calls[0][0]).toContain('/readrank/localities?q=St.%20Paul%20%26%20Co');
+    expect(f.mock.calls[0][0]).not.toContain('state=');
+    await fetchLocalities('Irvine', 'CA');
+    expect(f.mock.calls[1][0]).toContain('q=Irvine&state=CA');
+  });
+});
+
+describe('fetchRaces with a large roster (LA address, ~500 ids)', () => {
+  const uuid = (i: number) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+  const ids = Array.from({ length: 500 }, (_, i) => uuid(i));
+  const race = (raceId: string, isLocal: boolean, extra: object = {}) => ({
+    raceId, office: 'Mayor', electionName: 'E', electionDate: null, state: 'CA',
+    jurisdictionLevel: null, candidateCount: 2, topicCount: 2, isLocal, ...extra,
+  });
+
+  it('splits the ids across requests so no URL is oversize', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ races: [], counties: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchRaces(ids, { congressional: '0634', state_senate: null, state_house: null, county: '06037', school_district: null }, undefined, true);
+
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls).toHaveLength(Math.ceil(500 / RACES_ID_BATCH_SIZE));
+    const sent: string[] = [];
+    for (const url of urls) {
+      expect(url.length).toBeLessThan(4096);
+      const qs = new URLSearchParams(url.split('?')[1]);
+      sent.push(...qs.get('politician_ids')!.split(','));
+      // Every batch carries the shared params so isLocal/embed resolve the same way.
+      expect(qs.get('cd')).toBe('0634');
+      expect(qs.get('county')).toBe('06037');
+      expect(qs.get('embed_local')).toBe('1');
+    }
+    expect(sent).toEqual(ids);
+  });
+
+  it('merges batches: one copy per race, local if any batch matched, embedded geometry kept', async () => {
+    const geo = { layer: 'G4110', geoid: '0644000', geojson: { type: 'Polygon', coordinates: [] } };
+    const bodies = [
+      { races: [race('mayor', false, { boundaryRef: { layer: 'G4110', geoid: '0644000' } }), race('gov', false)], counties: { '06037': 'Los Angeles' } },
+      { races: [race('mayor', true, { boundaryRef: geo }), race('gov', false)], counties: {} },
+    ];
+    let call = 0;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => {
+      const body = bodies[Math.min(call++, bodies.length - 1)];
+      return { ok: true, json: async () => body };
+    }));
+    const { races, counties } = await fetchRaces(ids.slice(0, RACES_ID_BATCH_SIZE + 1));
+    expect(races.map((r) => r.raceId)).toEqual(['mayor', 'gov']);
+    expect(races.find((r) => r.raceId === 'mayor')).toMatchObject({ isLocal: true, boundaryRef: geo });
+    expect(races.find((r) => r.raceId === 'gov')?.isLocal).toBe(false);
+    expect(counties).toEqual({ '06037': 'Los Angeles' });
+  });
+
+  it('throws in production instead of falling back to mock races', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(fetchRaces(ids)).rejects.toBeInstanceOf(RacesUnavailableError);
+  });
+
+  it('fails the whole load if any batch fails (no partial ballot)', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    let call = 0;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () =>
+      call++ === 2 ? { ok: false, status: 414 } : { ok: true, json: async () => ({ races: [], counties: {} }) }));
+    await expect(fetchRaces(ids)).rejects.toBeInstanceOf(RacesUnavailableError);
+  });
+});
+
+describe('fetchRaceQuotes failure', () => {
+  it('throws in production instead of serving mock quotes', async () => {
+    vi.stubEnv('PROD', true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(fetchRaceQuotes('race-1')).rejects.toBeInstanceOf(RaceQuotesUnavailableError);
+  });
+
+  it('still falls back to the mock race outside production', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const payload = await fetchRaceQuotes('race-1');
+    expect(payload.raceId).toBe(MOCK_RACE_ID);
   });
 });

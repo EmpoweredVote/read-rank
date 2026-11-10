@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { EvaluationPhase } from '../EvaluationPhase';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
@@ -122,6 +122,8 @@ describe('reveal reachability with zero agreements (touch)', () => {
     disagreeWholeRace();
     render(<EvaluationPhase />);
 
-    expect(await screen.findByRole('button', { name: /reveal ballot|see your full ballot|see results/i }, { timeout: 3000 })).toBeInTheDocument();
+    // The topic-complete card also offers the reveal now, so scope to the sheet.
+    const sheet = await screen.findByRole('dialog', {}, { timeout: 3000 });
+    expect(within(sheet).getByRole('button', { name: /reveal ballot|see your full ballot|see results/i })).toBeInTheDocument();
   });
 });

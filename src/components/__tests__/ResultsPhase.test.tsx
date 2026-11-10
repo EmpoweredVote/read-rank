@@ -40,7 +40,7 @@ describe('ResultsPhase flow', () => {
 
     render(<ResultsPhase />);
 
-    // Reveal band appears once loading resolves (600ms setTimeout in the effect).
+    // Reveal band appears once loading resolves (400 ms revealing step after the reveal resolves).
     expect(await screen.findByText(/Now see/i, {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText(/you ranked 1 quote across 1 topic/i)).toBeInTheDocument();
 

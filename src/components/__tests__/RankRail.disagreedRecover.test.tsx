@@ -29,10 +29,10 @@ describe('RankRail disagreed recover', () => {
 
     render(<RaceRankSourceProvider><RankRail variant="sidebar" /></RaceRankSourceProvider>);
     await userEvent.click(screen.getByRole('button', { name: /disagreed.*review or recover/i }));
-    await userEvent.click(screen.getByRole('button', { name: /move to agreed/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Move to my ranking' }));
 
     const statusNodes = screen.getAllByRole('status');
-    const recovered = statusNodes.some((node) => /moved .* back to agreed/i.test(node.textContent ?? ''));
+    const recovered = statusNodes.some((node) => /moved ".*" to your ranking\./i.test(node.textContent ?? ''));
     expect(recovered).toBe(true);
   });
 });

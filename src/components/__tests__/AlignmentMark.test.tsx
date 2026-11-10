@@ -13,9 +13,11 @@ describe('AlignmentMarkView', () => {
     expect(container.querySelector('.mark-agreed')).toBeInTheDocument();
     expect(screen.getByText('Agreed')).toHaveClass('sr-only');
   });
-  it('renders a disagreed cross with sr-only label', () => {
+  it('renders a disagreed slash-circle (⊘) with sr-only label', () => {
     const { container } = render(<AlignmentMarkView mark={{ kind: 'disagreed' }} />);
-    expect(container.querySelector('.mark-disagreed')).toBeInTheDocument();
+    const svg = container.querySelector('.mark-disagreed')!;
+    expect(svg).toBeInTheDocument();
+    expect(svg.querySelector('path')!.getAttribute('d')).toMatch(/^M5\.6 5\.6/);
     expect(screen.getByText('Disagreed')).toHaveClass('sr-only');
   });
   it('renders a not-judged dash with sr-only label', () => {

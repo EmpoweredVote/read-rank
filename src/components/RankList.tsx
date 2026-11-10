@@ -82,8 +82,9 @@ function RowContent({ quote, index, rank, reorderMode, onNumberClick, popOpen, d
   const tieClass = `${quote.tieWithPrev ? ' rank-slip-tied' : ''}${tieAbove ? ' rank-slip-tie-above' : ''}`;
   const alsoAgreeClass = unranked ? ' rank-slip-also-agree' : '';
 
+  const firstClass = rank === 1 && !unranked ? ' rank-slip-first' : '';
   return (
-    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}${tieClass}${alsoAgreeClass}`}>
+    <div className={`rank-slip ${index < 3 ? 'rank-slip-top' : 'rank-slip-sub'}${tieClass}${alsoAgreeClass}${firstClass}`}>
       <button
         type="button"
         className="rank-num"

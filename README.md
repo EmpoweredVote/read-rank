@@ -264,3 +264,16 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Tailwind CSS** for utility-first styling
 - **@dnd-kit** for accessible drag-and-drop
 - **Manrope Font** by Mikhail Sharanda
+
+## Render settings live in ev-infra
+
+This repo's Render services (`read-rank-frontend`) are managed by the Render Blueprint in
+[`EmpoweredVote/ev-infra`](https://github.com/EmpoweredVote/ev-infra) (`render.yaml`).
+
+- Build and start commands, rewrites, headers, custom domains, plans, cron
+  schedules and build filters change **only through a PR to ev-infra**. Render
+  syncs its `main` branch automatically.
+- A setting changed in the Render dashboard is **undone on the next sync**.
+- Env var **values** are the exception: set them in the Render dashboard. Add a
+  new variable's name to ev-infra (with `sync: false`) so the record stays complete.
+- Do not add a `render.yaml` to this repo. Render does not read it.

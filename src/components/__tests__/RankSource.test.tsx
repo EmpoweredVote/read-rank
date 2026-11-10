@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
-import { RankSourceProvider, useRankSource, useRaceRankSource, type RankSource } from '../RankSource';
+import { RankSourceProvider, useRankSource, useRaceRankSource, type RankSource } from '../rankSourceContext';
 import { useReadRankStore, type RacePayload } from '../../store/useReadRankStore';
 
 const src: RankSource = { agreed: [], disagreed: [], reorder: () => {}, toggleTie: () => {}, reAgree: () => {}, setRankedCount: () => {} };

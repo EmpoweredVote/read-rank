@@ -5,8 +5,10 @@ import { useReadRankStore } from '../store/useReadRankStore';
 import { fetchRaces, fetchRaceQuotes, prefetchBoundaries, type RaceSummary } from '../data/api';
 import { shuffleArray } from '../utils/matchingAlgorithm';
 import { AddressFilterInput } from './AddressFilterInput';
+import { BrowseHeader } from './BrowseHeader';
 import { RaceBrowse } from './RaceBrowse';
 import { RaceCard } from './RaceCard';
+import { TimeFilterSwitch } from './TimeFilterSwitch';
 import { deriveTierScope } from '../utils/raceTier';
 import { estimateMinutes } from '../utils/estimateMinutes';
 import { raceCardProgress, isRaceComplete } from '../utils/raceProgressState';
@@ -18,6 +20,11 @@ import { DEFAULT_RACE_ID } from '../config/liveContent';
 interface RaceHubProps {
   hideHeader?: boolean;
   hideFilter?: boolean;
+  /** Controlled time filter. When omitted, RaceHub keeps its own state. */
+  timeFilter?: TimeFilter;
+  onTimeFilterChange?: (next: TimeFilter) => void;
+  /** Hide RaceHub's own switch (the parent renders it, e.g. Landing's header row). */
+  hideTimeFilter?: boolean;
 }
 
 function todayISO(): string {
@@ -25,15 +32,23 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false }) => {
+export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter = false, timeFilter: timeFilterProp, onTimeFilterChange, hideTimeFilter = false }) => {
   const {
     raceProgress, selectRace, locationFilter, clearLocationFilter,
     counties, setCounties, browseTarget, setBrowseTarget,
   } = useReadRankStore();
   const [races, setRaces] = useState<RaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [starting, setStarting] = useState<string | null>(null);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
+  const [startError, setStartError] = useState(false);
+  const [timeFilterState, setTimeFilterState] = useState<TimeFilter>('upcoming');
+  const timeFilter = timeFilterProp ?? timeFilterState;
+  const setTimeFilter = (next: TimeFilter) => {
+    if (timeFilterProp === undefined) setTimeFilterState(next);
+    onTimeFilterChange?.(next);
+  };
 
   const m = useMotion();
   const politicianIds = locationFilter?.politicianIds;
@@ -60,6 +75,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   useEffect(() => {
     setLoading(true);
+    setLoadError(false);
     // Inline geometry for cards shown immediately so their motif doesn't flash: the
     // featured default race on the no-location landing, or the user's own ("Your races")
     // isLocal races on a located ballot.
@@ -67,9 +83,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     const embedLocal = locationFilter != null;
     fetchRaces(politicianIds, jurisdiction, embed, embedLocal)
       .then(({ races, counties }) => { setRaces(races); setCounties(counties); })
+      // Production throws instead of serving mock races; show a real error state.
+      .catch(() => { setRaces([]); setLoadError(true); })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [politicianIds, setCounties, jurisdictionKey]);
+  }, [politicianIds, setCounties, jurisdictionKey, reloadKey]);
 
   // Warm boundary geometry for the cards this view will show, so their map motifs
   // resolve without the dot-field placeholder flashing. Browse renders its own (large)
@@ -93,6 +111,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   const handleSelect = useCallback(async (race: RaceSummary) => {
     setStarting(race.raceId);
+    setStartError(false);
     // Capture resume state BEFORE selectRace mutates the store. Read fresh state
     // (not the render-closure `raceProgress`) since this callback isn't recreated
     // when progress changes. Drives the `resumed` funnel property below.
@@ -104,7 +123,13 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         ...payload,
         topics: payload.topics.map((t) => ({ ...t, quotes: shuffleArray(t.quotes) })),
       };
-      selectRace(shuffled, { office: race.office, seat: race.seat ?? null, state: race.state, rankableTopicCount: race.rankableTopicCount ?? race.topicCount });
+      const { tier, scope } = deriveTierScope(race);
+      selectRace(shuffled, {
+        office: race.office, seat: race.seat ?? null, state: race.state,
+        rankableTopicCount: race.rankableTopicCount ?? race.topicCount,
+        electionDate: race.electionDate ?? null, tier, scope,
+        boundaryRef: race.boundaryRef ?? null, frameRef: race.frameRef ?? null,
+      });
       track('readrank_race_started', {
         race_id: race.raceId,
         office: race.office,
@@ -118,10 +143,13 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
         resumed,
         resumed_completed: resumed ? isRaceComplete(existingProgress, race.rankableTopicCount ?? race.topicCount) : false,
       });
+    } catch {
+      // Production throws instead of serving mock quotes; tell the user and stay on the hub.
+      setStartError(true);
     } finally {
       setStarting(null);
     }
-  }, [selectRace]);
+  }, [selectRace, locationFilter]);
 
   const renderCard = useCallback((race: RaceSummary, enterIndex?: number) => {
     const { progress, label } = raceCardProgress(raceProgress[race.raceId], race.rankableTopicCount);
@@ -154,18 +182,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     );
   }, [raceProgress, starting, handleSelect]);
 
-  if (loading) {
-    return (
-      <div className="text-center py-16">
-        <div className="inline-block w-6 h-6 border-2 rounded-full animate-spin"
-          style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--color-ev-muted-blue)' }} />
-        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-          Loading races…
-        </p>
-      </div>
-    );
-  }
-
   const located = locationFilter != null;
   const userState = locationFilter?.state ?? null;
   const userCounty = locationFilter?.county ?? null;
@@ -179,7 +195,31 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   let content: React.ReactNode = null;
 
-  if (races.length === 0) {
+  if (loading) {
+    content = (
+      <div className="text-center py-16">
+        <div className="inline-block w-6 h-6 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'var(--border-subtle)', borderTopColor: 'var(--color-ev-muted-blue)' }} />
+        <p className="mt-4" style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
+          Loading races…
+        </p>
+      </div>
+    );
+  } else if (loadError) {
+    // The race list failed to load. Say so — never imply the area simply has no races.
+    content = (
+      <motion.div className="max-w-2xl mx-auto text-center py-12" role="alert"
+        {...m.enter({ y: 8 })} transition={m.transition(DUR.base, EASE.settle)}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
+          We couldn&apos;t load races
+        </p>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1rem' }}>
+          Something went wrong on our end. Please try again in a moment.
+        </p>
+        <button className="ev-button-secondary" onClick={() => setReloadKey((k) => k + 1)}>Try again</button>
+      </motion.div>
+    );
+  } else if (races.length === 0) {
     // No races at all — nothing to browse or locate.
     content = (
       <motion.div className="max-w-2xl mx-auto text-center py-12"
@@ -199,9 +239,6 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     // View 1 — explicit browse (Browse button, or a place-name smart search).
     content = (
       <div className="w-full">
-        <button className="ev-button-secondary" style={{ marginTop: '0.5rem' }} onClick={() => setBrowseTarget(null)}>
-          ‹ Back to my ballot
-        </button>
         <RaceBrowse
           key={`${browseTarget.state}:${browseTarget.geoid ?? 'all'}`}
           races={races}
@@ -220,29 +257,11 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
     });
     content = (
       <div className="w-full">
-        {/* Time filter chips */}
-        <div className="flex gap-2 justify-start mt-2 mb-1" role="group" aria-label="Filter by election timing">
-          {(['upcoming', 'past'] as const).map((tf) => {
-            const active = timeFilter === tf;
-            return (
-              <button
-                key={tf}
-                onClick={() => setTimeFilter(tf)}
-                aria-pressed={active}
-                className="rounded-full px-4 py-1.5 text-sm transition-colors"
-                style={{
-                  fontFamily: "'Manrope', sans-serif", fontWeight: active ? 700 : 500,
-                  border: active ? 'none' : '1px solid var(--border-subtle)',
-                  background: active ? 'var(--color-ev-muted-blue)' : 'transparent',
-                  color: active ? '#fff' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                }}
-              >
-                {tf === 'upcoming' ? 'Upcoming' : 'Past'}
-              </button>
-            );
-          })}
-        </div>
+        {!hideTimeFilter && (
+          <div className="mt-2 mb-1">
+            <TimeFilterSwitch value={timeFilter} onChange={setTimeFilter} />
+          </div>
+        )}
 
         {/* No-exact-match note — point at the county if we have one, else the state */}
         {noExactMatch && sections.some((s) => s.kind === 'county' || s.kind === 'state') && (
@@ -310,7 +329,7 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
 
   return (
     <div className="pb-12">
-      {!hideHeader && (
+      {!hideHeader && !browseTarget && (
         <motion.div
           className="max-w-2xl mx-auto mb-4"
           {...m.enter({ y: 12 })}
@@ -333,8 +352,23 @@ export const RaceHub: React.FC<RaceHubProps> = ({ hideHeader = false, hideFilter
       )}
 
       <div className="max-w-2xl mx-auto">
-        {!hideFilter && <AddressFilterInput />}
+        {!hideFilter && !browseTarget && <AddressFilterInput />}
       </div>
+
+      {startError && (
+        <p role="alert" className="max-w-2xl mx-auto text-center mb-2" style={{
+          fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-heading)',
+        }}>
+          We couldn&apos;t open that race. Please try again in a moment.
+        </p>
+      )}
+
+      {browseTarget && (
+        <BrowseHeader
+          backLabel={locationFilter !== null ? '‹ Back to my ballot' : '‹ Back'}
+          onBack={() => setBrowseTarget(null)}
+        />
+      )}
 
       {content}
     </div>

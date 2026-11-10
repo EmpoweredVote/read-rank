@@ -39,7 +39,7 @@ export const AlignmentGrid: React.FC<AlignmentGridProps> = ({
           <tr>
             <th scope="col" className="alignment-grid-corner">Candidate</th>
             {topics.map((t) => (
-              <th scope="col" key={t.key} className="alignment-topic-col"><span className="alignment-col-label">{t.title}</span></th>
+              <th scope="col" key={t.key} className="alignment-topic-col" title={t.title}><span className="alignment-col-label">{t.title}</span></th>
             ))}
             <th aria-hidden="true" className="alignment-spacer" />
           </tr>

@@ -36,3 +36,25 @@ export function getStateFips(abbr: string | null | undefined): string | null {
   if (!abbr) return null;
   return STATE_FIPS[abbr.toUpperCase()] ?? null;
 }
+
+const NAME_TO_ABBREV: Record<string, string> = Object.fromEntries(
+  Object.entries(STATE_NAMES)
+    .filter(([abbr]) => abbr in STATE_FIPS && abbr !== 'DC')
+    .map(([abbr, name]) => [name.toLowerCase(), abbr]),
+);
+
+/** Full state name or 2-letter abbreviation (case-insensitive) → USPS abbreviation.
+ *  Null for DC and anything unrecognized. */
+export function getStateAbbrevFromName(input: string): string | null {
+  const t = input.trim().toLowerCase();
+  if (!t) return null;
+  const upper = t.toUpperCase();
+  if (t.length === 2 && upper in STATE_FIPS && upper !== 'DC') return upper;
+  return NAME_TO_ABBREV[t] ?? null;
+}
+
+/** 2-digit Census state FIPS code → USPS abbreviation (reverse of STATE_FIPS). */
+export function getStateAbbrevFromFips(fips: string): string | null {
+  const hit = Object.entries(STATE_FIPS).find(([, f]) => f === fips);
+  return hit ? hit[0] : null;
+}

@@ -82,17 +82,18 @@ function BoundaryMotif({ childRef, frameRef, fallback }: {
   // Browse list doesn't fire hundreds of requests at once and cards load just before
   // they're seen. In-view cards (landing / ballot) intersect immediately. No
   // IntersectionObserver (jsdom/tests) → fetch right away.
-  const [nearView, setNearView] = useState(false);
+  const [nearView, setNearView] = useState(() => typeof IntersectionObserver === 'undefined');
   useEffect(() => {
-    if (!needsFetch) return;
+    if (!needsFetch || nearView) return;
+    // The span carrying containerRef always renders, so el is set once mounted.
     const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') { setNearView(true); return; }
+    if (!el) return;
     const io = new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting)) { setNearView(true); io.disconnect(); }
     }, { rootMargin: '300px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [needsFetch]);
+  }, [needsFetch, nearView]);
 
   useEffect(() => {
     if (hasInlineGeom || !nearView) return;

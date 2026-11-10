@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMotion, EASE, DUR } from '../motion';
 import type { BallotEntry } from '../data/api';
@@ -7,6 +7,25 @@ import { PoliticianIdentityCard } from './PoliticianIdentityCard';
 import { QuoteDrawer } from './QuoteDrawer';
 import { RankNumber } from './RankNumber';
 import { track } from '../lib/analytics';
+
+const MAX_SEGMENTS = 8;
+
+/** Small "agreed N of M" meter for the evidence strip (decorative; the text carries the numbers). */
+function AgreementBar({ agreed, total }: { agreed: number; total: number }) {
+  if (total <= 0) return null;
+  const n = Math.max(0, Math.min(agreed, total));
+  return (
+    <span className="agree-bar" aria-hidden="true">
+      {total > MAX_SEGMENTS ? (
+        <span className="agree-bar__track"><span className="agree-bar__fill" style={{ width: `${(n / total) * 100}%` }} /></span>
+      ) : (
+        Array.from({ length: total }, (_, i) => (
+          <span key={i} className={`agree-bar__seg${i < n ? ' agree-bar__seg--on' : ''}`} />
+        ))
+      )}
+    </span>
+  );
+}
 
 export interface CandidateBallotCardProps {
   entry: BallotEntry;
@@ -22,24 +41,23 @@ export interface CandidateBallotCardProps {
 
 interface Particle { dx: number; dy: number; size: number; delay: number; isLarge: boolean; }
 
+/** The burst pattern is fixed (derived from the index alone), so it is computed once. */
+const PARTICLES: Particle[] = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i / 16) * 360;
+  const dist = 40 + ((i * 37) % 70);
+  return {
+    dx: Math.cos((angle * Math.PI) / 180) * dist,
+    dy: Math.sin((angle * Math.PI) / 180) * dist,
+    size: 2 + ((i * 13) % 5), delay: (i % 5) * 0.03, isLarge: i % 4 === 0,
+  };
+});
+
 /** Celebratory burst on the #1 card — the one earned celebration (spec §7). */
 const MegaParticles: React.FC<{ active: boolean }> = ({ active }) => {
-  const ref = useRef<Particle[]>([]);
-  if (ref.current.length === 0) {
-    ref.current = Array.from({ length: 16 }, (_, i) => {
-      const angle = (i / 16) * 360;
-      const dist = 40 + ((i * 37) % 70);
-      return {
-        dx: Math.cos((angle * Math.PI) / 180) * dist,
-        dy: Math.sin((angle * Math.PI) / 180) * dist,
-        size: 2 + ((i * 13) % 5), delay: (i % 5) * 0.03, isLarge: i % 4 === 0,
-      };
-    });
-  }
   if (!active) return null;
   return (
     <div style={{ position: 'absolute', inset: -20, pointerEvents: 'none', zIndex: 20 }}>
-      {ref.current.map((p, i) => (
+      {PARTICLES.map((p, i) => (
         <div key={i} style={{
           position: 'absolute', width: p.isLarge ? p.size * 2 : p.size, height: p.isLarge ? p.size * 2 : p.size,
           borderRadius: '50%',
@@ -97,7 +115,7 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
         )}
       </div>
 
-      <div className="ballot-outer">
+      <div className={`ballot-outer${rank === 1 ? ' ballot-outer--first' : ''}`}>
         <PoliticianIdentityCard
           name={entry.name} photo={entry.photo} essentialsUrl={entry.essentialsUrl}
           office={entry.office} title={entry.title} chamber={entry.chamber} district={entry.district}
@@ -107,9 +125,12 @@ export const CandidateBallotCard: React.FC<CandidateBallotCardProps> = ({
           <p className="ballot-evidence">
             {rank != null ? (
               <>
-                Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                <span className="ballot-evidence__main">
+                  <AgreementBar agreed={agreementCount} total={totalTopics} />
+                  Agreed with <strong>{agreementCount} of {totalTopics}</strong>
+                </span>
                 {topPicks > 0 && (
-                  <> · <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></>
+                  <> <span className="ballot-evidence__topk">· <span className="ballot-topk">{topPicks} top pick{topPicks === 1 ? '' : 's'}</span></span></>
                 )}
               </>
             ) : (
