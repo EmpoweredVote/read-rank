@@ -1,8 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-
-vi.mock('@empoweredvote/ev-ui', () => ({ useMediaQuery: vi.fn() }));
-import { useMediaQuery } from '@empoweredvote/ev-ui';
 import { AlignmentSection } from '../AlignmentSection';
 import type { RevealResult } from '../../data/api';
 
@@ -17,16 +14,15 @@ const reveal: RevealResult = {
 const topics = [{ key: 'h', title: 'Housing' }];
 
 describe('AlignmentSection', () => {
-  beforeEach(() => vi.clearAllMocks());
-  it('renders the label and the matrix on desktop', () => {
-    (useMediaQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(true); // desktop
-    render(<AlignmentSection reveal={reveal} topics={topics} rankMap={new Map()} />);
-    expect(screen.getByText('Your alignment at a glance')).toBeInTheDocument();
-    expect(document.querySelector('.alignment-grid')).toBeInTheDocument();
+  it('renders the heading and one table at every width (no separate mobile pills)', () => {
+    render(<AlignmentSection reveal={reveal} topics={topics} rankMap={new Map([['q', 1]])} />);
+    expect(screen.getByRole('heading', { name: 'Your alignment at a glance' })).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(document.querySelector('.pills-wrap')).toBeNull();
   });
-  it('renders pills on mobile', () => {
-    (useMediaQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false); // mobile
-    render(<AlignmentSection reveal={reveal} topics={topics} rankMap={new Map()} />);
-    expect(document.querySelector('.pills-wrap')).toBeInTheDocument();
+
+  it('renders nothing without topics', () => {
+    const { container } = render(<AlignmentSection reveal={reveal} topics={[]} rankMap={new Map()} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

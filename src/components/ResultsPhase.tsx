@@ -9,6 +9,8 @@ import { AlignmentSection } from './AlignmentSection';
 import { CandidateBallotCard } from './CandidateBallotCard';
 import { RevealBand } from './RevealBand';
 import { CompassCrossLink } from './CompassCrossLink';
+import { YourCompassCard } from './YourCompassCard';
+import { useMyCompass } from '../hooks/useMyCompass';
 import type { AlignmentTopic } from '../utils/alignmentGrid';
 import { disambiguateCardLabels } from '../utils/cardLabels';
 import { buildPerTopicRankMap } from '../utils/alignmentMarks';
@@ -33,6 +35,7 @@ export const ResultsPhase: React.FC = () => {
     setFailed(false);
   }
   const m = useMotion();
+  const myCompass = useMyCompass();
   // Retry: show the loader again and re-run the fetch effect.
   const retry = () => {
     setLoadStep('matching');
@@ -187,8 +190,22 @@ export const ResultsPhase: React.FC = () => {
   // "Also on the ballot" / "Everyone you read") so the style isn't duplicated.
   const sectionHeadingStyle = { fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: '1rem', color: 'var(--text-heading)', margin: '1.25rem 0 0.25rem' } as const;
 
+  // Calibrated compass → "Your compass"; otherwise the Calibrate invitation.
+  // Nothing while we find out, so a calibrated user never sees the wrong card flash.
+  const compassCard = myCompass.status === 'calibrated' ? (
+    <YourCompassCard spokes={myCompass.spokes} topics={myCompass.topics}
+      candidates={[...ranked, ...unranked].map((e) => ({ candidateId: e.candidateId, name: e.name }))} />
+  ) : myCompass.status === 'uncalibrated' ? (
+    <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={null} />
+  ) : myCompass.status === 'error' ? (
+    <section className="compass-card" role="status">
+      <h3 className="compass-card-heading">Your compass</h3>
+      <p className="compass-card-body" style={{ margin: 0 }}>We couldn&apos;t load your compass right now.</p>
+    </section>
+  ) : null;
+
   return (
-    <div className="pb-12 max-w-2xl mx-auto">
+    <div className="results-page pb-12">
       <div aria-live="polite" role="status" className="sr-only">{revealAnnouncement}</div>
 
       <RevealBand office={office} rankedCount={agreedList.length} judgedCount={judgedCount} topicCount={topicCount} nothingRanked={ranked.length === 0} />
@@ -199,68 +216,79 @@ export const ResultsPhase: React.FC = () => {
         </p>
       )}
 
-      <div className="space-y-4">
-        <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
-          animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.cellsStart} />
+      {/* Full width: the alignment table stacks itself when its columns can't fit. */}
+      <AlignmentSection reveal={reveal!} topics={alignmentTopics} rankMap={rankMap}
+        animate frameDelayMs={timeline.gridFrame} cellBaseDelayMs={timeline.cellsStart} />
 
-        {ranked.length > 0 && (
-          <>
-            <h3 style={sectionHeadingStyle}>
-              How the candidates stack up
-            </h3>
-            {ranked.map((entry, i) => (
-              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
-                rankMap={rankMap}
-                tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
-                landDelayMs={timeline.cardDelay(i)} />
-            ))}
-          </>
-        )}
-
-        {unranked.length > 0 && (
-          <>
-            <h3 style={sectionHeadingStyle}>
-              {ranked.length > 0 ? 'Also on the ballot' : 'Everyone you read'}
-            </h3>
+      {/* Two columns on wide screens (ballot left, compass card right and sticky);
+          one column below, with the compass card between the ballot and the exits. */}
+      <div className="results-layout">
+        <div className="results-main">
+          <div className="results-stack space-y-4">
             {ranked.length > 0 && (
-              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
-                You read them, but didn&apos;t agree with any of their positions.
-              </p>
+              <>
+                <h3 style={sectionHeadingStyle}>
+                  How the candidates stack up
+                </h3>
+                {ranked.map((entry, i) => (
+                  <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                    rankMap={rankMap}
+                    tied={entry.rank != null && (tiedRanks.get(entry.rank) ?? 0) > 1}
+                    landDelayMs={timeline.cardDelay(i)} />
+                ))}
+              </>
             )}
-            {/* Cascade index continues across both sections so the animation
-                doesn't restart at the second heading. */}
-            {unranked.map((entry, i) => (
-              <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
-                rankMap={rankMap}
-                landDelayMs={timeline.cardDelay(ranked.length + i)} />
-            ))}
-          </>
-        )}
 
-        <CompassCrossLink raceId={reveal?.raceId ?? ''} topTopicTitle={null} />
+            {unranked.length > 0 && (
+              <>
+                <h3 style={sectionHeadingStyle}>
+                  {ranked.length > 0 ? 'Also on the ballot' : 'Everyone you read'}
+                </h3>
+                {ranked.length > 0 && (
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
+                    You read them, but didn&apos;t agree with any of their positions.
+                  </p>
+                )}
+                {/* Cascade index continues across both sections so the animation
+                    doesn't restart at the second heading. */}
+                {unranked.map((entry, i) => (
+                  <CandidateBallotCard key={entry.candidateId} entry={entry} totalTopics={topicCount}
+                    rankMap={rankMap}
+                    landDelayMs={timeline.cardDelay(ranked.length + i)} />
+                ))}
+              </>
+            )}
+          </div>
+
+          <motion.div className="results-actions flex flex-col items-center gap-3 pt-6"
+            {...m.enter({ y: 12 })}
+            transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.actionsDelay / 1000 })}>
+            {!complete && (
+              <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
+                ← Back to your topics
+              </button>
+            )}
+            <button
+              onClick={() => { track('readrank_play_again_clicked'); goToHub(); }}
+              className={complete ? 'ev-button-primary' : 'ev-button-secondary'}
+              style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}
+            >
+              Play another race near you
+            </button>
+            {complete && (
+              <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
+                Review a topic
+              </button>
+            )}
+          </motion.div>
+        </div>
+
+        {compassCard && (
+          <aside className="results-side" aria-label="Compass">
+            {compassCard}
+          </aside>
+        )}
       </div>
-
-      <motion.div className="flex flex-col items-center gap-3 pt-6"
-        {...m.enter({ y: 12 })}
-        transition={m.transition(DUR.moderate, EASE.settle, { delay: timeline.actionsDelay / 1000 })}>
-        {!complete && (
-          <button onClick={() => setPhase('issue-selection')} className="ev-button-primary" style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}>
-            ← Back to your topics
-          </button>
-        )}
-        <button
-          onClick={() => { track('readrank_play_again_clicked'); goToHub(); }}
-          className={complete ? 'ev-button-primary' : 'ev-button-secondary'}
-          style={{ fontSize: '0.9375rem', padding: '0.625rem 1.75rem' }}
-        >
-          Play another race near you
-        </button>
-        {complete && (
-          <button onClick={() => setPhase('issue-selection')} className="ev-button-secondary" style={{ fontSize: '0.8125rem' }}>
-            Review a topic
-          </button>
-        )}
-      </motion.div>
     </div>
   );
 };
