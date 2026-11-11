@@ -18,8 +18,8 @@ This folder holds a clickable HTML prototype of a visual/UX refresh of the Read 
 | 3 | Choose your issues (in-progress race) | `04-choose-issues.png` |
 | 4 | Read a quote: agree / disagree, arrow-key shortcuts | `05-read-quote.png` |
 | 5 | After answering: ranking panel (reorderable), disagreed tray, topic complete | `06-topic-complete-ranking.png` |
-| 6 | Your rankings (full ballot): loading step, then staged reveal; a "Preview with 8 issues and 4 candidates" switch fills it with fictional sample data to check the many-issues layout | `07-ballot-loading.png`, `08-full-ballot.png` |
-| 6b | Your rankings, for a user who already has a calibrated compass (`#ballot-compass`): a "Your compass" card with a candidate overlay replaces the Calibrate prompt. Reached from "See your matches" at the end of Compass; the ballot screen's notice links switch between the two versions | `13-ballot-compass.png`, `14-ballot-compass-phone.png` |
+| 6 | Your rankings (full ballot): loading step, then staged reveal | `07-ballot-loading.png`, `08-full-ballot.png` |
+| 6b | Your rankings, for a user who already has a calibrated compass (`#ballot-compass`): a "Your compass" card with a candidate overlay replaces the Calibrate prompt. Reached from "See your matches" at the end of Compass, or directly at `prototype/index.html#ballot-compass` (and `#ballot` for the version without a compass) | `13-ballot-compass.png`, `14-ballot-compass-phone.png` |
 | 7 | Compass step 1: choose topics (3–8) | `09-compass-choose-topics.png` |
 | 8 | Compass step 2: your stances, with a 2-step guide pop-up | `10-stances-guide.png`, `11-stances.png` |
 | 9 | Compass step 3: compass ready, compare animation | `12-compass-ready-compared.png` |
