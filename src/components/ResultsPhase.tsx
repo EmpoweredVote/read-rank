@@ -192,7 +192,18 @@ export const ResultsPhase: React.FC = () => {
 
   // Calibrated compass → "Your compass"; otherwise the Calibrate invitation.
   // Nothing while we find out, so a calibrated user never sees the wrong card flash.
-  const compassCard = myCompass.status === 'calibrated' ? (
+  // "Your compass" names every candidate's Compass stance on the user's topics, and
+  // quotes are coupled to those stances: shown before every card is ranked, it would
+  // let the user match an unranked card's blind quotes to a name. So the comparison
+  // waits for a complete race.
+  const compassCard = myCompass.status === 'calibrated' && !complete ? (
+    <section className="compass-card" role="status">
+      <h3 className="compass-card-heading">Your compass</h3>
+      <p className="compass-card-body" style={{ margin: 0 }}>
+        Rank every topic in this race to compare your compass with the candidates&apos;.
+      </p>
+    </section>
+  ) : myCompass.status === 'calibrated' ? (
     <YourCompassCard spokes={myCompass.spokes} topics={myCompass.topics}
       candidates={[...ranked, ...unranked].map((e) => ({ candidateId: e.candidateId, name: e.name }))} />
   ) : myCompass.status === 'uncalibrated' ? (
