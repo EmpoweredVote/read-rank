@@ -18,8 +18,7 @@ describe('AlignmentGrid', () => {
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'Jane Doe' })).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('Ranked 1')).toHaveClass('sr-only');
+    expect(screen.getByRole('img', { name: 'Your number 1 pick' })).toHaveTextContent('1');
   });
 });
 

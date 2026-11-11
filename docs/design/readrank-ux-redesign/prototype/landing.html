@@ -117,19 +117,28 @@
   .link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .link small { color: var(--ink-3); font-weight: 500; font-size: 13px; margin-left: 4px; }
 
-  /* How it works */
-  .steps { list-style: none; margin: 0; padding: 8px 0; position: relative; }
-  .steps::before { content: ""; position: absolute; left: 17px; top: 30px; bottom: 30px; width: 2px; background: var(--line); }
-  .steps li { display: grid; grid-template-columns: 36px 1fr; gap: 18px; padding-block: 14px; position: relative; }
-  .num {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: grid; place-items: center;
-    background: var(--surface); border: 2px solid var(--line);
-    font-size: 13px; font-weight: 800; color: var(--ink-3); font-variant-numeric: tabular-nums;
+  /* How it works: an animated Bobit (Empowered Vote's Leremy rig) walks through the three steps on his own */
+  .bobit { margin: 0; display: grid; gap: 4px; width: 100%; max-width: 420px; justify-self: center; }
+  .bubble {
+    position: relative; padding: 18px 20px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow, none);
   }
-  .steps li:first-child .num { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
-  .steps h3 { margin: 5px 0 2px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
-  .steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+  .bubble::after {
+    content: ""; position: absolute; left: var(--tail, 50%); bottom: -9px; width: 16px; height: 16px; margin-left: -8px;
+    background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); rotate: 45deg;
+  }
+  .bubble-step { display: block; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); }
+  .bubble h3 { margin: 6px 0 4px; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+  .bubble p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.5; min-height: 3em; }
+  .bubble-bar { display: block; height: 4px; margin-top: 14px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .bubble-bar i { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--step-color, var(--teal)); transform-origin: left; transform: scaleX(var(--progress, 0)); }
+  .bubble.swap > * { animation: bubble-in .35s ease both; }
+  @keyframes bubble-in { from { opacity: 0; translate: 0 6px; } }
+  .bobit-stage { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 16px; }
+  .bobit-stage:focus-visible { outline: 3px solid color-mix(in srgb, var(--teal) 40%, transparent); outline-offset: 2px; }
+  .bobit canvas { display: block; width: 100%; height: 135px; color: var(--teal); }
+  @media (prefers-reduced-motion: reduce) { .bubble.swap > * { animation: none; } }
+  @media (max-width: 880px) { .bobit canvas { height: 110px; } }
 
   /* Elections */
   .elections { padding-block: 8px 72px; }
@@ -209,6 +218,39 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+
+  /* Landing hero and election list share Treasury Tracker's full-width side margins */
+  .hero.wrap, .elections.wrap { max-width: none; padding-inline: 48px; }
+  .hero { padding-block: 64px; gap: 64px; }
+  .elections { padding-block: 0 48px; }
+  @media (min-width: 640px) { .hero.wrap, .elections.wrap { padding-inline: 64px; } }
+  @media (min-width: 1024px) {
+    .hero.wrap, .elections.wrap { padding-inline: 96px; }
+    .hero { grid-template-columns: minmax(0, 1fr) 380px; gap: 96px; }
+  }
+  @media (max-width: 560px) { .hero.wrap, .elections.wrap { padding-inline: 16px; } }
+  /* end EV layout */
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -217,7 +259,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -241,24 +283,18 @@
           Choose an election
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
         </a>
-        <a class="link" href="#">Try a warm-up with pizza opinions <small>30 sec</small></a>
       </div>
     </div>
 
-    <ol class="steps" aria-label="How it works">
-      <li>
-        <span class="num">1</span>
-        <div><h3>Pick an election</h3><p>Local and upcoming races in our Alpha communities.</p></div>
-      </li>
-      <li>
-        <span class="num">2</span>
-        <div><h3>Read the quotes</h3><p>Judge positions on their words alone.</p></div>
-      </li>
-      <li>
-        <span class="num">3</span>
-        <div><h3>Rank the candidates</h3><p>See who earned your trust, and where you align.</p></div>
-      </li>
-    </ol>
+    <figure class="bobit" id="bobit" aria-label="How it works">
+      <div class="bubble" aria-live="polite">
+        <span class="bubble-step">Step <span id="bobit-n">1</span> of 3</span>
+        <h3 id="bobit-title">Pick an election</h3>
+        <p id="bobit-text">Local and upcoming races in our Alpha communities.</p>
+        <span class="bubble-bar" aria-hidden="true"><i></i></span>
+      </div>
+      <button class="bobit-stage" type="button" aria-label="Next step"><canvas aria-hidden="true"></canvas></button>
+    </figure>
   </section>
 
   <section class="wrap elections" id="elections" aria-labelledby="elections-title">
@@ -267,7 +303,7 @@
         <h2 id="elections-title">Choose an election</h2>
         <p class="near">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-          Races for <strong>100 W Kirkwood Ave, Bloomington, IN</strong>
+          Races for <strong>Bloomington, Indiana</strong>
           <button type="button">Change</button>
         </p>
       </div>
@@ -281,7 +317,7 @@
     <p class="group-label">Indiana · Nov 3, 2026</p>
 
     <div class="grid">
-      <a class="race in-progress" href="#issues">
+      <a class="race in-progress" href="#issues" data-race="d7">
         <div class="race-top">
           <div>
             <span class="badge">In progress</span>
@@ -293,7 +329,7 @@
         <div class="meta"><span><strong>1 of 2 topics</strong> · ~1 min left</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
 
-      <a class="race" href="#">
+      <a class="race" href="#issues" data-race="d2">
         <div class="race-top">
           <div>
             <span class="date">Nov 3, 2026</span>
@@ -304,7 +340,7 @@
         <div class="meta"><span>2 candidates · 1 topic · ~2 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
 
-      <a class="race" href="#">
+      <a class="race" href="#issues" data-race="d3">
         <div class="race-top">
           <div>
             <span class="date">Nov 3, 2026</span>
@@ -315,7 +351,7 @@
         <div class="meta"><span>2 candidates · 1 topic · ~1 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
 
-      <a class="race" href="#">
+      <a class="race" href="#issues" data-race="d8">
         <div class="race-top">
           <div>
             <span class="date">Nov 3, 2026</span>
@@ -387,8 +423,238 @@
   </div>
 </footer>
 
+<script src="assets/leremy-rig.js"></script>
+<script src="assets/ev-anim-extras.js"></script>
 <script>
   (function () {
+    // Shared race data for the clickable prototype. District 7 uses the content from the live
+    // screens; Districts 2, 3 and 8 use bracketed placeholders until their real topics, quotes
+    // and candidates are supplied. Screens read window.RR when they open.
+    if (!window.RR) {
+      var STATE = '<path class="state" d="M7 3 H33 L34 42 L31 46 L27 48 L23 52 L17 53 L13 52 L9 55 L5 53 L6 49 L4 45 L5 41 Z"/>';
+      var placeholderRace = function (seat, dist, minutes) {
+        return {
+          office: 'US Representative', officeLong: 'U.S. Representative', seat: seat, state: 'Indiana', date: 'Nov 3, 2026', dist: dist, minutes: minutes,
+          candidates: {
+            c1: { name: '[Candidate 1 name]', ini: 'C1', office: 'Candidate' },
+            c2: { name: '[Candidate 2 name]', ini: 'C2', office: 'Candidate' }
+          },
+          topics: [{
+            key: 'topic-1', name: '[Topic name]', q: '[Question for this topic]',
+            quotes: [{ c: 'c1', text: '[Quote from candidate 1]' }, { c: 'c2', text: '[Quote from candidate 2]' }]
+          }]
+        };
+      };
+      window.RR = {
+        state: STATE,
+        active: 'd7',
+        selected: null,
+        results: {},
+        races: {
+          d7: {
+            office: 'US Representative', officeLong: 'U.S. Representative', seat: 'District 7', state: 'Indiana', date: 'Nov 3, 2026',
+            dist: '<circle class="dist" cx="19" cy="28" r="3.2"/>', minutes: 2,
+            candidates: {
+              rl: { name: 'Rosa Lindqvist', ini: 'RL', office: 'U.S. House of Representatives - Sample District' },
+              dr: { name: 'Dev Ramanathan', ini: 'DR', office: 'Candidate' }
+            },
+            topics: [
+              { key: 'housing', name: 'Housing', q: 'What role should government play in making sure people can afford housing?',
+                quotes: [
+                  { c: 'dr', text: 'We will update policies and introduce legislation that create stronger pathways to homeownership.' },
+                  { c: 'rl', text: 'Local zoning should allow more homes near jobs and transit, so rents come down over time.' }
+                ],
+                sample: { agreed: ['dr'], disagreed: ['rl'] } },
+              { key: 'immigration', name: 'Immigration', q: '[Immigration question]',
+                quotes: [{ c: 'rl', text: '[Immigration quote from the ballot]' }, { c: 'dr', text: '[Immigration quote from the ballot]' }],
+                ranked: { agreed: ['rl'], disagreed: ['dr'] } }
+            ]
+          },
+          d2: placeholderRace('District 2', '<path class="dist" d="M14 4 H26 V16 H14 Z"/>', 2),
+          d3: placeholderRace('District 3', '<path class="dist" d="M26 4 H33 V20 H26 Z"/>', 1),
+          d8: placeholderRace('District 8', '<path class="dist" d="M5 34 H14 V52 L9 55 L5 53 L6 49 L4 45 Z"/>', 2)
+        },
+        race: function () { return this.races[this.active]; },
+        // A topic's result: what the user did this session, else what the sample already holds.
+        result: function (raceId, t) {
+          var r = this.results[raceId] && this.results[raceId][t.key];
+          return r || t.ranked || null;
+        }
+      };
+      // Any race card carrying data-race selects that race before the router opens it.
+      document.addEventListener('click', function (e) {
+        var card = e.target.closest('[data-race]');
+        if (card && window.RR.races[card.dataset.race]) { window.RR.active = card.dataset.race; window.RR.selected = null; }
+      }, true);
+    }
+
+    // How it works: Bobit plays through the three steps by himself, walking to a new spot (and a new
+    // logo color) between them. Hover pauses the timer and he turns toward the pointer; a click makes
+    // him hop and move on, even mid-walk.
+    var bobit = document.getElementById('bobit');
+    if (bobit && window.LeremyRig && !bobit.dataset.bound) {
+      bobit.dataset.bound = '1';
+      (function () {
+        var LR = window.LeremyRig, A = LR.ANIMATIONS;
+        var CFG = Object.assign({}, LR.CFG, { R: 28, torsoW: 21, neckW: 19, armW: 10.5, legW: 12.5 }); // a slightly thinner Bobit
+        function wave(t, hz) { return Math.sin(t * hz * Math.PI * 2); }
+        function readStanding(t) {
+          var p = A.present.frame(t), r = A.read.frame(t);
+          p.lean = 2; p.hunch = -10; p.headTilt = r.headTilt; p.bob = r.bob;
+          p.armRU = r.armRU; p.armRF = r.armRF; p.armLU = r.armLU; p.armLF = r.armLF;
+          return p;
+        }
+        function holdBoard(t) {             // ranking board held out to the side at shoulder height
+          var p = A.present.frame(t);
+          p.armRU = 62 + wave(t, .6) * 3; p.armRF = 150 + wave(t, .6) * 4;
+          p.headTilt = -12 + wave(t, .3) * 3;
+          p.bob = 1 + wave(t, .9) * 1.5;
+          return p;
+        }
+        var STEPS = [
+          { title: 'Pick an election', text: 'Local and upcoming races in our Alpha communities.', x: .3, color: '--teal', pose: function (t) { return A.greet.frame(t); }, opts: {} },
+          { title: 'Read the quotes', text: 'Judge positions on their words alone.', x: .62, color: '--yellow', pose: readStanding, opts: {}, book: '--teal' },
+          { title: 'Rank the candidates', text: 'See who earned your trust, and where you align.', x: .36, color: '--coral', pose: holdBoard, opts: {}, board: true }
+        ];
+        var HOLD = 3.5, SPEED = 130, HOP = .38;  // seconds on each step, walking speed (px/s), hop length (s)
+        var stage = bobit.querySelector('.bobit-stage'), canvas = stage.querySelector('canvas');
+        var bubble = bobit.querySelector('.bubble');
+        var still = matchMedia('(prefers-reduced-motion: reduce)');
+        var step = 0, phase = 'pose', clock = 0, held = 0, hop = 9, x = null, fromX = 0, toX = 0, dur = 1, face = 1;
+        var paused = false, pointerX = null, visible = true, raf = 0, last = 0;
+
+        // A step's color, read from the page's tokens so dark mode follows.
+        function tone(name) { return getComputedStyle(canvas).getPropertyValue(name).trim() || '#0E6A80'; }
+
+        function show(i) {
+          document.getElementById('bobit-n').textContent = i + 1;
+          document.getElementById('bobit-title').textContent = STEPS[i].title;
+          document.getElementById('bobit-text').textContent = STEPS[i].text;
+          bubble.style.setProperty('--step-color', 'var(' + STEPS[i].color + ')');
+          bubble.classList.remove('swap'); void bubble.offsetWidth; bubble.classList.add('swap');
+        }
+        function next(w) {
+          step = (step + 1) % STEPS.length;
+          show(step);
+          fromX = x; toX = STEPS[step].x * w;
+          face = toX >= fromX ? 1 : -1;
+          dur = Math.max(.5, Math.abs(toX - fromX) / SPEED);
+          phase = still.matches ? 'pose' : 'walk';
+          if (still.matches) x = toX;
+          clock = 0; held = 0;
+        }
+
+        // The open book (same shape as the rig's), outlined in its own color so it stands out on a yellow Bobit.
+        function drawBook(ctx, bx, by, color) {
+          ctx.save();
+          ctx.translate(bx, by); ctx.rotate(-.24);
+          ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = color; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(0, -2); ctx.lineTo(-21, -12); ctx.lineTo(-21, 4); ctx.lineTo(0, 13); ctx.closePath();
+          ctx.moveTo(0, -2); ctx.lineTo(27, -9); ctx.lineTo(27, 8); ctx.lineTo(0, 13); ctx.closePath();
+          ctx.fill(); ctx.stroke();
+          ctx.restore();
+        }
+
+        // The ranking board: three rows slide into order, then the top row lights up.
+        function drawBoard(ctx, cx, cy, s, color, t) {
+          var bw = 74 * s, bh = 82 * s, r = 9 * s;
+          ctx.save();
+          ctx.translate(cx - bw / 2, cy - bh / 2);
+          ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = color; ctx.lineWidth = 3.5 * s;
+          ctx.beginPath(); ctx.roundRect(0, 0, bw, bh, r); ctx.fill(); ctx.stroke();
+          var cyc = t % 4, k = Math.min(1, Math.max(0, (cyc - .8) / .7));      // 0 = shuffled, 1 = ranked
+          k = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+          var widths = [1, .72, .46], shuffled = [1, 2, 0];                     // bar i sits in row shuffled[i] before ranking
+          var row = function (n) { return 13 * s + n * 23 * s; };
+          for (var n = 0; n < 3; n++) {
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(14 * s, row(n) + 6 * s, 7 * s, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#FFFFFF'; ctx.font = '800 ' + (9 * s) + 'px Manrope, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(String(n + 1), 14 * s, row(n) + 6.5 * s);
+          }
+          for (var i = 0; i < 3; i++) {
+            var y = row(shuffled[i]) + (row(i) - row(shuffled[i])) * k;
+            var top = i === 0 && k >= 1 && cyc > 1.6;
+            ctx.fillStyle = top ? tone('--yellow') : 'rgba(122, 125, 146, .45)';
+            ctx.beginPath(); ctx.roundRect(27 * s, y + 2 * s, 38 * s * widths[i], 8 * s, 4 * s); ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        function draw(w, h, pose, opts, color, board, book) {
+          var dpr = window.devicePixelRatio || 1;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+          var ctx = canvas.getContext('2d');
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          var s = (h - 14) / 270, ground = h - 8;
+          var lift = hop < HOP ? Math.sin(hop / HOP * Math.PI) * 22 : 0;
+          LR.drawShadow(ctx, x, ground, 34 * s * 2 * (1 - lift / 60), 'rgba(120, 125, 146, .18)');
+          var j = LR.computePose(pose, CFG, { x: 0, y: 0 });
+          var ox = x, oy = ground - 112 * s - lift;
+          ctx.save();
+          ctx.translate(ox, oy);
+          ctx.scale(face * s, s);
+          LR.draw(ctx, j, CFG, Object.assign({ color: color }, opts));
+          if (book) drawBook(ctx, (j.hR.x + j.hL.x) / 2, (j.hR.y + j.hL.y) / 2, tone(book));
+          ctx.restore();
+          if (board) drawBoard(ctx, ox + face * (j.hR.x + 26) * s, oy + j.hR.y * s - 30 * s, s, color, clock);
+          var tail = Math.min(88, Math.max(12, x / w * 100));
+          bubble.style.setProperty('--tail', tail + '%');
+        }
+        function frame(now) {
+          raf = 0;
+          var w = canvas.clientWidth, h = canvas.clientHeight;
+          if (!w || !visible || document.hidden) return;   // off screen: stop until shown again
+          var dt = Math.min(.1, (now - last) / 1000); last = now;
+          if (x === null) { x = STEPS[step].x * w; show(step); }
+          clock += dt; hop += dt;
+          if (!paused && phase === 'pose') held += dt;
+          var cur = STEPS[step], pose, opts = cur.opts, color, board = false;
+          if (phase === 'walk') {
+            var k = Math.min(1, clock / dur);
+            x = fromX + (toX - fromX) * k;
+            pose = A.stroll.frame(clock); opts = {};
+            color = tone(cur.color);
+            if (k >= 1) { phase = 'pose'; clock = 0; held = 0; }
+          } else {
+            if (paused && pointerX !== null && Math.abs(pointerX - x) > 24) face = pointerX > x ? 1 : -1;
+            pose = cur.pose(still.matches ? 1.2 : clock);
+            color = tone(cur.color);
+            board = !!cur.board;
+            if (held >= HOLD) next(w);
+          }
+          bubble.style.setProperty('--progress', phase === 'pose' ? Math.min(1, held / HOLD).toFixed(3) : 0);
+          draw(w, h, pose, opts, color, board, phase === 'pose' && cur.book);
+          start();
+        }
+        function start() { if (!raf) { if (!last) last = performance.now(); raf = requestAnimationFrame(frame); } }
+        function restart() { last = performance.now(); start(); }
+
+        bobit.addEventListener('pointerenter', function () { paused = true; });
+        bobit.addEventListener('pointerleave', function () { paused = false; pointerX = null; });
+        stage.addEventListener('pointermove', function (e) { pointerX = e.clientX - canvas.getBoundingClientRect().left; });
+        bobit.addEventListener('focusin', function () { if (stage.matches(':focus-visible')) paused = true; });
+        bobit.addEventListener('focusout', function () { paused = false; });
+        // Every click counts: mid-walk he finishes the walk at once, then moves on.
+        stage.addEventListener('click', function () {
+          if (x === null) return;
+          if (phase === 'walk') { x = toX; phase = 'pose'; }
+          hop = still.matches ? HOP : 0;
+          next(canvas.clientWidth);
+          restart();
+        });
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; if (visible) restart(); }).observe(canvas);
+        }
+        document.addEventListener('visibilitychange', restart);
+        var screenEl = bobit.closest('.screen');
+        if (screenEl) screenEl.addEventListener('screen:show', restart);
+        restart();
+      })();
+    }
+
     var root = document.documentElement;
     document.querySelectorAll('[data-theme-toggle]').forEach(function (t) { if (t.dataset.bound) return; t.dataset.bound = '1'; t.addEventListener('click', function () {
       var current = root.getAttribute('data-theme') ||

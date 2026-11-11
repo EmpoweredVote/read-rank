@@ -144,14 +144,14 @@
   h1 { margin: 16px 0 0; font-size: clamp(30px, 4vw, 42px); line-height: 1.1; letter-spacing: -.03em; font-weight: 800; }
 
   .tools {
-    margin-top: 24px; padding: 16px; border-radius: 20px;
+    margin-top: 24px; padding: 16px; border-radius: 16px;
     background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
     display: grid; gap: 14px;
   }
   .search { position: relative; }
   .search svg { position: absolute; left: 16px; top: 50%; translate: 0 -50%; color: var(--ink-3); pointer-events: none; }
   .search input {
-    width: 100%; height: 52px; padding: 0 44px 0 46px; border-radius: 14px;
+    width: 100%; height: 52px; padding: 0 44px 0 46px; border-radius: 12px;
     border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
     font: 500 16px var(--font);
   }
@@ -194,7 +194,7 @@
   .done-chip { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); font-weight: 700; }
   .done-chip svg { color: var(--teal); }
 
-  .none { margin-top: 28px; padding: 40px 20px; border-radius: 18px; border: 1.5px dashed var(--line); text-align: center; color: var(--ink-3); }
+  .none { margin-top: 28px; padding: 40px 20px; border-radius: 16px; border: 1.5px dashed var(--line); text-align: center; color: var(--ink-3); }
   .none b { display: block; color: var(--ink); font-size: 17px; margin-bottom: 4px; }
   .none button { margin-top: 12px; border: 0; background: none; color: var(--teal); font: 700 15px var(--font); cursor: pointer; }
   .none button:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -223,6 +223,37 @@
     * { transition: none !important; animation: none !important; }
   }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+  /* Same side margins as the landing page */
+  :root { --side: 16px; }
+  @media (min-width: 561px) { :root { --side: 48px; } }
+  @media (min-width: 640px) { :root { --side: 64px; } }
+  @media (min-width: 1024px) { :root { --side: 96px; } }
+  main.wrap { max-width: none; padding-inline: var(--side); }
+  .bar > .wrap { max-width: none; padding-inline: 0; }
+  .page { max-width: none; }
+  @media (max-width: 900px) { .catnav { margin-inline: calc(-1 * var(--side)); padding-inline: var(--side); } }
+  /* end EV layout */
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -231,7 +262,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -290,7 +321,7 @@
         <div class="progress empty" role="img" aria-label="0 of 4 topics read"><i></i></div>
         <div class="meta wrap-ok"><span><strong>Continue · 0 of 4 topics</strong><br>4 candidates · 4 topics · ~5 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
-      <a class="race done" href="#issues" data-state="indiana" data-search="us representative district 7 indiana nov 3, 2026">
+      <a class="race done" href="#issues" data-race="d7" data-state="indiana" data-search="us representative district 7 indiana nov 3, 2026">
         <div class="race-top">
           <div>
             <span class="date">Indiana · Nov 3, 2026</span>
@@ -300,7 +331,7 @@
         </div>
         <div class="meta wrap-ok"><span><span class="done-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Completed</span><br>2 candidates · 2 topics · ~2 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
-      <a class="race" href="#" data-state="indiana" data-search="us representative district 2 indiana nov 3, 2026">
+      <a class="race" href="#issues" data-race="d2" data-state="indiana" data-search="us representative district 2 indiana nov 3, 2026">
         <div class="race-top">
           <div>
             <span class="date">Indiana · Nov 3, 2026</span>
@@ -310,7 +341,7 @@
         </div>
         <div class="meta"><span>2 candidates · 1 topic · ~2 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
-      <a class="race" href="#" data-state="indiana" data-search="us representative district 3 indiana nov 3, 2026">
+      <a class="race" href="#issues" data-race="d3" data-state="indiana" data-search="us representative district 3 indiana nov 3, 2026">
         <div class="race-top">
           <div>
             <span class="date">Indiana · Nov 3, 2026</span>
@@ -320,7 +351,7 @@
         </div>
         <div class="meta"><span>2 candidates · 1 topic · ~1 min</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
       </a>
-      <a class="race" href="#" data-state="indiana" data-search="us representative district 8 indiana nov 3, 2026">
+      <a class="race" href="#issues" data-race="d8" data-state="indiana" data-search="us representative district 8 indiana nov 3, 2026">
         <div class="race-top">
           <div>
             <span class="date">Indiana · Nov 3, 2026</span>

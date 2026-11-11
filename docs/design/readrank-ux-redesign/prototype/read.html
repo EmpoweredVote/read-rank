@@ -124,7 +124,7 @@
   }
   .question mark {
     color: inherit;
-    background: linear-gradient(transparent 58%, color-mix(in srgb, var(--yellow) 70%, transparent) 58%, color-mix(in srgb, var(--yellow) 70%, transparent) 92%, transparent 92%);
+    background: none;
     -webkit-box-decoration-break: clone; box-decoration-break: clone;
     padding-inline: 2px;
   }
@@ -138,7 +138,7 @@
   /* Quote card */
   .card {
     margin-top: 16px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
     box-shadow: var(--shadow); overflow: hidden;
   }
   .card-body { position: relative; padding: 36px 36px 32px; min-height: 220px; display: flex; flex-direction: column; }
@@ -171,7 +171,7 @@
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 20px; }
   .choice {
-    height: 60px; border-radius: 14px;
+    height: 60px; border-radius: 12px;
     display: inline-flex; align-items: center; justify-content: center; gap: 10px;
     font: 800 15px/1 var(--font); letter-spacing: .1em; text-transform: uppercase;
     cursor: pointer; transition: background .15s ease, border-color .15s ease, color .15s ease, transform .1s ease;
@@ -199,7 +199,7 @@
   .done-card { padding: 36px; text-align: center; display: grid; justify-items: center; gap: 10px; }
   .done-icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--teal-tint); color: var(--teal); }
   .done-card h2 { margin: 8px 0 0; font-size: 24px; letter-spacing: -.02em; }
-  .done-card p { margin: 0; color: var(--ink-2); max-width: 30em; }
+  .done-card p { margin: 0; color: var(--ink); font-size: 17px; font-weight: 600; line-height: 1.5; max-width: 30em; }
   .done-actions { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
   .btn {
@@ -220,7 +220,7 @@
   .rank {
     position: sticky; top: calc(24px + env(safe-area-inset-top, 0px));
     margin-top: 30px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
     padding: 24px;
   }
   .rank-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -230,9 +230,9 @@
     padding: 5px 10px; border-radius: 999px; color: var(--teal); background: var(--teal-tint);
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  .rank .sub { margin: 4px 0 0; font-size: 14px; color: var(--ink-3); }
+  .rank .sub { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
   .empty {
-    margin-top: 18px; padding: 26px 20px; border-radius: 14px;
+    margin-top: 18px; padding: 26px 20px; border-radius: 12px;
     border: 1.5px dashed var(--line); text-align: center; color: var(--ink-3); font-size: 14px;
   }
   .empty svg { color: var(--map-line); margin-bottom: 8px; }
@@ -240,7 +240,7 @@
   .rank-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; counter-reset: pos; }
   .rank-list li {
     display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 14px;
-    padding: 14px 12px 14px 14px; border-radius: 14px;
+    padding: 14px 12px 14px 14px; border-radius: 12px;
     background: var(--surface); border: 1.5px solid var(--line);
     cursor: grab; animation: enter .28s ease;
     transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
@@ -257,7 +257,7 @@
   }
   .rank-list li:first-child .pos { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
   .rank-text { margin: 4px 0 0; font-size: 15px; line-height: 1.45; }
-  .rank-tag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+  .rank-tag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
   .order { display: grid; gap: 2px; justify-items: center; }
   .order button {
     width: 28px; height: 26px; border-radius: 8px; border: 0; background: transparent; color: var(--ink-3);
@@ -268,7 +268,7 @@
   .grip { color: var(--map-line); }
 
   /* Disagreed tray */
-  .tray { margin-top: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+  .tray { margin-top: 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
   .tray summary {
     list-style: none; cursor: pointer;
     display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
@@ -277,7 +277,7 @@
   .tray summary::-webkit-details-marker { display: none; }
   .tray-icon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--coral-tint); color: var(--coral-strong); }
   .tray-title { font-weight: 700; font-size: 15px; line-height: 1.3; }
-  .tray-title small { display: block; font-weight: 500; font-size: 13px; color: var(--ink-3); }
+  .tray-title small { display: block; font-weight: 500; font-size: 13px; color: var(--ink-2); }
   .chev { color: var(--ink-3); transition: transform .2s ease; }
   .tray[open] .chev { transform: rotate(180deg); }
   .tray-list { list-style: none; margin: 0; padding: 0 14px 14px; display: grid; gap: 8px; }
@@ -333,6 +333,59 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+  /* Same side margins as the landing page */
+  :root { --side: 16px; }
+  @media (min-width: 561px) { :root { --side: 48px; } }
+  @media (min-width: 640px) { :root { --side: 64px; } }
+  @media (min-width: 1024px) { :root { --side: 96px; } }
+  main.wrap { max-width: none; padding-inline: var(--side); }
+  .bar > .wrap { max-width: none; padding-inline: 0; }
+  .page { max-width: none; }
+  @media (max-width: 900px) { .catnav { margin-inline: calc(-1 * var(--side)); padding-inline: var(--side); } }
+
+  /* Ballot-casting figure from empowered.vote (icons/Sticks/noun_ballot), recolored with a mask */
+  .ballot-fig { position: relative; display: inline-block; width: 84px; aspect-ratio: 1; flex: none; }
+  .ballot-fig::before {
+    content: ""; position: absolute; inset: 0; background: var(--fig, var(--teal));
+    -webkit-mask: url("assets/ballot-figure.png") center / contain no-repeat;
+    mask: url("assets/ballot-figure.png") center / contain no-repeat;
+  }
+  .ballot-fig .slip {
+    position: absolute; left: 33%; top: 37.5%; width: 4.8%; height: 7%; border-radius: 2px;
+    background: var(--yellow); box-shadow: 0 0 0 2px var(--slip-edge, var(--surface)); opacity: 0;
+  }
+  .ballot-fig.loop .slip { animation: slipdrop 1.5s ease-in infinite; }
+  .ballot-fig.once .slip { animation: slipdrop 1.2s ease-in var(--slip-delay, .3s) both; }
+  @keyframes slipdrop {
+    0% { transform: translateY(-240%); opacity: 0; }
+    20% { opacity: 1; }
+    70% { transform: translateY(40%); opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ballot-fig .slip { animation: none !important; opacity: 1; } }
+  .done-fig { width: 68px; margin-bottom: -4px; }
+  /* end EV layout */
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -341,7 +394,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -403,7 +456,7 @@
       </div>
 
       <div class="reveal-row" id="reveal-row">
-        <a class="btn ghost" href="#ballot">See your full ballot</a>
+        <a class="btn ghost" href="#ballot">Your rankings</a>
       </div>
     </section>
 
@@ -480,6 +533,37 @@
     var revealRow = document.getElementById('reveal-row');
     var stageHTML = stage.innerHTML;
     var index = 0, agreed = [], disagreed = [], busy = false, dragFrom = null;
+    var topic = null, raceId = null, topicName = 'Housing';
+    var whereEl = document.querySelector('#question').closest('.page').querySelector('.crumbs .where:not(.sep)');
+    var eyebrowEl = document.querySelector('#question').closest('section').querySelector('.eyebrow');
+    var questionEl = document.getElementById('question');
+    var segsBox = document.getElementById('segs');
+
+    // Topics of the race picked earlier (window.RR) that were selected and are not ranked yet.
+    function remainingTopics() {
+      var RR = window.RR; if (!RR) return [];
+      var race = RR.race(), sel = RR.selected || race.topics.map(function (t) { return t.key; });
+      return race.topics.filter(function (t) { return sel.indexOf(t.key) >= 0 && !RR.result(RR.active, t); });
+    }
+
+    function applyTopic(t) {
+      var RR = window.RR, race = RR.race();
+      topic = t; raceId = RR.active; topicName = t.name;
+      QUOTES = t.quotes.map(function (q) { return { id: q.c, c: q.c, text: q.text }; });
+      whereEl.textContent = race.office + ', ' + race.seat + ' · ' + race.state;
+      eyebrowEl.innerHTML = 'Issue ' + (race.topics.indexOf(t) + 1) + ' of ' + race.topics.length + ' <span aria-hidden="true">·</span> <b>' + esc(t.name) + '</b>';
+      questionEl.innerHTML = '<mark>' + esc(t.q) + '</mark>';
+      segsBox.innerHTML = QUOTES.map(function () { return '<i></i>'; }).join('');
+    }
+
+    function saveResult() {
+      var RR = window.RR; if (!RR || !topic) return;
+      RR.results[raceId] = RR.results[raceId] || {};
+      RR.results[raceId][topic.key] = {
+        agreed: agreed.map(function (q) { return q.c; }),
+        disagreed: disagreed.map(function (q) { return q.c; })
+      };
+    }
 
     var ICON_UP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
     var ICON_DOWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
@@ -513,7 +597,7 @@
         li.draggable = true;
         li.innerHTML =
           '<span class="pos" aria-hidden="true">' + (i + 1) + '</span>' +
-          '<div><p class="rank-text"><span class="sr">Rank ' + (i + 1) + ': </span>' + esc(q.text) + '</p><span class="rank-tag">Housing</span></div>' +
+          '<div><p class="rank-text"><span class="sr">Rank ' + (i + 1) + ': </span>' + esc(q.text) + '</p><span class="rank-tag">' + esc(topicName) + '</span></div>' +
           '<div class="order">' +
             '<button type="button" data-up aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>' + ICON_UP + '</button>' +
             ICON_GRIP +
@@ -551,6 +635,7 @@
       tray.hidden = disagreed.length === 0;
       if (disagreed.length === 0) tray.open = false;
       trayCount.textContent = disagreed.length + ' disagreed';
+      if (index >= QUOTES.length) saveResult();
     }
 
     function paintTally() {
@@ -560,22 +645,31 @@
         (disagreed.length ? '<span class="no">' + disagreed.length + ' disagreed</span>' : '');
     }
 
+    function nextLink() {
+      saveResult();
+      var next = remainingTopics()[0];
+      return next ? '<button class="btn" type="button" data-next-topic>Next topic: ' + esc(next.name) + ' '
+                  : '<a class="btn" href="#issues">Back to issues ';
+    }
+
     function paintDone() {
       for (var i = 0; i < segs.length; i++) segs[i].className = 'done';
       countEl.textContent = 'All ' + QUOTES.length + ' quotes read';
       revealRow.hidden = true;
       stage.innerHTML =
         '<div class="card entering"><div class="done-card">' +
-          '<span class="done-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>' +
+          '<span class="ballot-fig once done-fig" aria-hidden="true"><span class="slip"></span></span>' +
           '<h2 tabindex="-1">Topic complete</h2>' +
           '<div class="tally"></div>' +
           '<p>Move on to the next topic, or keep arranging your ranking on the right.</p>' +
           '<div class="done-actions">' +
-            '<a class="btn" href="#issues">Next topic <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>' +
-            '<a class="btn ghost" href="#ballot">See your full ballot</a>' +
+            nextLink() + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' + (remainingTopics().length ? '</button>' : '</a>') +
+            '<a class="btn ghost" href="#ballot">Your rankings</a>' +
           '</div>' +
         '</div></div>';
       paintTally();
+      var nb = stage.querySelector('[data-next-topic]');
+      if (nb) nb.addEventListener('click', function () { reset(); window.scrollTo(0, 0); });
       stage.querySelector('h2').focus({ preventScroll: true });
     }
 
@@ -610,6 +704,7 @@
     }
 
     function reset() {
+      if (window.RR) { var RR = window.RR; applyTopic(remainingTopics()[0] || RR.race().topics[0]); }
       index = 0; agreed = []; disagreed = []; busy = false;
       stage.innerHTML = stageHTML;
       revealRow.hidden = false;

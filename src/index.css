@@ -2154,9 +2154,9 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 
 /* Reveal band (spec §1) — merged gate, persistent hero */
-.reveal-band { background-color: var(--color-ev-black, #1c1c1c); border-radius: 1rem; padding: 2.25rem 1.5rem; text-align: center; margin-bottom: 1rem; }
+.reveal-band { position: relative; overflow: hidden; background-color: var(--color-ev-black, #1c1c1c); border-radius: 1rem; padding: 2.25rem 1.5rem; text-align: center; margin-bottom: 2rem; }
 .dark .reveal-band { background-color: var(--surface-raised); border: 1px solid var(--border-medium); }
-.reveal-band-eyebrow { font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-dark-muted); margin: 0 0 0.625rem; }
+.reveal-band-eyebrow { font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-dark-muted); margin: 1rem 0 0; }
 .reveal-band-headline { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.02em; color: var(--on-dark-ink); margin: 0; }
 /* ev-yellow accent — approved placement #5 (decorative; the text carries) */
 .reveal-band-who { box-shadow: inset 0 -3px 0 var(--color-ev-yellow, #fed12e); padding-bottom: 2px; }
@@ -2247,41 +2247,6 @@ button.rank-num:focus-visible .rank-num-badge {
 
 .alignment-section-label { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 0.5rem; }
 
-.alignment-grid-wrap {
-  position: relative;
-  overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.75rem;
-  background-color: var(--surface-card);
-}
-/* Full-width so row dividers span the whole card; content packs left and the
-   flexible trailing spacer soaks up the slack on the right. */
-.alignment-grid { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; font-size: 0.875rem; }
-.alignment-grid th, .alignment-grid td { padding: 0.5rem 0.5rem; text-align: center; border-bottom: 1px solid var(--border-subtle); }
-/* Equal, tight mark columns. */
-/* Horizontal, clamped column headers (full title in the th title attribute). */
-.alignment-grid thead th { background: var(--surface-sunken); vertical-align: middle; padding: 0.625rem 0.5rem; }
-.alignment-grid thead th.alignment-topic-col, .alignment-grid td.alignment-mark-col { min-width: 6rem; }
-.alignment-grid .alignment-col-label {
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  max-width: 9rem; margin: 0 auto;
-  font-weight: 700; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
-  line-height: 1.3; color: var(--text-tertiary); white-space: normal; text-align: center;
-}
-/* Candidate column: one line, left padding off the card edge. */
-.alignment-grid tbody th {
-  text-align: left; font-weight: 600; font-size: 0.9375rem; color: var(--text-heading); white-space: nowrap;
-  padding-left: 1.125rem; padding-right: 1.5rem; min-width: 11.5rem;
-  position: sticky; left: 0; background: var(--surface-card); box-shadow: 1px 0 0 var(--border-subtle); z-index: 1;
-}
-/* Corner cell: sticky with the candidate column. */
-/* Beats `.alignment-grid thead th` padding so the header aligns with candidate names. */
-.alignment-grid thead th.alignment-grid-corner { text-align: left; padding-left: 1.125rem; }
-.alignment-grid-corner { position: sticky; left: 0; background: var(--surface-sunken); z-index: 2; text-align: left; padding-left: 1.125rem; min-width: 11.5rem; font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
-/* Flexible trailing spacer: takes the remaining width (packs real columns left)
-   and gives the last (horizontal) header label room so it never triggers horizontal scroll. */
-.alignment-grid .alignment-spacer { width: 100%; padding: 0; }
-.alignment-grid tbody tr:last-child th, .alignment-grid tbody tr:last-child td { border-bottom: none; }
 
 /* ============================================
    Compass cross-link card (REDESIGN_SPEC §10)
@@ -2623,13 +2588,6 @@ button.rank-num:focus-visible .rank-num-badge {
 .mark-disagreed-wrap { background: var(--surface-sunken); border-radius: 9999px; }
 .mark-none { color: var(--border-medium); }
 
-/* Mobile alignment pills (spec §3) */
-.pills-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
-.pills-candidate { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 0.625rem; padding: 0.625rem 0.75rem; }
-.pills-name { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--text-heading); margin: 0 0 0.5rem; }
-.pills-row { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.pill { display: inline-flex; align-items: center; gap: 0.3125rem; padding: 0.1875rem 0.5rem 0.1875rem 0.25rem; border-radius: 9999px; font-family: 'Manrope', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-strong); border: 1px solid var(--border-subtle); background: var(--surface-sunken); }
-.pill-dis { color: var(--text-secondary); }
 
 /* Candidate identity card (spec §4) — faithful to Essentials PoliticianCard, themed */
 .pid-card { display: flex; background: var(--surface-card); }
@@ -2926,18 +2884,6 @@ button.rank-num:focus-visible .rank-num-badge {
 
 /* Ballot loader */
 .ballot-loader { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 4rem 1rem; text-align: center; }
-.ballot-loader__cards { position: relative; width: 8rem; height: 5.5rem; margin-bottom: 1rem; }
-.ballot-loader__card {
-  position: absolute; inset: 0; border-radius: 0.75rem; background: var(--surface-card);
-  border: 1px solid var(--border-medium);
-}
-.ballot-loader__card--back { transform: rotate(4deg) translate(6px, -4px); }
-.ballot-loader__card--front {
-  border-color: var(--action-primary); box-shadow: var(--shadow-card);
-  display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1rem;
-}
-.ballot-loader__line { display: block; height: 6px; width: 55%; border-radius: 9999px; background: var(--border-subtle); }
-.ballot-loader__line--accent { width: 85%; background: var(--color-ev-yellow); }
 .ballot-loader__title { margin: 0; font-family: 'Manrope', sans-serif; font-size: 1.125rem; font-weight: 800; color: var(--text-heading); }
 .ballot-loader__step { margin: 0; font-size: 0.875rem; color: var(--text-secondary); }
 .ballot-loader__track { width: 16rem; max-width: 80%; height: 4px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; margin-top: 0.75rem; }
@@ -2956,3 +2902,151 @@ button.rank-num:focus-visible .rank-num-badge {
 .agree-bar__seg--on { background: var(--action-primary); }
 .agree-bar__track { width: 4.5rem; height: 4px; border-radius: 9999px; background: var(--border-subtle); overflow: hidden; display: inline-block; }
 .agree-bar__fill { display: block; height: 100%; border-radius: 9999px; background: var(--action-primary); }
+
+/* ============================================
+   Your ranking screen (prototype screen 6 / 6b)
+   ============================================ */
+
+/* Race name as a large pill at the top of the reveal band. */
+.reveal-band-race {
+  display: inline-block; max-width: 100%; margin: 0 0 1rem; padding: 0.5rem 1.25rem; border-radius: 9999px;
+  background: color-mix(in srgb, var(--on-dark-ink) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on-dark-ink) 28%, transparent);
+  font-family: 'Manrope', sans-serif; font-weight: 800; font-size: clamp(1.125rem, 2.2vw, 1.5rem);
+  line-height: 1.25; letter-spacing: -0.01em; color: var(--on-dark-ink);
+}
+
+/* Ballot-casting figure ("Bobit"), recoloured with a mask. Sizes are the prototype's
+   smaller ones: 84px on the loader, 76px in the reveal band. */
+.ballot-fig { position: relative; display: inline-block; width: 84px; aspect-ratio: 1; flex: none; }
+.ballot-fig::before {
+  content: ""; position: absolute; inset: 0; background: var(--fig, var(--action-primary));
+  -webkit-mask: var(--ballot-fig-url) center / contain no-repeat;
+  mask: var(--ballot-fig-url) center / contain no-repeat;
+}
+.ballot-fig__slip {
+  position: absolute; left: 33%; top: 37.5%; width: 4.8%; height: 7%; border-radius: 2px;
+  background: var(--color-ev-yellow); box-shadow: 0 0 0 2px var(--slip-edge, var(--surface-page)); opacity: 0;
+}
+.ballot-fig--loop .ballot-fig__slip { animation: ballot-slipdrop 1.5s ease-in infinite; }
+.ballot-fig--once .ballot-fig__slip { animation: ballot-slipdrop 1.2s ease-in var(--slip-delay, 0.3s) both; }
+@keyframes ballot-slipdrop {
+  0% { transform: translateY(-240%); opacity: 0; }
+  20% { opacity: 1; }
+  70% { transform: translateY(40%); opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.ballot-loader__fig { margin-bottom: 0.75rem; }
+.reveal-band-fig {
+  position: absolute; right: 48px; bottom: -6px; width: 76px;
+  --fig: color-mix(in srgb, var(--on-dark-ink) 92%, transparent);
+  --slip-edge: var(--color-ev-black, #1c1c1c); --slip-delay: 1s;
+}
+.dark .reveal-band-fig { --slip-edge: var(--surface-raised); }
+@media (max-width: 1023px) { .reveal-band-fig { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ballot-fig__slip { animation: none !important; opacity: 1; } }
+
+/* "Your alignment at a glance": full-width table; stacks into wrapping tiles when it can't fit. */
+.glance { margin: 0 0 0.5rem; }
+.glance-wrap { background: var(--surface-card); border: 1px solid var(--border-medium); border-radius: 1rem; overflow: hidden; }
+.glance-table { width: 100%; border-collapse: collapse; font-family: 'Manrope', sans-serif; }
+.glance-table th, .glance-table td { padding: 0.875rem 1.5rem; text-align: left; }
+.glance-table thead > tr > * {
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.35;
+  color: var(--text-secondary); background: var(--surface-sunken); border-bottom: 1px solid var(--border-medium); vertical-align: middle;
+}
+.glance-table thead th.glance-topic { text-align: center; width: 120px; padding-inline: 0.75rem; }
+.glance-table .glance-cand-col { width: 220px; }
+.glance-table tbody tr + tr > * { border-top: 1px solid var(--border-medium); }
+.glance-table tbody th { font-weight: 600; font-size: 1rem; color: var(--text-heading); }
+.glance-table td { text-align: center; padding-inline: 0.75rem; }
+.glance-table .glance-fill { width: auto; padding: 0; }
+.glance-pop { display: inline-flex; }
+.glance-mark {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9999px;
+  font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 0.875rem; line-height: 1;
+}
+.glance-mark--top { background: var(--action-primary); color: var(--action-primary-ink); box-shadow: 0 0 0 4px var(--agree-bg-strong); }
+.glance-mark--rank { background: var(--agree-bg-strong); color: var(--text-link); }
+.glance-mark--no { background: var(--disagree-bg-strong); color: var(--disagree); }
+.glance-mark--none { color: var(--text-tertiary); font-weight: 700; }
+/* Stacked: the header hides, each candidate becomes a wrapping grid of labelled tiles. */
+.glance-table--stacked thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.glance-table--stacked tbody tr { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; padding: 1rem 1.25rem; }
+.glance-table--stacked tbody tr + tr { border-top: 1px solid var(--border-medium); }
+.glance-table--stacked tbody tr + tr > * { border-top: 0; }
+.glance-table--stacked tbody th { grid-column: 1 / -1; padding: 0 0 0.25rem; }
+.glance-table--stacked td {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0;
+  padding: 0.375rem 0.375rem 0.375rem 0.75rem; border-radius: 0.625rem;
+  background: var(--surface-sunken); border: 1px solid var(--border-medium); text-align: left;
+}
+.glance-table--stacked td::before {
+  content: attr(data-topic); min-width: 0; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em;
+  line-height: 1.3; text-transform: uppercase; color: var(--text-strong);
+}
+.glance-table--stacked .glance-pop { flex: none; }
+.glance-table--stacked .glance-fill { display: none; }
+@media (max-width: 400px) {
+  .glance-table--stacked tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; padding: 0.875rem; }
+  .glance-table--stacked td { padding: 0.3125rem 0.3125rem 0.3125rem 0.5625rem; }
+  .glance-table--stacked td::before { font-size: 0.625rem; letter-spacing: 0.04em; }
+  .glance-table--stacked .glance-mark { width: 26px; height: 26px; }
+}
+
+/* Two columns from 1024px: ballot left, compass card right (sticky). One column below,
+   with the compass card between the ballot and the exit buttons. */
+.results-layout { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.results-main { display: contents; }
+.results-stack { order: 0; }
+.results-side { order: 1; }
+.results-actions { order: 2; }
+@media (min-width: 1024px) {
+  .results-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 2.5rem; align-items: start; }
+  .results-main { display: block; }
+  .results-main .results-actions { align-items: flex-start; }
+  .results-side { position: sticky; top: 1.5rem; }
+}
+@media (min-width: 1280px) { .results-layout { grid-template-columns: minmax(0, 1fr) 440px; } }
+.results-stack > h3:first-child { margin-top: 0 !important; }
+
+/* "Your compass" card (screen 6b) */
+.my-compass { padding: 1.5rem; border-radius: 1rem; background: var(--surface-card); border: 1px solid var(--border-medium); font-family: 'Manrope', sans-serif; }
+.my-compass__head { display: flex; align-items: center; gap: 0.75rem; }
+.my-compass__symbol { flex: none; }
+.my-compass__symbol--dark { display: none; }
+.dark .my-compass__symbol--light { display: none; }
+.dark .my-compass__symbol--dark { display: block; }
+.my-compass__badge {
+  display: inline-block; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.25rem 0.625rem; border-radius: 9999px; background: var(--agree-bg-strong); color: var(--text-link);
+}
+.my-compass__title { margin: 0.375rem 0 0; font-size: 1.1875rem; font-weight: 800; letter-spacing: -0.015em; color: var(--text-heading); }
+.my-compass__intro { margin: 0.75rem 0 0; font-size: 0.9375rem; color: var(--text-secondary); }
+.my-compass__figure { margin: 0.5rem 0 0; }
+.my-compass__chart { width: 100%; max-width: 400px; margin: 0 auto; }
+.my-compass__chart svg { display: block; overflow: visible; }
+/* Only labels the chart leaves uncoloured; its grey "no stance on file" labels keep their fill. */
+.my-compass__chart text:not([fill]) { fill: var(--text-strong); }
+.my-compass__legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.375rem 1.125rem; margin-top: 0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
+.my-compass__key i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 0.375rem; vertical-align: middle; }
+/* Swatches match ev-ui RadarChartCore's own polygon colours. */
+.my-compass__key--you i { background: #7C6B9E; }
+.my-compass__key--them i { background: #5A9A6E; }
+.my-compass__note { margin: 0.5rem 0 0; min-height: 1.25rem; font-size: 0.8125rem; color: var(--text-secondary); text-align: center; }
+.my-compass__note:empty { min-height: 0; margin: 0; }
+.my-compass__cands { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.875rem; }
+.my-compass__cand {
+  display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; min-height: 2.75rem; padding: 0.3125rem 0.75rem 0.3125rem 0.3125rem;
+  border-radius: 9999px; cursor: pointer; background: var(--surface-card); border: 1px solid var(--border-medium);
+  color: var(--text-secondary); font: 600 0.875rem/1.2 'Manrope', sans-serif; text-align: left;
+}
+.my-compass__ini {
+  width: 28px; height: 28px; border-radius: 9999px; display: grid; place-items: center; flex: none;
+  font-size: 0.6875rem; font-weight: 800; background: var(--agree-bg-strong); color: var(--text-link);
+}
+@media (hover: hover) { .my-compass__cand:hover { border-color: #5A9A6E; color: var(--text-heading); } }
+.my-compass__cand[aria-pressed="true"] { border-color: #5A9A6E; background: color-mix(in srgb, #5A9A6E 14%, var(--surface-card)); color: var(--text-heading); }
+.my-compass__cand:focus-visible { outline: 2px solid var(--text-link); outline-offset: 2px; }
+.my-compass__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 1.125rem; margin-top: 1.125rem; }
+.my-compass__refine { text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2.75rem; font-size: 0.9375rem; }

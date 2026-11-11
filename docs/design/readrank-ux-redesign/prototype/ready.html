@@ -108,7 +108,7 @@
   .back { display: inline-flex; align-items: center; gap: 6px; color: var(--teal); font-weight: 600; font-size: 14px; text-decoration: none; }
   .back:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-  .stepper { margin: 18px 0 0; padding: 18px 22px; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+  .stepper { margin: 18px 0 0; padding: 18px 22px; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
   .stepper li { position: relative; display: flex; align-items: center; gap: 12px; }
   .stepper li + li::before { content: ""; position: absolute; right: calc(100% + 6px); width: calc(100% - 180px); max-width: 120px; min-width: 16px; top: 50%; height: 2px; background: var(--teal); }
   .dot { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; border: 2px solid var(--line); color: var(--ink-3); background: var(--surface); }
@@ -121,7 +121,7 @@
   .stepper li.done .step-txt b { color: var(--teal); }
 
   .hero { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
-  .chart { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; overflow: hidden; }
+  .chart { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow: hidden; }
   .chart::before { content: ""; position: absolute; inset: 10% 10% auto; height: 80%; background: radial-gradient(closest-side, color-mix(in srgb, var(--teal) 12%, transparent), transparent 70%); pointer-events: none; }
   .radar { position: relative; display: block; width: 100%; height: auto; }
   .radar .ring { fill: none; stroke: var(--line); stroke-width: 1; }
@@ -160,7 +160,7 @@
   h1 { margin: 12px 0 0; font-size: clamp(38px, 5vw, 56px); line-height: 1.02; letter-spacing: -.035em; font-weight: 800; }
   h1 .mark { background: linear-gradient(var(--yellow), var(--yellow)) no-repeat 0 88% / 100% 10px; }
   .lede { margin: 18px 0 0; font-size: 18px; line-height: 1.55; color: var(--ink-2); max-width: 30em; }
-  .note { margin: 18px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: flex; gap: 12px; font-size: 14px; color: var(--ink-2); max-width: 30em; }
+  .note { margin: 18px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); display: flex; gap: 12px; font-size: 14px; color: var(--ink-2); max-width: 30em; }
   .note svg { flex: none; margin-top: 2px; color: var(--teal); }
   .cta {
     margin-top: 28px; width: 100%; max-width: 420px; height: 58px; border-radius: 999px; border: 0; cursor: pointer;
@@ -208,6 +208,37 @@
     * { transition: none !important; animation: none !important; }
     .radar .cand.show { opacity: 1; }
   }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+  /* Same side margins as the landing page */
+  :root { --side: 16px; }
+  @media (min-width: 561px) { :root { --side: 48px; } }
+  @media (min-width: 640px) { :root { --side: 64px; } }
+  @media (min-width: 1024px) { :root { --side: 96px; } }
+  main.wrap { max-width: none; padding-inline: var(--side); }
+  .bar > .wrap { max-width: none; padding-inline: 0; }
+  .page { max-width: none; }
+  @media (max-width: 900px) { .catnav { margin-inline: calc(-1 * var(--side)); padding-inline: var(--side); } }
+  /* end EV layout */
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -216,7 +247,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -345,7 +376,7 @@
     function reset() {
       clear();
       chart.classList.remove('comparing');
-      cta.removeAttribute('aria-busy'); cta.disabled = false;
+      cta.removeAttribute('aria-busy'); cta.disabled = false; delete cta.dataset.done;
       ctaLabel.textContent = 'Compare & Discover'; ctaArrow.hidden = false;
       var sp = cta.querySelector('.spinner'); if (sp) sp.remove();
       statusEl.textContent = '';
@@ -361,6 +392,8 @@
 
     cta.addEventListener('click', function () {
       if (cta.getAttribute('aria-busy') === 'true') return;
+      // After the comparison, "See your matches" opens the results page with the new compass on it.
+      if (cta.dataset.done) { if (window.RRGo) window.RRGo('ballot-compass'); else location.href = 'ballot.html#ballot-compass'; return; }
       cta.setAttribute('aria-busy', 'true');
       ctaArrow.hidden = true;
       var sp = document.createElement('span'); sp.className = 'spinner'; sp.setAttribute('aria-hidden', 'true'); cta.prepend(sp);
@@ -375,8 +408,7 @@
           chart.classList.remove('comparing');
           cta.removeAttribute('aria-busy'); sp.remove(); ctaArrow.hidden = false;
           ctaLabel.textContent = 'See your matches';
-          toast.textContent = 'Your match results are the next screen.'; toast.hidden = false;
-          timers.push(setTimeout(function () { toast.hidden = true; }, 2600));
+          cta.dataset.done = '1';
         }]
       ];
       steps.forEach(function (s) {

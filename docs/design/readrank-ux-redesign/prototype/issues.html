@@ -105,7 +105,7 @@
   /* Options panel */
   .panel {
     margin-top: 44px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
     padding: 28px; box-shadow: var(--shadow);
   }
   .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
@@ -241,6 +241,37 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+  /* Same side margins as the landing page */
+  :root { --side: 16px; }
+  @media (min-width: 561px) { :root { --side: 48px; } }
+  @media (min-width: 640px) { :root { --side: 64px; } }
+  @media (min-width: 1024px) { :root { --side: 96px; } }
+  main.wrap { max-width: none; padding-inline: var(--side); }
+  .bar > .wrap { max-width: none; padding-inline: 0; }
+  .page { max-width: none; }
+  @media (max-width: 900px) { .catnav { margin-inline: calc(-1 * var(--side)); padding-inline: var(--side); } }
+  /* end EV layout */
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -249,7 +280,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -331,7 +362,7 @@
           <span class="dim" id="start-meta">4 quotes · about 1 min</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
-        <a class="ballot" href="#">See your ballot so far</a>
+        <a class="ballot" href="#ballot">Your rankings</a>
       </div>
     </form>
 
@@ -362,21 +393,61 @@
     }); });
 
     var form = document.getElementById('issues-form');
-    var boxes = form.querySelectorAll('input[name="issue"]');
     var btn = document.getElementById('start');
     var label = document.getElementById('start-label');
     var meta = document.getElementById('start-meta');
+    var screen = form.closest('.screen') || document.body;
+    var CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    var TICK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+    function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
     function update() {
       var quotes = 0;
-      boxes.forEach(function (b) { if (b.checked) quotes += Number(b.dataset.quotes); });
+      form.querySelectorAll('input[name="issue"]').forEach(function (b) { if (b.checked) quotes += Number(b.dataset.quotes); });
       btn.disabled = quotes === 0;
       label.textContent = quotes === 0 ? 'Pick at least one issue' : 'Start reading';
       var mins = Math.max(1, Math.round(quotes * 15 / 60));
       meta.textContent = quotes === 0 ? '' : quotes + ' quotes · about ' + mins + ' min';
     }
-    boxes.forEach(function (b) { b.addEventListener('change', update); });
-    form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+    // Draw the race picked on the landing or browse screen (window.RR). Without it the
+    // District 7 markup above stays as is.
+    function render() {
+      var RR = window.RR; if (!RR) return;
+      var race = RR.race(), id = RR.active;
+      var page = form.closest('.page');
+      page.querySelector('.race .map').innerHTML = RR.state + race.dist;
+      page.querySelector('.race .date').textContent = race.state + ' · ' + race.date;
+      page.querySelector('.race .name').innerHTML = esc(race.office) + ' <span>· ' + esc(race.seat) + '</span>';
+      var ranked = race.topics.filter(function (t) { return RR.result(id, t); }).length;
+      var total = race.topics.length;
+      var row = page.querySelector('.progress-row');
+      row.innerHTML = '<span><strong>' + ranked + ' of ' + total + '</strong> issue' + (total === 1 ? '' : 's') + ' ranked</span>' + (ranked ? '<span>Welcome back</span>' : '');
+      var bar = page.querySelector('.intro .bar');
+      bar.setAttribute('aria-label', ranked + ' of ' + total + ' issues ranked');
+      bar.firstElementChild.style.width = (total ? ranked / total * 100 : 0) + '%';
+      form.querySelector('.panel-count').textContent = total + ' available';
+      form.querySelector('.issues').innerHTML = race.topics.map(function (t) {
+        var done = RR.result(id, t), n = t.quotes.length;
+        return '<label class="issue">' +
+          '<input type="checkbox" name="issue" value="' + t.key + '" data-quotes="' + n + '" checked>' +
+          '<span class="check" aria-hidden="true">' + CHECK + '</span>' +
+          '<span><span class="issue-name">' + esc(t.name) + '</span><span class="issue-sub">' + n + ' quotes · ' + (done ? 'already ranked' : 'about ' + n * 15 + ' sec') + '</span></span>' +
+          (done ? '<span class="status done">' + TICK + 'Ranked</span>' : '<span class="status new">Not started</span>') +
+        '</label>';
+      }).join('');
+      update();
+    }
+
+    form.addEventListener('change', update);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (window.RR) {
+        window.RR.selected = Array.prototype.map.call(form.querySelectorAll('input[name="issue"]:checked'), function (b) { return b.value; });
+      }
+    });
+    screen.addEventListener('screen:show', render);
     update();
   })();
 </script>

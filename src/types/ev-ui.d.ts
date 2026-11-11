@@ -87,12 +87,24 @@ declare module '@empoweredvote/ev-ui' {
     includeUrl?: boolean;
   }): string;
 
+  // Matches ev-ui 0.16 src/RadarChartCore.jsx. Spokes are keyed by Compass topic
+  // short_title; `topics` supplies each topic's stance count (the scale's max).
   export interface RadarChartCoreProps {
-    labels: string[];
-    data: number[];
-    data2?: number[];
-    onSpokeClick?: (index: number) => void;
-    invertedSpokes?: boolean[];
+    topics: Array<{ short_title: string; stances?: unknown[] }>;
+    data: Record<string, number>;
+    compareData?: Record<string, number>;
+    invertedSpokes?: Record<string, boolean>;
+    unansweredSpokes?: Record<string, boolean>;
+    onToggleInversion?: (shortTitle: string) => void;
+    onReplaceTopic?: (shortTitle: string) => void;
+    size?: number;
+    labelFontSize?: number;
+    padding?: number;
+    labelOffset?: number;
+    tightFit?: boolean;
+    maxLabelLines?: number;
+    showLabels?: boolean;
+    dotRadius?: number;
   }
 
   export function RadarChartCore(props: RadarChartCoreProps): JSX.Element;

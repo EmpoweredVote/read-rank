@@ -112,7 +112,7 @@
   .loading { padding-block: 72px 40px; display: grid; justify-items: center; text-align: center; gap: 22px; }
   .deck { position: relative; width: 132px; height: 96px; }
   .deck i {
-    position: absolute; inset: 0; border-radius: 14px;
+    position: absolute; inset: 0; border-radius: 12px;
     background: var(--surface); border: 1.5px solid var(--line); box-shadow: var(--shadow);
     animation: shuffle 1.2s ease-in-out infinite;
   }
@@ -139,7 +139,7 @@
 
   /* Hero */
   .hero {
-    margin-top: 20px; padding: 36px 32px; border-radius: 22px; text-align: center;
+    margin-top: 20px; padding: 36px 32px; border-radius: 16px; text-align: center;
     background: #1B1E3B; color: #F7F4EF; position: relative; overflow: hidden;
   }
   .hero::before {
@@ -147,8 +147,13 @@
     background: radial-gradient(closest-side, rgba(79, 179, 200, .22), transparent 70%);
     pointer-events: none;
   }
-  .hero-eyebrow { position: relative; margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #B6BACB; }
-  .hero h1 { position: relative; margin: 12px 0 0; font-size: clamp(28px, 4.2vw, 40px); line-height: 1.15; letter-spacing: -.03em; font-weight: 800; }
+  .hero-race {
+    position: relative; display: inline-block; max-width: 100%; margin: 0; padding: 8px 20px; border-radius: 999px;
+    background: rgba(247, 244, 239, .1); border: 1px solid rgba(247, 244, 239, .28);
+    color: #FFFFFF; font-size: clamp(18px, 2.2vw, 24px); font-weight: 800; letter-spacing: -.01em; line-height: 1.25;
+  }
+  .hero-eyebrow { position: relative; margin: 14px 0 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #B6BACB; }
+  .hero h1 { position: relative; margin: 16px 0 0; font-size: clamp(28px, 4.2vw, 40px); line-height: 1.15; letter-spacing: -.03em; font-weight: 800; }
   .hero h1 u {
     text-decoration: none;
     background: linear-gradient(var(--yellow), var(--yellow)) no-repeat 0 92% / 0% 5px;
@@ -160,17 +165,43 @@
   .label { margin: 40px 0 12px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
   h2.title { margin: 40px 0 14px; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
 
-  /* Alignment matrix */
-  .matrix-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow-x: auto; }
-  .matrix { width: 100%; border-collapse: collapse; min-width: 420px; }
-  .matrix th, .matrix td { padding: 14px 18px; text-align: left; }
-  .matrix thead th { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--line); background: var(--surface-2); }
-  .matrix thead th.topic { text-align: center; width: 130px; }
-  .matrix tbody tr + tr td, .matrix tbody tr + tr th { border-top: 1px solid var(--line); }
-  .matrix tbody th { font-weight: 700; font-size: 15px; }
-  .person { display: flex; align-items: center; gap: 12px; }
+  /* Alignment at a glance: full-width table. When the topics don't fit, rows stack and wrap (see fitGlance). */
+  .glance { margin-top: 32px; }
+  .glance .label { margin: 0 0 12px; }
+  .glance-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .glance-table { width: 100%; border-collapse: collapse; }
+  .glance-table th, .glance-table td { padding: 14px 24px; text-align: left; }
+  .glance-table thead > tr > * { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); line-height: 1.35; border-bottom: 1px solid var(--line); background: var(--surface-2); vertical-align: middle; }
+  .glance-table thead th.topic { text-align: center; width: 120px; padding-inline: 12px; }
+  .glance-table .cand-col { width: 220px; }
+  .glance-table tbody tr + tr > * { border-top: 1px solid var(--line); }
+  .glance-table tbody th { font-weight: 600; font-size: 16px; }
+  .glance-table td { text-align: center; padding-inline: 12px; }
+  .glance-table .fill { width: auto; padding: 0; }
+  .glance-empty { color: var(--ink-3); font-size: 14px; }
+  .glance-table .mark { width: 30px; height: 30px; }
+  /* Stacked: each candidate becomes a row of labeled marks that wraps */
+  .glance-table.stacked thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .glance-table.stacked tbody tr { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 16px 20px; }
+  .glance-table.stacked tbody tr + tr { border-top: 1px solid var(--line); }
+  .glance-table.stacked tbody tr + tr > * { border-top: 0; }
+  .glance-table.stacked tbody th { grid-column: 1 / -1; padding: 0 0 4px; }
+  .glance-table.stacked td {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;
+    padding: 6px 6px 6px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); text-align: left;
+  }
+  .glance-table.stacked td::before { content: attr(data-topic); min-width: 0; font-size: 11px; font-weight: 800; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; color: var(--ink-2); }
+  .glance-table.stacked .mark { flex: none; }
+  .glance-table.stacked .fill { display: none; }
+  .glance-table.stacked td.glance-empty { grid-column: 1 / -1; background: none; border: 0; padding: 0; }
+  .glance-table.stacked td.glance-empty::before { content: none; }
+  @media (max-width: 400px) {
+    .glance-table.stacked tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 14px; }
+    .glance-table.stacked td { padding: 5px 5px 5px 9px; }
+    .glance-table.stacked td::before { font-size: 10px; letter-spacing: .04em; }
+    .glance-table.stacked .mark { width: 26px; height: 26px; }
+  }
   .ini { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: var(--teal-tint); color: var(--teal); flex: none; }
-  .matrix td { text-align: center; }
   .mark { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; scale: 0; }
   .reveal.in .mark { animation: pop .4s cubic-bezier(.3,1.6,.5,1) forwards; animation-delay: calc(.6s + var(--d, 0) * 120ms); }
   @keyframes pop { to { scale: 1; } }
@@ -179,7 +210,7 @@
 
   /* Stack-up cards */
   .stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-  .cand { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
+  .cand { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
   .cand:hover { box-shadow: var(--shadow); }
   .cand:first-child { border-color: var(--teal); }
   .cand-main { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 16px; padding: 18px 20px; }
@@ -219,7 +250,7 @@
 
   /* Inform card */
   .inform {
-    margin-top: 28px; padding: 26px 28px; border-radius: 18px;
+    margin-top: 28px; padding: 26px 28px; border-radius: 16px;
     background: color-mix(in srgb, var(--yellow) 14%, var(--surface));
     border: 1px solid color-mix(in srgb, var(--yellow) 45%, var(--line));
     display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: center;
@@ -264,20 +295,16 @@
     .page { padding-block: 20px 48px; }
     .crumbs .where { display: none; }
     .hero { padding: 28px 20px; }
+    .hero-race { padding: 8px 16px; border-radius: 16px; }
     .cand-main { grid-template-columns: auto auto 1fr; gap: 12px; padding: 16px; }
     .cand-main .profile { grid-column: 3; justify-self: start; display: none; }
-    .avatar { width: 46px; height: 46px; border-radius: 14px; font-size: 16px; }
+    .avatar { width: 46px; height: 46px; border-radius: 12px; font-size: 16px; }
     .rank-no { font-size: 22px; width: 20px; }
     .cand-foot { padding: 12px 16px; }
     .inform { grid-template-columns: 1fr; padding: 22px 20px; }
     .inform-actions { grid-column: 1; grid-row: auto; margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
     .inform .btn { white-space: normal; text-align: center; }
     .end .btn { width: 100%; }
-    .matrix { min-width: 0; }
-    .matrix th, .matrix td { padding: 12px 10px; }
-    .matrix thead th { font-size: 11px; letter-spacing: .06em; }
-    .matrix thead th.topic { width: auto; }
-    .matrix .ini { display: none; }
     footer .wrap { flex-direction: column; align-items: start; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -286,14 +313,128 @@
     .mark { scale: 1; }
     .hero h1 u { background-size: 100% 5px; }
   }
+  /* EV layout: margins, borders and spacing matched to Treasury Tracker (ev-ui) */
+  :root { --line: #D3D7DE; --radius: 12px; }
+  .wrap { max-width: 1400px; padding-inline: 24px; }
+  .top { border-bottom: 0; }
+  .top .wrap { max-width: 1512px; height: auto; padding: 16px 24px; }
+  .product img { width: auto; height: 43px; }
+  .btn, .continue, .primary, .ghost, .cta, .pop-next, .save, .choice { border-radius: 12px; }
+  footer { padding-block: 32px 40px; font-size: .88rem; border-top: 1px solid var(--line); }
+  footer .wrap { max-width: 1280px; padding: 0 24px; gap: 12px; }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .top .wrap { padding: 12px; }
+    .product img { height: 36px; }
+    footer .wrap { padding: 0 16px; }
+  }
+
+  /* Ballot: landing-page side margins, two-column layout on wide screens */
+  main.wrap { max-width: none; padding-inline: 48px; }
+  .page { max-width: none; padding-block: 32px 72px; }
+  .layout { margin-top: 32px; display: grid; gap: 32px; }
+  .reveal > .layout { opacity: 1; translate: none; animation: none; }
+  .col-main > *, .col-side > * { opacity: 0; translate: 0 14px; }
+  .reveal.in .col-main > *, .reveal.in .col-side > * { animation: rise .55s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--i, 0) * 110ms); }
+  .col-main h2.title { margin-top: 0; }
+  .col-main .end { justify-content: flex-start; margin-top: 24px; }
+  .col-side { display: grid; gap: 0; align-content: start; }
+  .col-side .inform { margin-top: 0; grid-template-columns: 1fr; padding: 24px; }
+  .col-side .inform-actions { grid-column: 1; grid-row: auto; margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; justify-items: start; }
+  @media (min-width: 640px) { main.wrap { padding-inline: 64px; } }
+  @media (min-width: 1024px) {
+    main.wrap { padding-inline: 96px; }
+    .layout { grid-template-columns: minmax(0, 1fr) 440px; gap: 40px; align-items: start; }
+    .col-side { position: sticky; top: 24px; }
+  }
+  @media (max-width: 1023px) {
+    .layout { display: flex; flex-direction: column; gap: 0; }
+    .col-main, .col-side { display: contents; }
+    .col-main .title { order: 3; }
+    .col-main .stack { order: 4; }
+    .col-side .inform, .col-side .my-compass { order: 5; }
+    .col-main .end { order: 6; justify-content: center; }
+  }
+  @media (max-width: 560px) { main.wrap { padding-inline: 16px; } }
+  @media (prefers-reduced-motion: reduce) { .col-main > *, .col-side > * { opacity: 1; translate: none; } }
+
+  /* Ballot-casting figure from empowered.vote (icons/Sticks/noun_ballot), recolored with a mask */
+  .ballot-fig { position: relative; display: inline-block; width: 84px; aspect-ratio: 1; flex: none; }
+  .ballot-fig::before {
+    content: ""; position: absolute; inset: 0; background: var(--fig, var(--teal));
+    -webkit-mask: url("assets/ballot-figure.png") center / contain no-repeat;
+    mask: url("assets/ballot-figure.png") center / contain no-repeat;
+  }
+  .ballot-fig .slip {
+    position: absolute; left: 33%; top: 37.5%; width: 4.8%; height: 7%; border-radius: 2px;
+    background: var(--yellow); box-shadow: 0 0 0 2px var(--slip-edge, var(--surface)); opacity: 0;
+  }
+  .ballot-fig.loop .slip { animation: slipdrop 1.5s ease-in infinite; }
+  .ballot-fig.once .slip { animation: slipdrop 1.2s ease-in var(--slip-delay, .3s) both; }
+  @keyframes slipdrop {
+    0% { transform: translateY(-240%); opacity: 0; }
+    20% { opacity: 1; }
+    70% { transform: translateY(40%); opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ballot-fig .slip { animation: none !important; opacity: 1; } }
+  .hero-fig { position: absolute; right: 48px; bottom: -6px; width: 76px; --fig: rgba(247, 244, 239, .92); --slip-edge: #1B1E3B; --slip-delay: 1s; }
+  @media (max-width: 1023px) { .hero-fig { display: none; } }
+  .mark.rank { background: var(--teal-tint); color: var(--teal); font-weight: 800; font-size: 14px; }
+  .mark.none { color: var(--ink-3); font-weight: 700; }
+  /* end EV layout */
 
   .proto-note {
     display: flex; gap: 10px; align-items: flex-start;
-    margin: 0 0 18px; padding: 12px 14px;
-    background: #FDF4D9; border: 1px solid #E8D48F; border-left: 4px solid var(--yellow);
+    margin: 20px 0 0; padding: 12px 14px;
+    background: color-mix(in srgb, var(--yellow) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--yellow) 45%, var(--line)); border-left: 4px solid var(--yellow);
     border-radius: 10px; color: var(--ink-2); font-size: 13.5px; line-height: 1.45;
   }
   .proto-note b { color: var(--ink); }
+
+  /* "Your compass" card: shown instead of the calibrate prompt once the user has a compass */
+  .my-compass { padding: 24px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+  .mc-head { display: flex; align-items: center; gap: 12px; }
+  .mc-head img { flex: none; }
+  .mc-badge { background: var(--teal-tint); color: var(--teal); }
+  .my-compass h3 { margin: 6px 0 0; font-size: 19px; font-weight: 800; letter-spacing: -.015em; }
+  .mc-intro { margin: 12px 0 0; font-size: 15px; color: var(--ink-2); }
+  .mc-figure { margin: 8px 0 0; }
+  .mc-radar { display: block; width: 100%; height: auto; overflow: visible; }
+  .mc-radar .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+  .mc-radar .ring.outer { stroke: var(--ink-3); stroke-opacity: .5; }
+  .mc-radar .axis { stroke: var(--line); stroke-width: 1; }
+  .mc-radar .you { fill: color-mix(in srgb, var(--teal) 22%, transparent); stroke: var(--teal); stroke-width: 2.5; stroke-linejoin: round; }
+  .mc-radar .you-pt { fill: var(--teal); }
+  .mc-radar .them { fill: color-mix(in srgb, var(--coral) 12%, transparent); stroke: var(--coral-strong); stroke-width: 2.5; stroke-dasharray: 6 4; stroke-linejoin: round; transform-origin: 0 0; }
+  .mc-radar .them.pop { animation: mc-pop .45s cubic-bezier(.2,.8,.2,1.1) both; }
+  .mc-radar text { font: 600 10.5px/1 var(--font); fill: var(--ink-2); }
+  @keyframes mc-pop { from { opacity: 0; scale: .6; } }
+  .mc-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  .mc-legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .mc-legend .you i { background: var(--teal); }
+  .mc-legend .them i { background: repeating-linear-gradient(90deg, var(--coral-strong) 0 5px, transparent 5px 8px); }
+  .mc-cands { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .mc-cand {
+    display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 5px 12px 5px 5px; border-radius: 999px; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); font: 600 14px/1.2 var(--font); text-align: left;
+  }
+  .mc-cand .ini { width: 28px; height: 28px; font-size: 11px; }
+  @media (hover: hover) { .mc-cand:hover { border-color: var(--coral-strong); color: var(--ink); } }
+  .mc-cand[aria-pressed="true"] { border-color: var(--coral-strong); background: var(--coral-tint); color: var(--ink); }
+  .mc-cand:focus-visible { outline: 3px solid color-mix(in srgb, var(--teal) 40%, transparent); outline-offset: 2px; }
+  .mc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 18px; }
+  .mc-actions .btn { height: 44px; font-size: 15px; }
+  .mc-open { color: var(--teal); font-weight: 700; font-size: 15px; text-decoration: none; }
+  .mc-open:hover { text-decoration: underline; text-underline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .mc-radar .them.pop { animation: none; } }
+  .proto-note + .hero { margin-top: 16px; }
+  /* Read & Rank logo: official dark-theme version in dark mode */
+  :root { --logo-light: block; --logo-dark: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-light: none; --logo-dark: block; } }
+  :root[data-theme="dark"] { --logo-light: none; --logo-dark: block; }
+  .product .logo-light { display: var(--logo-light); }
+  .product .logo-dark { display: var(--logo-dark); }
 </style>
 
 <header class="top">
@@ -302,7 +443,7 @@
       <img src="assets/empowered-vote-logo.png" width="133" height="30" alt="empowered.vote">
     </a>
     <a class="product" href="#top" aria-label="Read and Rank">
-      <img src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank">
+      <img class="logo-light" src="assets/read-rank-logo.png" width="107" height="48" alt="read &amp; rank"><img class="logo-dark" src="assets/read-rank-logo-dark.svg" width="124" height="48" alt="read &amp; rank">
     </a>
     <div class="actions">
       <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color theme">
@@ -327,7 +468,7 @@
     </nav>
 
     <div class="loading" id="loading" role="status" aria-live="polite">
-      <div class="deck" aria-hidden="true"><i></i><i></i><i></i></div>
+      <span class="ballot-fig loop" aria-hidden="true"><span class="slip"></span></span>
       <div>
         <p>Tallying your ballot</p>
         <small id="load-step">Matching quotes to candidates…</small>
@@ -336,108 +477,128 @@
     </div>
 
     <div class="reveal" id="ballot" hidden>
-      <p class="proto-note" role="note">
+      <p class="proto-note" role="note" style="--i:0">
         <span aria-hidden="true">⚠️</span>
         <span><b>Prototype — sample content.</b> The names, quotes and results on this screen are
         invented for design review. They are not real candidates and not real statements.</span>
       </p>
-      <section class="hero" style="--i:0" aria-labelledby="ballot-title">
-        <p class="hero-eyebrow">U.S. Representative District 7 · You ranked 2 quotes across 2 topics</p>
+      <section class="hero" style="--i:0" aria-labelledby="hero-race ballot-title">
+        <p class="hero-race" id="hero-race">U.S. Representative District 7</p>
         <h1 id="ballot-title">Now see <u>who</u> you agreed with</h1>
+        <p class="hero-eyebrow">You ranked 2 quotes across 2 topics</p>
+        <span class="ballot-fig once hero-fig" aria-hidden="true"><span class="slip"></span></span>
       </section>
 
-      <p class="label" style="--i:1">Your alignment at a glance</p>
-      <div class="matrix-wrap" style="--i:2">
-        <table class="matrix">
-          <thead>
-            <tr><th scope="col">Candidate</th><th scope="col" class="topic">Housing</th><th scope="col" class="topic">Immigration</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row"><span class="person"><span class="ini" aria-hidden="true">RL</span>Rosa Lindqvist</span></th>
-              <td><span class="mark no" style="--d:0" role="img" aria-label="Disagreed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></td>
-              <td><span class="mark top" style="--d:1" role="img" aria-label="Your number 1 pick">1</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><span class="person"><span class="ini" aria-hidden="true">DR</span>Dev Ramanathan</span></th>
-              <td><span class="mark top" style="--d:2" role="img" aria-label="Your number 1 pick">1</span></td>
-              <td><span class="mark no" style="--d:3" role="img" aria-label="Disagreed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2 class="title" style="--i:3">How the candidates stack up</h2>
-      <ol class="stack" style="--i:4">
-        <li class="cand">
-          <div class="cand-main">
-            <span class="rank-no"><span class="sr">Rank </span>1</span>
-            <span class="avatar" aria-hidden="true">RL</span>
-            <div>
-              <h3>Rosa Lindqvist</h3>
-              <p class="office">U.S. House of Representatives - Sample District</p>
-            </div>
-            <a class="profile" href="#" aria-label="View Rosa Lindqvist's profile">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7" class="lens" stroke="currentColor"/><circle cx="10" cy="8.5" r="2.2"/><path d="M6.5 14c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/><path d="M15.5 15.5L21 21" class="lens" stroke="currentColor"/></svg>
-            </a>
-          </div>
-          <div class="cand-foot">
-            <span class="agree"><span class="meter" aria-hidden="true"><i class="on"></i><i></i></span>Agreed with <b>1 of 2</b> · <span class="pick">1 top pick</span></span>
-            <button class="said-btn" type="button" aria-expanded="false" aria-controls="said-rl">See what they said
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-          </div>
-          <div class="said" id="said-rl">
-            <div>
-              <ul>
-                <li><span class="topic-row">Housing <span class="tag no">Disagreed</span></span><p>Local zoning should allow more homes near jobs and transit, so rents come down over time.</p></li>
-                <li><span class="topic-row">Immigration <span class="tag top">#1 pick</span></span><p>[Immigration quote from the ballot]</p></li>
-              </ul>
-            </div>
-          </div>
-        </li>
-        <li class="cand">
-          <div class="cand-main">
-            <span class="rank-no"><span class="sr">Rank </span>2</span>
-            <span class="avatar" aria-hidden="true">DR</span>
-            <div>
-              <h3>Dev Ramanathan</h3>
-              <p class="office">Candidate</p>
-            </div>
-            <a class="profile" href="#" aria-label="View Dev Ramanathan's profile">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7" class="lens" stroke="currentColor"/><circle cx="10" cy="8.5" r="2.2"/><path d="M6.5 14c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/><path d="M15.5 15.5L21 21" class="lens" stroke="currentColor"/></svg>
-            </a>
-          </div>
-          <div class="cand-foot">
-            <span class="agree"><span class="meter" aria-hidden="true"><i class="on"></i><i></i></span>Agreed with <b>1 of 2</b> · <span class="pick">1 top pick</span></span>
-            <button class="said-btn" type="button" aria-expanded="false" aria-controls="said-dr">See what they said
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-          </div>
-          <div class="said" id="said-dr">
-            <div>
-              <ul>
-                <li><span class="topic-row">Housing <span class="tag top">#1 pick</span></span><p>We will update policies and introduce legislation that create stronger pathways to homeownership.</p></li>
-                <li><span class="topic-row">Immigration <span class="tag no">Disagreed</span></span><p>[Immigration quote from the ballot]</p></li>
-              </ul>
-            </div>
-          </div>
-        </li>
-      </ol>
-
-      <section class="inform" id="inform" style="--i:5" aria-labelledby="inform-title">
-        <span class="badge">Inform</span>
-        <h3 id="inform-title">Map where you stand on every issue.</h3>
-        <p>Compass helps you place yourself on every issue, and your next Read &amp; Rank will start with what you care about.</p>
-        <div class="inform-actions">
-          <a class="btn" href="#compass">Calibrate your Compass</a>
-          <button class="later" type="button" id="later">Maybe later</button>
+      <section class="glance" style="--i:1" aria-labelledby="glance-title">
+        <h2 class="label" id="glance-title">Your alignment at a glance</h2>
+        <div class="glance-wrap">
+          <table class="glance-table">
+            <thead>
+              <tr><th scope="col" class="cand-col">Candidate</th><th scope="col" class="topic">Housing</th><th scope="col" class="topic">Immigration</th><td class="fill" aria-hidden="true"></td></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Rosa Lindqvist</th><td data-topic="Housing"><span class="mark no" style="--d:0" role="img" aria-label="Disagreed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></td><td data-topic="Immigration"><span class="mark top" style="--d:1" role="img" aria-label="Your number 1 pick">1</span></td><td class="fill" aria-hidden="true"></td></tr>
+              <tr><th scope="row">Dev Ramanathan</th><td data-topic="Housing"><span class="mark top" style="--d:2" role="img" aria-label="Your number 1 pick">1</span></td><td data-topic="Immigration"><span class="mark no" style="--d:3" role="img" aria-label="Disagreed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></td><td class="fill" aria-hidden="true"></td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <div class="end" style="--i:6">
-        <a class="btn" href="#elections">Play another race near you</a>
-        <a class="btn ghost" href="#issues">Review a topic</a>
+      <div class="layout">
+        <div class="col-main">
+              <h2 class="title" style="--i:0">How the candidates stack up</h2>
+              <ol class="stack" style="--i:1">
+                <li class="cand">
+                  <div class="cand-main">
+                    <span class="rank-no"><span class="sr">Rank </span>1</span>
+                    <span class="avatar" aria-hidden="true">RL</span>
+                    <div>
+                      <h3>Rosa Lindqvist</h3>
+                      <p class="office">U.S. House of Representatives - Sample District</p>
+                    </div>
+                    <a class="profile" href="#" aria-label="View Rosa Lindqvist's profile">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7" class="lens" stroke="currentColor"/><circle cx="10" cy="8.5" r="2.2"/><path d="M6.5 14c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/><path d="M15.5 15.5L21 21" class="lens" stroke="currentColor"/></svg>
+                    </a>
+                  </div>
+                  <div class="cand-foot">
+                    <span class="agree"><span class="meter" aria-hidden="true"><i class="on"></i><i></i></span>Agreed with <b>1 of 2</b> · <span class="pick">1 top pick</span></span>
+                    <button class="said-btn" type="button" aria-expanded="false" aria-controls="said-rl">See what they said
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                  <div class="said" id="said-rl">
+                    <div>
+                      <ul>
+                        <li><span class="topic-row">Housing <span class="tag no">Disagreed</span></span><p>Local zoning should allow more homes near jobs and transit, so rents come down over time.</p></li>
+                        <li><span class="topic-row">Immigration <span class="tag top">#1 pick</span></span><p>[Immigration quote from the ballot]</p></li>
+                      </ul>
+                    </div>
+                  </div>
+                </li>
+                <li class="cand">
+                  <div class="cand-main">
+                    <span class="rank-no"><span class="sr">Rank </span>2</span>
+                    <span class="avatar" aria-hidden="true">DR</span>
+                    <div>
+                      <h3>Dev Ramanathan</h3>
+                      <p class="office">Candidate</p>
+                    </div>
+                    <a class="profile" href="#" aria-label="View Dev Ramanathan's profile">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7" class="lens" stroke="currentColor"/><circle cx="10" cy="8.5" r="2.2"/><path d="M6.5 14c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/><path d="M15.5 15.5L21 21" class="lens" stroke="currentColor"/></svg>
+                    </a>
+                  </div>
+                  <div class="cand-foot">
+                    <span class="agree"><span class="meter" aria-hidden="true"><i class="on"></i><i></i></span>Agreed with <b>1 of 2</b> · <span class="pick">1 top pick</span></span>
+                    <button class="said-btn" type="button" aria-expanded="false" aria-controls="said-dr">See what they said
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                  <div class="said" id="said-dr">
+                    <div>
+                      <ul>
+                        <li><span class="topic-row">Housing <span class="tag top">#1 pick</span></span><p>We will update policies and introduce legislation that create stronger pathways to homeownership.</p></li>
+                        <li><span class="topic-row">Immigration <span class="tag no">Disagreed</span></span><p>[Immigration quote from the ballot]</p></li>
+                      </ul>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+
+              <div class="end" style="--i:2">
+                <a class="btn ghost" href="#issues">Review a topic</a>
+              </div>
+        </div>
+        <aside class="col-side" aria-label="Summary">
+              <section class="inform" id="inform" style="--i:2" aria-labelledby="inform-title">
+                <span class="badge">Inform</span>
+                <h3 id="inform-title">Map where you stand on every issue.</h3>
+                <p>Compass helps you place yourself on every issue, and your next Read &amp; Rank will start with what you care about.</p>
+                <div class="inform-actions">
+                  <a class="btn" href="#compass">Calibrate your Compass</a>
+                  <button class="later" type="button" id="later">Maybe later</button>
+                </div>
+              </section>
+
+              <section class="my-compass" id="my-compass" style="--i:2" aria-labelledby="mc-title" hidden>
+                <div class="mc-head">
+                  <img src="assets/compass-symbol-light.svg" width="40" height="40" alt="">
+                  <div>
+                    <span class="badge mc-badge">Compass</span>
+                    <h3 id="mc-title">Your compass</h3>
+                  </div>
+                </div>
+                <p class="mc-intro">Pick a candidate to lay their compass over yours.</p>
+                <figure class="mc-figure">
+                  <svg class="mc-radar" id="mc-radar" viewBox="-195 -150 390 300" role="img" aria-label="Your compass"></svg>
+                  <figcaption class="mc-legend"><span class="you"><i></i>You</span><span class="them"><i></i><span id="mc-them-name">Candidate</span></span></figcaption>
+                </figure>
+                <div class="mc-cands" id="mc-cands" role="group" aria-label="Compare with"></div>
+                <div class="mc-actions">
+                  <a class="btn ghost" href="#stances">Refine your stances</a>
+                  <a class="mc-open" href="https://compass.empowered.vote/" target="_blank" rel="noopener">Open Compass <span aria-hidden="true">↗</span></a>
+                </div>
+              </section>
+        </aside>
       </div>
     </div>
   </div>
@@ -478,6 +639,156 @@
 
     function clear() { timers.forEach(clearTimeout); timers = []; }
 
+    var XMARK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    var LENS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7" class="lens" stroke="currentColor"/><circle cx="10" cy="8.5" r="2.2"/><path d="M6.5 14c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/><path d="M15.5 15.5L21 21" class="lens" stroke="currentColor"/></svg>';
+    var CHEV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    // Stack the alignment table when its topic columns don't fit the width (no sideways scrolling).
+    function fitGlance() {
+      var wrap = ballot.querySelector('.glance-wrap'), table = wrap.querySelector('.glance-table');
+      if (!wrap.clientWidth) return;
+      table.classList.remove('stacked');
+      table.classList.toggle('stacked', innerWidth <= 560 || table.scrollWidth > wrap.clientWidth + 1);
+    }
+    if (window.ResizeObserver) new ResizeObserver(fitGlance).observe(ballot.querySelector('.glance-wrap'));
+    function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+    // Build the ballot for the race picked earlier (window.RR) from the rankings made on the
+    // reading screen. Without window.RR the District 7 markup above stays as is.
+
+    // ── "Your compass" card ─────────────────────────────────────────────
+    // The user's stances come from the Compass steps in this session; otherwise a sample on the
+    // topics the live Compass uses. Candidate compasses are sample data like the rest of this screen.
+    var COMPASS_SAMPLE = [
+      { label: 'Housing', level: 2 }, { label: 'Homelessness', level: 4 }, { label: 'Residential Zoning', level: 2 },
+      { label: 'Civil Rights', level: 4 }, { label: 'Public Safety Approach', level: 2 }, { label: 'Local Immigration Enforcement', level: 5 },
+      { label: 'Economic Development Incentives', level: 3 }, { label: 'Transportation Priorities', level: 3 }
+    ];
+    var hasCompass = false, compareWith = null, compassRace = null;
+    function myStances() { return (window.RRStances && window.RRStances.length >= 3) ? window.RRStances : COMPASS_SAMPLE; }
+    function sampleCompass(k, n) {          // a stable, made-up compass per candidate slot
+      var out = []; for (var i = 0; i < n; i++) out.push(1 + ((i * 3 + k * 2 + (k % 2 ? 1 : 3)) % 5)); return out;
+    }
+    function drawCompass(animate) {
+      var svg = document.getElementById('mc-radar');
+      // Narrow cards: a smaller chart with larger labels, so the topic names stay readable on phones.
+      var small = svg.clientWidth > 0 && svg.clientWidth < 330;
+      var data = myStances(), n = data.length, R = small ? 72 : 92, h = '', wrap = small ? 11 : 13, fs = small ? 14 : 10.5, lh = small ? 15 : 12;
+      function pt(i, r) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [r * Math.cos(a), r * Math.sin(a)]; }
+      function f(v) { return v.toFixed(1); }
+      function poly(v) { return v.map(function (x, i) { return pt(i, R * x / 5).map(f).join(','); }).join(' '); }
+      for (var k = 1; k <= 5; k++) {
+        var ring = []; for (var i = 0; i < n; i++) ring.push(pt(i, R * k / 5).map(f).join(','));
+        h += '<polygon class="ring' + (k === 5 ? ' outer' : '') + '" points="' + ring.join(' ') + '"/>';
+      }
+      for (var j = 0; j < n; j++) { var e = pt(j, R); h += '<line class="axis" x1="0" y1="0" x2="' + f(e[0]) + '" y2="' + f(e[1]) + '"/>'; }
+      var ids = Object.keys(compassRace.candidates), them = null;
+      if (compareWith) {
+        them = sampleCompass(ids.indexOf(compareWith), n);
+        h += '<polygon class="them' + (animate ? ' pop' : '') + '" points="' + poly(them) + '"/>';
+      }
+      var you = data.map(function (d) { return d.level || 0; });
+      h += '<polygon class="you" points="' + poly(you) + '"/>';
+      h += you.map(function (v, i) { var p = pt(i, R * v / 5); return '<circle class="you-pt" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="3.5"/>'; }).join('');
+      data.forEach(function (d, t) {
+        var lp = pt(t, R + 16), anchor = Math.abs(lp[0]) < 6 ? 'middle' : (lp[0] < 0 ? 'end' : 'start');
+        var words = d.label.split(' '), lines = [], line = '';
+        words.forEach(function (w) { if ((line + ' ' + w).trim().length > wrap && line) { lines.push(line); line = w; } else line = (line + ' ' + w).trim(); });
+        lines.push(line);
+        var y0 = lp[1] - (lines.length - 1) * lh / 2 + (lp[1] > 20 ? lh * .7 : lp[1] < -20 ? -lh * .3 : lh * .25);
+        h += '<text text-anchor="' + anchor + '" style="font-size:' + fs + 'px">' + lines.map(function (l, li) { return '<tspan x="' + f(lp[0]) + '" y="' + f(y0 + li * lh) + '">' + esc(l) + '</tspan>'; }).join('') + '</text>';
+      });
+      svg.innerHTML = h;
+      var who = compareWith ? compassRace.candidates[compareWith].name : '';
+      document.getElementById('mc-them-name').textContent = who || 'Candidate';
+      svg.setAttribute('aria-label', 'Your compass' + (who ? ', compared with ' + who : '') + ': ' +
+        data.map(function (d, i) { return d.label + ' ' + you[i] + (them ? ' (' + who + ' ' + them[i] + ')' : ''); }).join(', '));
+    }
+    function renderCompass(race, order) {
+      compassRace = race;
+      if (!race.candidates[compareWith]) compareWith = order[0] || null;
+      document.getElementById('mc-cands').innerHTML = order.map(function (c) {
+        var who = race.candidates[c];
+        return '<button class="mc-cand" type="button" data-cand="' + c + '" aria-pressed="' + (c === compareWith) + '"><span class="ini" aria-hidden="true">' + esc(who.ini) + '</span>' + esc(who.name) + '</button>';
+      }).join('');
+      drawCompass(false);
+    }
+
+    function render() {
+      var RR = window.RR; if (!RR) return;
+      var race = RR.race(), id = RR.active;
+      var where = ballot.closest('.page').querySelector('.crumbs .where:not(.sep)');
+      if (where) where.textContent = race.office + ', ' + race.seat + ' · ' + race.state;
+      var ranked = race.topics.map(function (t) { return { t: t, r: RR.result(id, t) || t.sample }; }).filter(function (x) { return x.r; });
+      var ids = Object.keys(race.candidates);
+      var agreedTotal = ranked.reduce(function (n, x) { return n + x.r.agreed.length; }, 0);
+      ballot.querySelector('.hero-race').textContent = race.officeLong + ' ' + race.seat;
+      ballot.querySelector('.hero-eyebrow').textContent =
+        (ranked.length ? 'You ranked ' + plural(agreedTotal, 'quote') + ' across ' + plural(ranked.length, 'topic') : 'No topics ranked yet');
+
+      var stats = ids.map(function (c, order) {
+        var agree = 0, quotes = 0, top = 0;
+        ranked.forEach(function (x) {
+          if (x.t.quotes.some(function (q) { return q.c === c; })) quotes++;
+          var i = x.r.agreed.indexOf(c);
+          if (i >= 0) agree++;
+          if (i === 0) top++;
+        });
+        return { c: c, agree: agree, quotes: quotes, top: top, order: order };
+      });
+
+      // Marks pop in one after another; spread over ~1.2s whatever the table size.
+      var d = 0, step = Math.min(1, 10 / Math.max(1, ranked.length * ids.length));
+      function stagger() { return (d++ * step).toFixed(2); }
+      var FILL = '<td class="fill" aria-hidden="true"></td>';
+      ballot.querySelector('.glance-table thead').innerHTML = '<tr><th scope="col" class="cand-col">Candidate</th>' +
+        ranked.map(function (x) { return '<th scope="col" class="topic">' + esc(x.t.name) + '</th>'; }).join('') + FILL + '</tr>';
+      ballot.querySelector('.glance-table tbody').innerHTML = ranked.length ? ids.map(function (c) {
+        return '<tr><th scope="row">' + esc(race.candidates[c].name) + '</th>' +
+          ranked.map(function (x) {
+            var i = x.r.agreed.indexOf(c), cell;
+            if (i === 0) cell = '<span class="mark top" style="--d:' + stagger() + '" role="img" aria-label="Your number 1 pick">1</span>';
+            else if (i > 0) cell = '<span class="mark rank" style="--d:' + stagger() + '" role="img" aria-label="Agreed, ranked ' + (i + 1) + '">' + (i + 1) + '</span>';
+            else if (x.r.disagreed.indexOf(c) >= 0) cell = '<span class="mark no" style="--d:' + stagger() + '" role="img" aria-label="Disagreed">' + XMARK + '</span>';
+            else cell = '<span class="mark none" style="--d:' + stagger() + '" role="img" aria-label="No quote">–</span>';
+            return '<td data-topic="' + esc(x.t.name) + '">' + cell + '</td>';
+          }).join('') + FILL + '</tr>';
+      }).join('') : '<tr><td class="glance-empty" colspan="2">Rank a topic to see your alignment.</td></tr>';
+      fitGlance();
+
+      stats.sort(function (a, b) { return b.top - a.top || b.agree - a.agree || a.order - b.order; });
+      renderCompass(race, stats.map(function (st) { return st.c; }));
+      ballot.querySelector('.stack').innerHTML = stats.map(function (st, rank) {
+        var who = race.candidates[st.c];
+        var meter = '';
+        for (var m = 0; m < Math.max(st.quotes, 1); m++) meter += '<i' + (m < st.agree ? ' class="on"' : '') + '></i>';
+        var said = ranked.map(function (x) {
+          var q = x.t.quotes.filter(function (q) { return q.c === st.c; })[0];
+          if (!q) return '';
+          var i = x.r.agreed.indexOf(st.c);
+          var tag = i === 0 ? '<span class="tag top">#1 pick</span>' : i > 0 ? '<span class="tag top">#' + (i + 1) + '</span>' : '<span class="tag no">Disagreed</span>';
+          return '<li><span class="topic-row">' + esc(x.t.name) + ' ' + tag + '</span><p>' + esc(q.text) + '</p></li>';
+        }).join('');
+        var summary = ranked.length
+          ? 'Agreed with <b>' + st.agree + ' of ' + st.quotes + '</b> · <span class="pick">' + plural(st.top, 'top pick') + '</span>'
+          : 'Not ranked yet';
+        return '<li class="cand">' +
+          '<div class="cand-main">' +
+            '<span class="rank-no"><span class="sr">Rank </span>' + (rank + 1) + '</span>' +
+            '<span class="avatar" aria-hidden="true">' + esc(who.ini) + '</span>' +
+            '<div><h3>' + esc(who.name) + '</h3><p class="office">' + esc(who.office) + '</p></div>' +
+            '<a class="profile" href="#" aria-label="View ' + esc(who.name) + '\'s profile">' + LENS + '</a>' +
+          '</div>' +
+          '<div class="cand-foot">' +
+            '<span class="agree"><span class="meter" aria-hidden="true">' + meter + '</span>' + summary + '</span>' +
+            (said ? '<button class="said-btn" type="button" aria-expanded="false" aria-controls="said-' + st.c + '">See what they said ' + CHEV + '</button>' : '') +
+          '</div>' +
+          (said ? '<div class="said" id="said-' + st.c + '"><div><ul>' + said + '</ul></div></div>' : '') +
+        '</li>';
+      }).join('');
+    }
+
+
     function showBallot() {
       loading.hidden = true;
       ballot.hidden = false;
@@ -491,11 +802,15 @@
 
     function run(e) {
       var from = e && e.detail && e.detail.from;
+      var view = (e && e.detail && e.detail.view) || location.hash.slice(1);
+      hasCompass = view === 'ballot-compass';
       clear();
-      inform.hidden = false;
+      render();
+      inform.hidden = hasCompass;
+      document.getElementById('my-compass').hidden = !hasCompass;
       ballot.querySelectorAll('.said').forEach(function (s) { s.classList.remove('open'); });
       ballot.querySelectorAll('.said-btn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
-      if (reduced || from === 'compass') { showBallot(); return; }
+      if (reduced || from === 'compass' || from === 'ready' || from === 'ballot') { showBallot(); return; }
       ballot.hidden = true; ballot.classList.remove('in');
       loading.hidden = false;
       fill.style.width = '0%'; step.textContent = STEPS[0];
@@ -505,14 +820,24 @@
       timers.push(setTimeout(showBallot, 1850));
     }
 
-    ballot.querySelectorAll('.said-btn').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var open = b.getAttribute('aria-expanded') !== 'true';
-        b.setAttribute('aria-expanded', String(open));
-        document.getElementById(b.getAttribute('aria-controls')).classList.toggle('open', open);
-      });
+    ballot.addEventListener('click', function (e) {
+      var b = e.target.closest('.said-btn'); if (!b) return;
+      var open = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(open));
+      document.getElementById(b.getAttribute('aria-controls')).classList.toggle('open', open);
     });
     document.getElementById('later').addEventListener('click', function () { inform.hidden = true; });
+    var resizeTimer = 0;
+    addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (hasCompass && compassRace) drawCompass(false); }, 150);
+    });
+    document.getElementById('mc-cands').addEventListener('click', function (e) {
+      var b = e.target.closest('.mc-cand'); if (!b) return;
+      compareWith = b.dataset.cand;
+      this.querySelectorAll('.mc-cand').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      drawCompass(true);
+    });
 
     if (screen === document.body) run();
     screen.addEventListener('screen:show', run);
