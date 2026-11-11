@@ -80,11 +80,26 @@ export function fetchPoliticianAnswers(politicianId: string): Promise<CompassAns
   return p;
 }
 
-/** True when the dev-only signed-in mock is switched on (`?compass=mock`, `npm run dev` only). */
+const MOCK_KEY = 'rr-dev-compass-mock';
+
+/**
+ * True when the dev-only signed-in mock is switched on (`npm run dev` only).
+ * `?compass=mock` turns it on for the rest of the browser tab, so it survives
+ * clicking through the app (in-app links drop the query); `?compass=off` turns it off.
+ */
 export function isCompassMockOn(): boolean {
   if (!import.meta.env.DEV || typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('compass') === 'mock';
+  const param = new URLSearchParams(window.location.search).get('compass');
+  try {
+    if (param === 'mock') window.sessionStorage.setItem(MOCK_KEY, '1');
+    if (param === 'off') window.sessionStorage.removeItem(MOCK_KEY);
+    return window.sessionStorage.getItem(MOCK_KEY) === '1';
+  } catch {
+    return param === 'mock';
+  }
 }
+// Read the switch once at start-up, while the opening URL still carries it.
+isCompassMockOn();
 
 /**
  * The signed-in user's own compass, or null when signed out (or the session

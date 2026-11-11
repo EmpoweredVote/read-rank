@@ -1,6 +1,7 @@
 // Stands in for: GET /api/compass/answers and GET /api/compass/selected-topics (signed in).
 // Both routes are served, but only to a signed-in user, and local dev is always signed out
-// (CLAUDE.md: mock signed-in states here). Used only by `npm run dev` with `?compass=mock`.
+// (CLAUDE.md: mock signed-in states here). Used only by `npm run dev`: open any page with
+// `?compass=mock` (stays on for that browser tab; `?compass=off` switches it off).
 //
 // These are the stances of a FICTIONAL user, not of any real person. The topic ids are real
 // Compass topics (GET /api/compass/topics, fetched 2026-11-11) so the chart lays real
