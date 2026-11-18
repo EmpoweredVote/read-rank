@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { RaceHub } from './RaceHub';
+import { LandingBobit } from './LandingBobit';
 import { AddressFilterInput } from './AddressFilterInput';
 import { TimeFilterSwitch } from './TimeFilterSwitch';
 import { useReadRankStore } from '../store/useReadRankStore';
-import { PRACTICE_QUOTES } from '../data/practiceData';
 import { track } from '../lib/analytics';
-import { useMotion, EASE, DUR, STAGGER } from '../motion';
+import { useMotion, EASE, DUR } from '../motion';
 import type { TimeFilter } from '../utils/raceGrouping';
 
 const STEPS = [
-  { heading: 'Pick an election', body: 'Local and upcoming races in our Alpha communities.' },
-  { heading: 'Read the quotes', body: 'Judge positions on their words alone.' },
-  { heading: 'Rank the candidates', body: 'See who earned your trust, and where you align.' },
+  { title: 'Pick an election', text: 'Local and upcoming races in our Alpha communities.' },
+  { title: 'Read the quotes', text: 'Judge positions on their words alone.' },
+  { title: 'Rank the candidates', text: 'See who earned your trust, and where you align.' },
 ];
 
 export function Landing() {
-  const { startPractice, locationFilter, browseTarget } = useReadRankStore();
+  const { locationFilter, browseTarget } = useReadRankStore();
   const m = useMotion();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
   const pickerHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -80,32 +80,10 @@ export function Landing() {
                   <path d="M12 5v14M5 12l7 7 7-7" />
                 </svg>
               </button>
-              <button
-                type="button"
-                className="rr-text-btn"
-                onClick={() => { track('readrank_practice_started'); startPractice(PRACTICE_QUOTES); }}
-              >
-                Try a warm-up with pizza opinions
-                <span className="rr-cta__meta"> 30 sec</span>
-              </button>
             </motion.div>
           </div>
 
-          <ol className="rr-timeline" role="list" aria-label="How it works">
-            {STEPS.map(({ heading, body }, i) => (
-              <motion.li key={heading} className="rr-timeline__step"
-                {...m.enter({ y: 12 })}
-                transition={m.transition(DUR.moderate, EASE.settle, { delay: 0.1 + i * (STAGGER.gridCell / 1000) })}>
-                <span className={`rr-timeline__n${i === 0 ? ' rr-timeline__n--active' : ''}`} aria-hidden="true">
-                  {i + 1}
-                </span>
-                <div>
-                  <div className="rr-timeline__title">{heading}</div>
-                  <div className="rr-timeline__body">{body}</div>
-                </div>
-              </motion.li>
-            ))}
-          </ol>
+          <LandingBobit steps={STEPS} />
         </div>
         )}
 

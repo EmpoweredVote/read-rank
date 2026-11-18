@@ -31,7 +31,7 @@ const payload: RacePayload = {
 
 const s = () => useReadRankStore.getState();
 const revealButton = () =>
-  screen.queryByRole('button', { name: /reveal ballot|see your full ballot|see results/i });
+  screen.queryByRole('button', { name: /your rankings|see results/i });
 
 function seed() {
   window.localStorage?.clear();
@@ -124,6 +124,6 @@ describe('reveal reachability with zero agreements (touch)', () => {
 
     // The topic-complete card also offers the reveal now, so scope to the sheet.
     const sheet = await screen.findByRole('dialog', {}, { timeout: 3000 });
-    expect(within(sheet).getByRole('button', { name: /reveal ballot|see your full ballot|see results/i })).toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: /your rankings|see results/i })).toBeInTheDocument();
   });
 });
