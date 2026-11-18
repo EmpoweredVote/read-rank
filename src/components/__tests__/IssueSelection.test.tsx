@@ -106,7 +106,7 @@ describe('IssueSelection', () => {
     expect(screen.getByText(/issues in this race/i)).toBeInTheDocument();
     expect(screen.getByText('2 available')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /see your ballot so far/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /your rankings/i })).not.toBeInTheDocument();
   });
 
   it('"All races" returns to the hub', async () => {
@@ -167,11 +167,11 @@ describe('IssueSelection re-entry hub', () => {
     expect(screen.queryByRole('button', { name: /fossil fuels/i })).toBeNull();
   });
 
-  it('offers "See your ballot" when no remaining topic is selected', async () => {
+  it('offers "Your rankings" when no remaining topic is selected', async () => {
     seedReentry();
     s().setSelectedTopics([]);  // deselect the remaining (undone) topic
     render(<IssueSelection />);
-    expect(screen.getByRole('button', { name: /see your ballot/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /your rankings/i })).toBeInTheDocument();
   });
 
   it('shows progress, Welcome back and a Ranked pill on re-entry', () => {
@@ -186,19 +186,19 @@ describe('IssueSelection re-entry hub', () => {
     expect(screen.getByText(/^ranked$/i)).toBeInTheDocument();
   });
 
-  it('offers "See your ballot so far" next to Start on re-entry and opens the ballot', async () => {
+  it('offers "Your rankings" next to Start on re-entry and opens the ballot', async () => {
     seedReentry();
     render(<IssueSelection />);
     expect(screen.getByRole('button', { name: /start reading · 2 quotes/i })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /see your ballot so far/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^your rankings$/i }));
     expect(useReadRankStore.getState().phase).toBe('results');
   });
 
-  it('does not show "See your ballot so far" when the main button is already See your ballot', () => {
+  it('shows a single "Your rankings" button when there is nothing left to read', () => {
     seedReentry();
     s().setSelectedTopics([]);
     render(<IssueSelection />);
-    expect(screen.getByRole('button', { name: /^see your ballot$/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /see your ballot so far/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^your rankings$/i })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /^your rankings$/i })).toHaveClass('rr-issues__cta');
   });
 });

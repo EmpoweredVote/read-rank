@@ -46,7 +46,7 @@ describe('topic-complete card', () => {
     expect(screen.getByText('1 DISAGREED')).toBeInTheDocument();
     expect(screen.getByText('Move on to the next topic, or keep arranging your ranking.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next topic →' })).toBeInTheDocument();
-    const rev = screen.getAllByRole('button', { name: /reveal ballot|see your full ballot/i });
+    const rev = screen.getAllByRole('button', { name: /your rankings/i });
     expect(rev).toHaveLength(1);
     expect(rev[0]).toHaveClass('ev-button-secondary');
   });
@@ -69,7 +69,7 @@ describe('topic-complete card', () => {
     expect(screen.getByText('1 AGREED')).toBeInTheDocument();
     expect(screen.getByText('1 DISAGREED')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Next topic →' })).not.toBeInTheDocument();
-    const reveal = screen.getAllByRole('button', { name: /see your full ballot/i });
+    const reveal = screen.getAllByRole('button', { name: /your rankings/i });
     expect(reveal).toHaveLength(1);
     expect(reveal[0]).toHaveClass('ev-button-primary');
   });

@@ -4,7 +4,6 @@ import { track } from '../lib/analytics';
 import { TopicStepper } from './TopicStepper';
 import { EvaluationSurface } from './EvaluationSurface';
 import { useRaceRankSource } from './rankSourceContext';
-import { isRaceComplete } from '../utils/raceProgressState';
 
 export const EvaluationPhase: React.FC = () => {
   const {
@@ -54,7 +53,7 @@ export const EvaluationPhase: React.FC = () => {
   };
 
   const raceAgreedCount = race ? getAllAgreedQuotes(race).length : 0;
-  const revealLabel = isRaceComplete(race ?? undefined, race?.rankableTopicCount) ? 'See your full ballot' : 'Reveal ballot';
+  const revealLabel = 'Your rankings';
   // Mid-race the reveal waits for a first agreement, so nobody reveals an empty
   // ballot one quote in. But once every selected topic is triaged there is
   // nothing left to do, and gating on agreements alone stranded anyone who

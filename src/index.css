@@ -618,22 +618,9 @@ dialog::backdrop {
   text-align: left; text-wrap: balance; color: var(--text-heading);
 }
 
-/* Yellow through-line: the question is "yellow" in both themes.
-   Light = marker band under ink text; Dark = yellow text, no band. */
-.question-banner-hl {
-  background: linear-gradient(transparent 55%, color-mix(in srgb, var(--color-ev-yellow) 70%, transparent) 55%);
-  color: var(--text-heading);
-  padding: 0 0.1em; border-radius: 0;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-
-.dark .question-banner-hl {
-  background: none;
-  background-color: transparent;
-  color: var(--color-ev-yellow);
-  padding: 0;
-}
+/* The question reads as a plain heading in both themes: no marker band,
+   no yellow text (UX redesign prototype, #141). */
+.question-banner-hl { color: inherit; background: none; }
 
 /* Audit / maintenance notice — full-width strip under the header */
 .rr-audit-banner {
@@ -1638,7 +1625,7 @@ dialog.rank-sheet[open] {
   font-size: 0.6875rem;
   font-weight: 500;
   line-height: 1.4;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .rank-reorder-btn {
   font-family: 'Manrope', sans-serif;
@@ -1954,7 +1941,7 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .rank-dis-txt { display: flex; flex-direction: column; line-height: 1.25; }
 .rank-dis-lab { font-size: 0.8125rem; font-weight: 700; color: var(--text-heading); }
-.rank-dis-sub { font-size: 0.71875rem; font-weight: 500; color: var(--text-tertiary); }
+.rank-dis-sub { font-size: 0.71875rem; font-weight: 500; color: var(--text-secondary); }
 .rank-dis-chev {
   margin-left: auto;
   color: var(--text-tertiary);
@@ -2689,28 +2676,32 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .rr-cta:hover { background: var(--action-primary-hover); }
 .rr-cta:focus-visible { outline: 2px solid var(--text-link); outline-offset: 3px; }
-.rr-cta__meta { font-size: 0.875rem; font-weight: 500; color: var(--text-tertiary); }
 
-/* Landing hero — vertical step timeline */
-.rr-timeline { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 1.75rem; }
-.rr-timeline::before {
-  content: ''; position: absolute; left: 1rem; top: 1rem; bottom: 1rem;
-  width: 1px; background: var(--border-medium);
+/* Landing hero — "How it works": an animated Bobit walks through the three
+   steps (LandingBobit.tsx, from the #141 prototype). */
+.rr-bobit { margin: 0; display: grid; gap: 4px; width: 100%; max-width: 420px; justify-self: center; }
+.rr-bobit__bubble {
+  position: relative; padding: 18px 20px; border-radius: 16px;
+  background: var(--surface-card); border: 1px solid var(--border-subtle);
 }
-.rr-timeline__step { position: relative; display: flex; gap: 1rem; align-items: flex-start; }
-.rr-timeline__n {
-  position: relative; z-index: 1; flex-shrink: 0;
-  width: 2rem; height: 2rem; border-radius: 9999px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.75rem; font-weight: 700;
-  background: var(--surface-page); color: var(--text-tertiary);
-  border: 1px solid var(--border-medium);
+.rr-bobit__bubble::after {
+  content: ""; position: absolute; left: var(--tail, 50%); bottom: -9px; width: 16px; height: 16px; margin-left: -8px;
+  background: var(--surface-card); border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); rotate: 45deg;
 }
-.rr-timeline__n--active {
-  background: var(--action-primary); color: var(--action-primary-ink); border-color: var(--action-primary);
+.rr-bobit__swap { animation: rr-bobit-in 0.35s ease both; }
+@keyframes rr-bobit-in { from { opacity: 0; translate: 0 6px; } }
+.rr-bobit__step { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-link); }
+.rr-bobit__title { margin: 6px 0 4px; font-size: 1.1875rem; font-weight: 800; letter-spacing: -0.01em; color: var(--text-heading); }
+.rr-bobit__text { margin: 0; color: var(--text-secondary); font-size: 0.9375rem; line-height: 1.5; min-height: 3em; }
+.rr-bobit__bar { display: block; height: 4px; margin-top: 14px; border-radius: 99px; background: var(--border-subtle); overflow: hidden; }
+.rr-bobit__bar i {
+  display: block; height: 100%; width: 100%; border-radius: inherit;
+  background: var(--step-color, var(--text-link)); transform-origin: left; transform: scaleX(var(--progress, 0));
 }
-.rr-timeline__title { font-weight: 700; font-size: 1rem; color: var(--text-heading); margin-bottom: 0.25rem; }
-.rr-timeline__body { font-size: 0.875rem; line-height: 1.5; color: var(--text-secondary); }
+.rr-bobit__stage { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 16px; }
+.rr-bobit canvas { display: block; width: 100%; height: 135px; }
+@media (max-width: 880px) { .rr-bobit canvas { height: 110px; } }
+@media (prefers-reduced-motion: reduce) { .rr-bobit__swap { animation: none; } }
 
 /* Race chip (issue screen) */
 .rr-chip {
@@ -2855,7 +2846,7 @@ button.rank-num:focus-visible .rank-num-badge {
 .rank-dis-recover { display: inline-flex; align-items: center; gap: 0.25rem; }
 .rank-privacy {
   display: flex; align-items: flex-start; gap: 0.5rem; margin: 1rem 0 0; padding-top: 0.875rem;
-  border-top: 1px solid var(--border-subtle); font-size: 0.8125rem; line-height: 1.45; color: var(--text-tertiary);
+  border-top: 1px solid var(--border-subtle); font-size: 0.8125rem; line-height: 1.45; color: var(--text-secondary);
 }
 .rank-privacy svg { flex-shrink: 0; margin-top: 0.125rem; }
 
@@ -2879,7 +2870,7 @@ button.rank-num:focus-visible .rank-num-badge {
 }
 .topic-done__chip--agreed { background: var(--surface-raised); color: var(--text-link); }
 .topic-done__chip--disagreed { background: var(--surface-sunken); color: var(--text-secondary); }
-.topic-done__text { margin: 0; max-width: 34ch; font-size: 0.9375rem; line-height: 1.5; color: var(--text-secondary); }
+.topic-done__text { margin: 0; max-width: 34ch; font-size: 1.0625rem; font-weight: 600; line-height: 1.5; color: var(--text-heading); }
 .topic-done__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }
 
 /* Ballot loader */

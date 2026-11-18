@@ -170,7 +170,7 @@ export const IssueSelection: React.FC = () => {
 
         {showSeeBallotOnly ? (
           <button type="button" className="rr-issues__cta" onClick={() => setPhase('results')}>
-            See your ballot
+            Your rankings
           </button>
         ) : (
           <button type="button" className="rr-issues__cta" disabled={selectedUndone.length === 0} onClick={handleConfirm}
@@ -186,7 +186,7 @@ export const IssueSelection: React.FC = () => {
         )}
         {isReentry && !showSeeBallotOnly && (
           <button type="button" className="rr-text-btn rr-issues__ballot-link" onClick={() => setPhase('results')}>
-            See your ballot so far
+            Your rankings
           </button>
         )}
       </div>

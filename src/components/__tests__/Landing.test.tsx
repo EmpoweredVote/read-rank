@@ -38,11 +38,9 @@ describe('Landing', () => {
     expect(h2).toHaveFocus();
   });
 
-  it('offers practice as an opt-in warm-up', async () => {
+  it('does not offer the pizza warm-up on the landing page', () => {
     render(<Landing />);
-    await userEvent.click(screen.getByRole('button', { name: /try a warm-up with pizza opinions/i }));
-    expect(useReadRankStore.getState().phase).toBe('practice');
-    expect(useReadRankStore.getState().practiceProgress).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /warm-up/i })).toBeNull();
   });
 
   it('with no address: the search box sits in the race section and there is no switch', () => {

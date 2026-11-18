@@ -201,17 +201,16 @@ describe('EvaluationPhase reveal CTA', () => {
     s().confirmIssueSelection();
   }
 
-  it('labels the reveal "Reveal ballot" while rankable topics remain', () => {
+  it('labels the reveal "Your rankings" while rankable topics remain', () => {
     seed();
     s().agree(two.topics[0].quotes[0]);
     s().disagree(two.topics[0].quotes[1]); // k1 done
     s().nextTopic();                        // now on k2 (not done)
     render(<EvaluationPhase />);
-    expect(screen.getByRole('button', { name: /^reveal ballot$/i })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /see your full ballot/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /^your rankings$/i })).toBeTruthy();
   });
 
-  it('labels the reveal "See your full ballot" when the race is complete', () => {
+  it('labels the reveal "Your rankings" when the race is complete', () => {
     seed();
     s().agree(two.topics[0].quotes[0]);
     s().disagree(two.topics[0].quotes[1]); // k1 done
@@ -219,8 +218,7 @@ describe('EvaluationPhase reveal CTA', () => {
     s().disagree(two.topics[1].quotes[0]);
     s().disagree(two.topics[1].quotes[1]); // k2 done -> race complete
     render(<EvaluationPhase />);
-    expect(screen.getByRole('button', { name: /see your full ballot/i })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /^reveal ballot$/i })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^your rankings$/i }).length).toBeGreaterThan(0);
   });
 
   it('shows the reveal in the mobile sheet when agreed anywhere in the race, even if the current topic has none', async () => {
@@ -236,7 +234,7 @@ describe('EvaluationPhase reveal CTA', () => {
     await userEvent.click(screen.getByRole('button', { name: /open your ranking/i }));
     // Under the old per-topic gate this footer would be hidden (k2 pile empty);
     // the race-wide canReveal wiring must surface it. k1 done + k2 not done ->
-    // race not complete -> "Reveal ballot".
-    expect(await screen.findByRole('button', { name: /reveal ballot/i })).toBeTruthy();
+    // race not complete -> the reveal still shows.
+    expect(await screen.findByRole('button', { name: /your rankings/i })).toBeTruthy();
   });
 });
